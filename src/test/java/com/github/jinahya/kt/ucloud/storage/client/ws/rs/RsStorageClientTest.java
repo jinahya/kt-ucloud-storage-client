@@ -31,15 +31,15 @@ import static org.testng.Assert.assertEquals;
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-public class KtUcloudStorageClientTest {
+public class RsStorageClientTest {
 
     private static final Logger logger
-            = getLogger(KtUcloudStorageClientTest.class);
+            = getLogger(RsStorageClientTest.class);
 
     private static final String TEST_CONTAINER_NAME
             = "kt-ucloud-storage-client-test-container";
 
-    private static KtUcloudStorageClient client() {
+    private static RsStorageClient client() {
         final String authUrl = System.getProperty("authUrl");
         if (authUrl == null) {
             throw new SkipException("missing property; authUrl");
@@ -52,7 +52,7 @@ public class KtUcloudStorageClientTest {
         if (authPass == null) {
             throw new SkipException("missing property; authPass");
         }
-        return new KtUcloudStorageClient(authUrl, authUser, authPass);
+        return new RsStorageClient(authUrl, authUser, authPass);
     }
 
     @Test(enabled = true)
@@ -70,7 +70,7 @@ public class KtUcloudStorageClientTest {
 
     @Test(enabled = true)
     public void test1() {
-        final KtUcloudStorageClient client = client();
+        final RsStorageClient client = client();
         client.authenticateUser(response -> null);
         final String containerName = client.getClass().getPackage().getName();
         final String objectName = client.getClass().getSimpleName();

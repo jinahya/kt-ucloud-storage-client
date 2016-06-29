@@ -10,7 +10,7 @@
 
   <groupId>com.github.jinahya</groupId>
   <artifactId>kt-ucloud-storage-client-jax-rs</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
   <packaging>jar</packaging>
 
   <name>${project.artifactId}</name>
@@ -21,7 +21,7 @@
     <connection>scm:git:git@github.com:jinahya/${project.artifactId}.git</connection>
     <developerConnection>scm:git:git@github.com:jinahya/${project.artifactId}.git</developerConnection>
     <url>https://github.com/jinahya/${project.artifactId}</url>
-    <tag>0.1.0</tag>
+    <tag>0.1.1</tag>
   </scm>
   <issueManagement>
     <system>GitHub Issues</system>
@@ -31,8 +31,6 @@
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-<!--    <maven.compiler.testSource>1.8</maven.compiler.testSource>
-    <maven.compiler.testTarget>1.8</maven.compiler.testTarget>-->
   </properties>
 
   <dependencies>
@@ -67,7 +65,21 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
+  
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <links>
+            <link>http://docs.oracle.com/javaee/7/api/</link>
+          </links>
+        </configuration>
+      </plugin>
+    </plugins>
+  </reporting>
+  
   <profiles>
     <profile>
       <id>umlgraph</id>
