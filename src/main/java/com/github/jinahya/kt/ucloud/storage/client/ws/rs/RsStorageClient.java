@@ -16,7 +16,6 @@
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
 import java.util.Date;
-import java.util.Optional;
 import java.util.function.Function;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -24,22 +23,23 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
 /**
+ * A client using JAX-RS.
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-public class KtUcloudStorageClient {
+public class RsStorageClient {
 
-    public static final String X_AUTH_URL_STANDARD_KOR_CENTER
+    public static final String AUTH_URL_STANDARD_KOR_CENTER
             = "https://api.ucloudbiz.olleh.com/storage/v1/auth";
 
-    public static final String X_AUTH_URL_STANDARD_JPN
+    public static final String AUTH_URL_STANDARD_JPN
             = "https://api.ucloudbiz.olleh.com/storage/v1/authjp";
 
-    public static final String X_AUTH_URL_LITE_KOR_HA
+    public static final String AUTH_URL_LITE_KOR_HA
             = "https://api.ucloudbiz.olleh.com/storage/v1/authlite";
 
     public static final String HEADER_X_AUTH_USER = "X-Storage-User";
@@ -107,42 +107,6 @@ public class KtUcloudStorageClient {
                 .header(HEADER_X_AUTH_TOKEN, authToken);
     }
 
-//    /**
-//     * Updates container.
-//     *
-//     * @param client the client
-//     * @param storageUrl the storage URL
-//     * @param containerName container name
-//     * @param authToken authentication token
-//     * @return a response
-//     */
-//    public static Response updateContainer(final Client client,
-//                                           final String storageUrl,
-//                                           final String containerName,
-//                                           final String authToken) {
-//        return buildContainer(client, storageUrl, containerName, authToken)
-//                .buildPut(Entity.entity(
-//                        new byte[0], MediaType.APPLICATION_OCTET_STREAM))
-//                .invoke();
-//    }
-//
-//    /**
-//     * Deletes a container.
-//     *
-//     * @param client the client
-//     * @param storageUrl the storage URL
-//     * @param containerName the container name
-//     * @param authToken the authentication token.
-//     * @return a response
-//     */
-//    public static Response deleteContainer(final Client client,
-//                                           final String storageUrl,
-//                                           final String containerName,
-//                                           final String authToken) {
-//        return buildContainer(client, storageUrl, containerName, authToken)
-//                .buildDelete()
-//                .invoke();
-//    }
     /**
      * Targets an object.
      *
@@ -185,8 +149,8 @@ public class KtUcloudStorageClient {
      * @param authUser the authentication username
      * @param authPass the authentication password
      */
-    public KtUcloudStorageClient(final String authUrl, final String authUser,
-                                 final String authPass) {
+    public RsStorageClient(final String authUrl, final String authUser,
+                           final String authPass) {
         super();
         this.authUrl = authUrl;
         this.authUser = authUser;
@@ -313,7 +277,7 @@ public class KtUcloudStorageClient {
     }
 
     public <T> T readObject(final String containerName, final String objectName,
-                            final MultivaluedHashMap<String, Object> headers,
+                            final MultivaluedMap<String, Object> headers,
                             final Function<Response, T> invoker) {
         final Client client = ClientBuilder.newClient();
         try {
@@ -334,9 +298,20 @@ public class KtUcloudStorageClient {
         }
     }
 
+    /**
+     * Updates an object.
+     *
+     * @param <T> return value type parameter
+     * @param containerName the container name
+     * @param objectName the object name
+     * @param headers additional request headers; may be {@code null}
+     * @param entity the entity
+     * @param function a function applies with the response.
+     * @return a value the function results.
+     */
     public <T> T updateObject(final String containerName,
                               final String objectName,
-                              final MultivaluedHashMap<String, Object> headers,
+                              final MultivaluedMap<String, Object> headers,
                               final Entity<?> entity,
                               final Function<Response, T> function) {
         final Client client = ClientBuilder.newClient();
@@ -358,9 +333,19 @@ public class KtUcloudStorageClient {
         }
     }
 
+    /**
+     * Deletes an object.
+     *
+     * @param <T> return value type parameter
+     * @param containerName the container name
+     * @param objectName the object name
+     * @param headers additional headers; may be {@code null}.
+     * @param invoker a function applies with the response.
+     * @return a value the function results
+     */
     public <T> T deleteObject(final String containerName,
                               final String objectName,
-                              final MultivaluedHashMap<String, Object> headers,
+                              final MultivaluedMap<String, Object> headers,
                               final Function<Response, T> invoker) {
         final Client client = ClientBuilder.newClient();
         try {
