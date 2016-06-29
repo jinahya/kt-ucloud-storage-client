@@ -15,18 +15,17 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
-import java.io.IOException;
 import java.util.Date;
+import java.util.Optional;
 import java.util.function.Function;
-import javax.ws.rs.client.AsyncInvoker;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.StatusType;
 
 /**
  *
@@ -43,231 +42,340 @@ public class KtUcloudStorageClient {
     public static final String X_AUTH_URL_LITE_KOR_HA
             = "https://api.ucloudbiz.olleh.com/storage/v1/authlite";
 
-    public static Response authenticateUser(final String xAuthUrl,
-                                            final String xAuthUser,
-                                            final String xAuthPass) {
-        final Client client = ClientBuilder.newClient();
-        try {
-            return client
-                    .target(xAuthUrl).path("storage").path("v1").path("auth")
-                    .request(MediaType.APPLICATION_JSON_TYPE)
-                    .header("X-Storage-User", xAuthUser) // X-Auth-User -> 500
-                    .header("X-Storage-Pass", xAuthPass) // X-Auth-Pass -> 500
-                    .header("X-Auth-New-Token", "true")
-                    .buildGet()
-                    .invoke();
-        } finally {
-            client.close();
-        }
-    }
+    public static final String HEADER_X_AUTH_USER = "X-Storage-User";
 
-    public static Response updateContainer(final String xStorageUrl,
-                                           final String xAuthToken,
-                                           final String containerName) {
-        final Client client = ClientBuilder.newClient();
-        try {
-            return client
-                    .target(xStorageUrl).path(containerName)
-                    .request()
-                    .header("X-Auth-Token", xAuthToken)
-                    .buildPut(null)
-                    .invoke();
-        } finally {
-            client.close();
-        }
-    }
+    public static final String HEADER_X_AUTH_PASS = "X-Storage-Pass";
 
-    public static Response deleteContainer(final String xStorageUrl,
-                                           final String xAuthToken,
-                                           final String containerName) {
-        final Client client = ClientBuilder.newClient();
-        try {
-            return client
-                    .target(xStorageUrl).path(containerName)
-                    .request()
-                    .header("X-Auth-Token", xAuthToken)
-                    .buildDelete()
-                    .invoke();
-        } finally {
-            client.close();
-        }
-    }
+    public static final String HEADER_X_AUTH_NEW_TOKEN = "X-Auth-New-Token";
 
-    // -------------------------------------------------------------- readObject
-    public static WebTarget targetObject(
-            final Client client, final String url, final String container,
-            final String object) {
-        return client.target(url).path(container).path(object);
-    }
+    public static final String HEADER_X_AUTH_TOKEN = "X-Auth-Token";
 
-    public static Invocation.Builder buildObject(
-            final Client client, final String url, final String container,
-            final String object, final String token) {
-        return targetObject(client, url, container, object)
-                .request()
-                .header("X-Auth-Token", token);
-    }
+    public static final String HEADER_X_STORAGE_URL = "X-Storage-Url";
 
-    public static <T> T invokeObject(final Client client, final String url,
-                                     final String container, final String object,
-                                     final String token,
-                                     final Function<Invocation, T> invoker) {
-        final Invocation.Builder builder = buildObject(
-                client, url, container, object, token);
-        .
-        buildGet();
-        return invoker.apply(invocation);
-    }
-
-    public static <T> T readObjectAsync(
-            final String url, final String container, final String object,
-            final String token, final Function<AsyncInvoker, T> getter) {
-        final Client client = ClientBuilder.newClient();
-        try {
-            final AsyncInvoker invoker = buildObject(
-                    client, url, container, object, token)
-                    .async();
-            invoker.
-            return getter.apply(invoker);
-        } finally {
-            client.close();
-        }
-    }
-
-//    public static Future<Response> readObjectAsync(
-//            final String storageUrl, final String containerName,
-//            final String objectName, final String authToken,
-//            final InvocationCallback invocationCallback) {
-//        return readObjectAsync(storageUrl, containerName, objectName, authToken, invoker -> invoker.get(invocationCallback));
-//    }
-    // -------------------------------------------------------------- updateObject
-    public static Invocation.Builder updateObjectBuilder(
-            final Client client, final String url, final String container,
-            final String object, final String token) {
+    /**
+     * Authenticates with given arguments.
+     *
+     * @param client the client
+     * @param authUrl authentication URL
+     * @param authUser authentication username
+     * @param authPass authentication password
+     * @return a response
+     */
+    public static Response authenticateUser(final Client client,
+                                            final String authUrl,
+                                            final String authUser,
+                                            final String authPass) {
         return client
-                .target(url).path(container).path(object)
+                .target(authUrl)
+                .request(MediaType.APPLICATION_JSON_TYPE)
+                .header(HEADER_X_AUTH_USER, authUser) // X-Auth-User -> 500
+                .header(HEADER_X_AUTH_PASS, authPass) // X-Auth-Pass -> 500
+                .header(HEADER_X_AUTH_NEW_TOKEN, true)
+                .buildGet()
+                .invoke();
+    }
+
+    /**
+     * Targets container.
+     *
+     * @param client the client to use.
+     * @param storageUrl the storage URL
+     * @param containerName container name
+     * @return a target.
+     */
+    public static WebTarget targetContainer(final Client client,
+                                            final String storageUrl,
+                                            final String containerName) {
+        return client.target(storageUrl).path(containerName);
+    }
+
+    /**
+     * Builds an invocation for a container.
+     *
+     * @param client the client
+     * @param storageUrl the storage URL
+     * @param containerName container name
+     * @param authToken authentication token.
+     * @return an invocation builder.
+     */
+    public static Invocation.Builder buildContainer(final Client client,
+                                                    final String storageUrl,
+                                                    final String containerName,
+                                                    final String authToken) {
+        return targetContainer(client, storageUrl, containerName)
                 .request()
-                .header("X-Auth-Token", token);
+                .header(HEADER_X_AUTH_TOKEN, authToken);
     }
 
-    public static <T> T updateObject(final String url, final String container,
-                                     final String object, final String token,
-                                     final Entity<?> entity,
-                                     final Function<Invocation, T> invoker) {
-        final Client client = ClientBuilder.newClient();
-        try {
-            final Invocation invocation = buildObject(
-                    client, url, container, object, token)
-                    .buildPut(entity);
-            return invoker.apply(invocation);
-        } finally {
-            client.close();
-        }
+//    /**
+//     * Updates container.
+//     *
+//     * @param client the client
+//     * @param storageUrl the storage URL
+//     * @param containerName container name
+//     * @param authToken authentication token
+//     * @return a response
+//     */
+//    public static Response updateContainer(final Client client,
+//                                           final String storageUrl,
+//                                           final String containerName,
+//                                           final String authToken) {
+//        return buildContainer(client, storageUrl, containerName, authToken)
+//                .buildPut(Entity.entity(
+//                        new byte[0], MediaType.APPLICATION_OCTET_STREAM))
+//                .invoke();
+//    }
+//
+//    /**
+//     * Deletes a container.
+//     *
+//     * @param client the client
+//     * @param storageUrl the storage URL
+//     * @param containerName the container name
+//     * @param authToken the authentication token.
+//     * @return a response
+//     */
+//    public static Response deleteContainer(final Client client,
+//                                           final String storageUrl,
+//                                           final String containerName,
+//                                           final String authToken) {
+//        return buildContainer(client, storageUrl, containerName, authToken)
+//                .buildDelete()
+//                .invoke();
+//    }
+    /**
+     * Targets an object.
+     *
+     * @param client the client
+     * @param storageUrl the storage URL
+     * @param containerName the container name
+     * @param objectName the object name
+     * @return a target.
+     */
+    public static WebTarget targetObject(final Client client,
+                                         final String storageUrl,
+                                         final String containerName,
+                                         final String objectName) {
+        return client.target(storageUrl).path(containerName).path(objectName);
     }
 
-    public static <T> T updateObjectAsync(
-            final String url, final String container, final String object,
-            final String token, final Function<AsyncInvoker, T> getter) {
-        final Client client = ClientBuilder.newClient();
-        try {
-            final AsyncInvoker invoker = buildObject(
-                    client, url, container, object, token)
-                    .async();
-            return getter.apply(invoker);
-        } finally {
-            client.close();
-        }
+    /**
+     * Builds an invocation for an object.
+     *
+     * @param client the client
+     * @param storageUrl the storage URL
+     * @param containerName the container name
+     * @param objectName the object name
+     * @param accessToken the authentication token
+     * @return an invocation builder.
+     */
+    public static Invocation.Builder buildObject(
+            final Client client, final String storageUrl,
+            final String containerName, final String objectName,
+            final String accessToken) {
+        return targetObject(client, storageUrl, containerName, objectName)
+                .request()
+                .header(HEADER_X_AUTH_TOKEN, accessToken);
     }
 
-    public KtUcloudStorageClient(final String xAuthUrl, final String xAuthUser,
-                                 final String xAuthPass) {
+    /**
+     * Creates a new instance.
+     *
+     * @param authUrl the authentication URL
+     * @param authUser the authentication username
+     * @param authPass the authentication password
+     */
+    public KtUcloudStorageClient(final String authUrl, final String authUser,
+                                 final String authPass) {
         super();
-        this.authUrl = xAuthUrl;
-        this.authUser = xAuthUser;
-        this.authPass = xAuthPass;
+        this.authUrl = authUrl;
+        this.authUser = authUser;
+        this.authPass = authPass;
     }
 
-    public void authenticateUser() throws IOException {
-        if (token != null && date != null
-            && date.before(
-                        new Date(System.currentTimeMillis() + 600000L))) {
-            return;
-        }
+    /**
+     * Checks if the authentication token is valid before specified
+     * milliseconds.
+     *
+     * @param millis the milliseconds.
+     * @return {@code true} if the token is valid; {@code false} otherwise.
+     */
+    public boolean validBefore(final long millis) {
+        return authToken != null && tokenExpires != null
+               && tokenExpires.getTime() >= millis;
+    }
+
+    /**
+     * Authenticates user.
+     *
+     * @param <T> return value type parameter.
+     * @param function the function to be applied with an response.
+     * @return the value applied
+     */
+    public <T> T authenticateUser(final Function<Response, T> function) {
         final Client client = ClientBuilder.newClient();
         try {
             final Response response = authenticateUser(
-                    authUrl, authUser, authPass);
-            final int statusCode = response.getStatus();
-            if (statusCode != 200) {
-                throw new IOException(
-                        "failed to authenticate user; status code = "
-                        + statusCode);
-            }
-            url = response.getHeaderString("X-Storage-Url");
-            token = response.getHeaderString("X-Auth-Token");
-            expires = response.getHeaderString("X-Auth-Token-Expires");
-            date = new Date(System.currentTimeMillis()
-                            + (Long.parseLong(expires) * 1000L) - 600000L);
-        } finally {
-            client.close();
-        }
-    }
-
-    public void updateContainer(final String containerName) throws IOException {
-        authenticateUser();
-        final Client client = ClientBuilder.newClient();
-        try {
-            final Response response = updateContainer(
-                    url, token, containerName);
-            final StatusType status = response.getStatusInfo();
-            if (status.getFamily() != Response.Status.Family.SUCCESSFUL) {
-                final int statusCode = status.getStatusCode();
-                throw new IOException(
-                        "failed to update container; status code; "
-                        + statusCode);
+                    client, authUrl, authUser, authPass);
+            try {
+                final int statusCode = response.getStatus();
+                if (statusCode == 200) {
+                    storageUrl = response.getHeaderString(HEADER_X_STORAGE_URL);
+                    authToken = response.getHeaderString(HEADER_X_AUTH_TOKEN);
+                    final String expires
+                            = response.getHeaderString("X-Auth-Token-Expires");
+                    tokenExpires = new Date(
+                            System.currentTimeMillis()
+                            + (Long.parseLong(expires) * 1000L));
+                }
+                return function.apply(response);
+            } finally {
+                response.close();
             }
         } finally {
             client.close();
         }
     }
 
-    public int deleteContainer(final String containerName) throws IOException {
-        authenticateUser();
+    public WebTarget targetContainer(final Client client,
+                                     final String containerName) {
+        return targetContainer(client, storageUrl, containerName);
+    }
+
+    public Invocation.Builder buildContainer(final Client client,
+                                             final String containerName) {
+        return buildContainer(client, storageUrl, containerName, authToken);
+    }
+
+    /**
+     * Updates container.
+     *
+     * @param <T> return value type parameter
+     * @param containerName the container name
+     * @param function the function to be applied with the response.
+     * @return the value applied.
+     */
+    public <T> T updateContainer(final String containerName,
+                                 final Function<Response, T> function) {
         final Client client = ClientBuilder.newClient();
         try {
-            final Response response = deleteContainer(
-                    url, token, containerName);
-            final StatusType status = response.getStatusInfo();
-            return status.getStatusCode();
+            final Response response
+                    = buildContainer(client, containerName)
+                    .put(Entity.entity(
+                            new byte[0], MediaType.APPLICATION_OCTET_STREAM));
+            try {
+                return function.apply(response);
+            } finally {
+                response.close();
+            }
         } finally {
             client.close();
         }
     }
 
-    // -------------------------------------------------------------- readObject
-    public <T> T readObject(final String container, final String object,
-                            final Function<Invocation, T> invoker) {
+    /**
+     * Deletes container.
+     *
+     * @param <T> return value type parameter
+     * @param containerName the container name
+     * @param function the function to be applied with the response.
+     * @return the value function results.
+     */
+    public <T> T deleteContainer(final String containerName,
+                                 final Function<Response, T> function) {
         final Client client = ClientBuilder.newClient();
         try {
-            final WebTarget target = client.target(url).path(container).path(object);
-            target.request().header("X-Auth-Token", token).async().get
-            final Invocation invocation = buildObject(
-                    client, url, container, object, token)
-                    .buildGet();
-            return invoker.apply(invocation);
+            final Response response
+                    = buildContainer(client, containerName)
+                    .delete();
+            try {
+                return function.apply(response);
+            } finally {
+                response.close();
+            }
         } finally {
             client.close();
         }
     }
 
-    public <T> T readObjectAsync(final String container, final String object,
-                                 final Function<AsyncInvoker, T> getter) {
+    // ------------------------------------------------------------------ object
+    public WebTarget targetObject(final Client client,
+                                  final String containerName,
+                                  final String objectName) {
+        return targetObject(client, storageUrl, containerName, objectName);
+    }
+
+    public Invocation.Builder buildObject(final Client client,
+                                          final String containerName,
+                                          final String objectName) {
+        return buildObject(client, storageUrl, containerName, objectName,
+                           authToken);
+    }
+
+    public <T> T readObject(final String containerName, final String objectName,
+                            final MultivaluedHashMap<String, Object> headers,
+                            final Function<Response, T> invoker) {
         final Client client = ClientBuilder.newClient();
         try {
-            final AsyncInvoker invoker = buildObject(
-                    client, url, container, object, token)
-                    .async();
-            return getter.apply(invoker);
+            final Invocation.Builder builder
+                    = buildObject(client, containerName, objectName);
+            if (headers != null) {
+                builder.headers(headers);
+            }
+            final Invocation invocation = builder.buildGet();
+            final Response response = invocation.invoke();
+            try {
+                return invoker.apply(response);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
+    }
+
+    public <T> T updateObject(final String containerName,
+                              final String objectName,
+                              final MultivaluedHashMap<String, Object> headers,
+                              final Entity<?> entity,
+                              final Function<Response, T> function) {
+        final Client client = ClientBuilder.newClient();
+        try {
+            final Invocation.Builder builder
+                    = buildObject(client, containerName, objectName);
+            if (headers != null) {
+                builder.headers(headers);
+            }
+            final Invocation invocation = builder.buildPut(entity);
+            final Response response = invocation.invoke();
+            try {
+                return function.apply(response);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
+    }
+
+    public <T> T deleteObject(final String containerName,
+                              final String objectName,
+                              final MultivaluedHashMap<String, Object> headers,
+                              final Function<Response, T> invoker) {
+        final Client client = ClientBuilder.newClient();
+        try {
+            final Invocation.Builder builder
+                    = buildObject(client, containerName, objectName);
+            if (headers != null) {
+                builder.headers(headers);
+            }
+            final Invocation invocation = builder.buildDelete();
+            final Response response = invocation.invoke();
+            try {
+                return invoker.apply(response);
+            } finally {
+                response.close();
+            }
         } finally {
             client.close();
         }
@@ -279,11 +387,9 @@ public class KtUcloudStorageClient {
 
     private String authPass;
 
-    private String url;
+    private String storageUrl;
 
-    private String token;
+    private String authToken;
 
-    private String expires;
-
-    private Date date;
+    private Date tokenExpires;
 }

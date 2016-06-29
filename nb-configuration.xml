@@ -38,5 +38,6 @@ Any value defined here will override the pom.xml file value but is only applicab
         <org-netbeans-modules-editor-indent.CodeStyle.project.expand-tabs>true</org-netbeans-modules-editor-indent.CodeStyle.project.expand-tabs>
         <org-netbeans-modules-editor-indent.CodeStyle.usedProfile>project</org-netbeans-modules-editor-indent.CodeStyle.usedProfile>
         <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.blankLinesBeforeFields>1</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.blankLinesBeforeFields>
+        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.classMembersOrder>STATIC FIELD;STATIC_INIT;STATIC METHOD;STATIC CLASS;CONSTRUCTOR;CLASS;METHOD;INSTANCE_INIT;FIELD</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.classMembersOrder>
     </properties>
 </project-shared-configuration>
