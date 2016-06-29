@@ -15,6 +15,7 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
+import static java.util.Collections.singletonList;
 import java.util.Date;
 import java.util.function.Function;
 import javax.ws.rs.client.Client;
@@ -130,16 +131,16 @@ public class RsStorageClient {
      * @param storageUrl the storage URL
      * @param containerName the container name
      * @param objectName the object name
-     * @param accessToken the authentication token
+     * @param authToken the authentication token
      * @return an invocation builder.
      */
     public static Invocation.Builder buildObject(
             final Client client, final String storageUrl,
             final String containerName, final String objectName,
-            final String accessToken) {
+            final String authToken) {
         return targetObject(client, storageUrl, containerName, objectName)
                 .request()
-                .header(HEADER_X_AUTH_TOKEN, accessToken);
+                .header(HEADER_X_AUTH_TOKEN, authToken);
     }
 
     /**
@@ -201,11 +202,38 @@ public class RsStorageClient {
         }
     }
 
+    /**
+     * Check if the token is valid and (if required) refreshes the token.
+     *
+     * @return this instance.
+     */
+    public RsStorageClient refreshToken() {
+        if (!validBefore(System.currentTimeMillis() + 600000L)) {
+            authenticateUser(response -> null);
+        }
+        return this;
+    }
+
+    /**
+     * Targets a container identified by given name using specified client.
+     *
+     * @param client the client
+     * @param containerName the container name
+     * @return a web target
+     */
     public WebTarget targetContainer(final Client client,
                                      final String containerName) {
         return targetContainer(client, storageUrl, containerName);
     }
 
+    /**
+     * Creates an invocation builder for a container identified by given name
+     * using specified client.
+     *
+     * @param client the client
+     * @param containerName the container name
+     * @return an invocation builder.
+     */
     public Invocation.Builder buildContainer(final Client client,
                                              final String containerName) {
         return buildContainer(client, storageUrl, containerName, authToken);
@@ -216,15 +244,22 @@ public class RsStorageClient {
      *
      * @param <T> return value type parameter
      * @param containerName the container name
+     * @param headers additional request headers
      * @param function the function to be applied with the response.
      * @return the value applied.
      */
     public <T> T updateContainer(final String containerName,
+                                 final MultivaluedMap<String, Object> headers,
                                  final Function<Response, T> function) {
         final Client client = ClientBuilder.newClient();
         try {
-            final Response response
-                    = buildContainer(client, containerName)
+            final Invocation.Builder builder
+                    = buildContainer(client, containerName);
+            if (headers != null) {
+                headers.replace(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+                builder.headers(headers);
+            }
+            final Response response = builder
                     .put(Entity.entity(
                             new byte[0], MediaType.APPLICATION_OCTET_STREAM));
             try {
@@ -237,21 +272,32 @@ public class RsStorageClient {
         }
     }
 
+    public <T> T updateContainer(final String containerName,
+                                 final Function<Response, T> function) {
+        return updateContainer(containerName, null, function);
+    }
+
     /**
-     * Deletes container.
+     * Deletes a container identified by given name and returns the result .
      *
      * @param <T> return value type parameter
      * @param containerName the container name
+     * @param headers additional request headers
      * @param function the function to be applied with the response.
      * @return the value function results.
      */
     public <T> T deleteContainer(final String containerName,
+                                 final MultivaluedMap<String, Object> headers,
                                  final Function<Response, T> function) {
         final Client client = ClientBuilder.newClient();
         try {
-            final Response response
-                    = buildContainer(client, containerName)
-                    .delete();
+            final Invocation.Builder builder
+                    = buildContainer(client, containerName);
+            if (headers != null) {
+                headers.replace(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+                builder.headers(headers);
+            }
+            final Response response = builder.delete();
             try {
                 return function.apply(response);
             } finally {
@@ -260,6 +306,11 @@ public class RsStorageClient {
         } finally {
             client.close();
         }
+    }
+
+    public <T> T deleteContainer(final String containerName,
+                                 final Function<Response, T> function) {
+        return deleteContainer(containerName, null, function);
     }
 
     // ------------------------------------------------------------------ object
@@ -278,24 +329,30 @@ public class RsStorageClient {
 
     public <T> T readObject(final String containerName, final String objectName,
                             final MultivaluedMap<String, Object> headers,
-                            final Function<Response, T> invoker) {
+                            final Function<Response, T> function) {
         final Client client = ClientBuilder.newClient();
         try {
             final Invocation.Builder builder
                     = buildObject(client, containerName, objectName);
             if (headers != null) {
+                headers.replace(HEADER_X_AUTH_TOKEN, singletonList(authToken));
                 builder.headers(headers);
             }
             final Invocation invocation = builder.buildGet();
             final Response response = invocation.invoke();
             try {
-                return invoker.apply(response);
+                return function.apply(response);
             } finally {
                 response.close();
             }
         } finally {
             client.close();
         }
+    }
+
+    public <T> T readObject(final String containerName, final String objectName,
+                            final Function<Response, T> function) {
+        return readObject(containerName, objectName, null, function);
     }
 
     /**
@@ -319,6 +376,7 @@ public class RsStorageClient {
             final Invocation.Builder builder
                     = buildObject(client, containerName, objectName);
             if (headers != null) {
+                headers.replace(HEADER_X_AUTH_TOKEN, singletonList(authToken));
                 builder.headers(headers);
             }
             final Invocation invocation = builder.buildPut(entity);
@@ -333,6 +391,12 @@ public class RsStorageClient {
         }
     }
 
+    public <T> T updateObject(final String containerName,
+                              final String objectName, final Entity<?> entity,
+                              final Function<Response, T> function) {
+        return updateObject(containerName, objectName, null, entity, function);
+    }
+
     /**
      * Deletes an object.
      *
@@ -340,30 +404,37 @@ public class RsStorageClient {
      * @param containerName the container name
      * @param objectName the object name
      * @param headers additional headers; may be {@code null}.
-     * @param invoker a function applies with the response.
+     * @param function a function applies with the response.
      * @return a value the function results
      */
     public <T> T deleteObject(final String containerName,
                               final String objectName,
                               final MultivaluedMap<String, Object> headers,
-                              final Function<Response, T> invoker) {
+                              final Function<Response, T> function) {
         final Client client = ClientBuilder.newClient();
         try {
             final Invocation.Builder builder
                     = buildObject(client, containerName, objectName);
             if (headers != null) {
+                headers.replace(HEADER_X_AUTH_TOKEN, singletonList(authToken));
                 builder.headers(headers);
             }
             final Invocation invocation = builder.buildDelete();
             final Response response = invocation.invoke();
             try {
-                return invoker.apply(response);
+                return function.apply(response);
             } finally {
                 response.close();
             }
         } finally {
             client.close();
         }
+    }
+
+    public <T> T deleteObject(final String containerName,
+                              final String objectName,
+                              final Function<Response, T> function) {
+        return deleteObject(containerName, objectName, null, function);
     }
 
     private String authUrl;
