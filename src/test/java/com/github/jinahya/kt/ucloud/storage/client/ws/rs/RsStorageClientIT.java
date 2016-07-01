@@ -31,13 +31,9 @@ import static org.testng.Assert.assertEquals;
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-public class RsStorageClientTest {
+public class RsStorageClientIT {
 
-    private static final Logger logger
-            = getLogger(RsStorageClientTest.class);
-
-    private static final String TEST_CONTAINER_NAME
-            = "kt-ucloud-storage-client-test-container";
+    private static final Logger logger = getLogger(RsStorageClientIT.class);
 
     private static RsStorageClient client() {
         final String authUrl = System.getProperty("authUrl");
@@ -73,7 +69,7 @@ public class RsStorageClientTest {
         final RsStorageClient client = client();
         client.authenticateUser(response -> null);
         final String containerName = client.getClass().getPackage().getName();
-        final String objectName = client.getClass().getSimpleName();
+        final String objectName = client.getClass().getName().replaceAll("\\.", "/");
         client.updateContainer(
                 containerName,
                 response -> {
