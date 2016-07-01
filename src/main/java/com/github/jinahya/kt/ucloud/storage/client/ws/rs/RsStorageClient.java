@@ -159,18 +159,6 @@ public class RsStorageClient {
     }
 
     /**
-     * Checks if the authentication token is valid before specified
-     * milliseconds.
-     *
-     * @param millis the milliseconds.
-     * @return {@code true} if the token is valid; {@code false} otherwise.
-     */
-    public boolean validBefore(final long millis) {
-        return authToken != null && tokenExpires != null
-               && tokenExpires.getTime() >= millis;
-    }
-
-    /**
      * Authenticates user.
      *
      * @param <T> return value type parameter.
@@ -203,12 +191,37 @@ public class RsStorageClient {
     }
 
     /**
+     * Checks if the authentication token is valid before specified
+     * milliseconds.
+     *
+     * @param millis the milliseconds.
+     * @return {@code true} if the token is valid; {@code false} otherwise.
+     */
+    public boolean validBefore(final long millis) {
+        return authToken != null && tokenExpires != null
+               && tokenExpires.getTime() >= millis;
+    }
+
+    /**
      * Check if the token is valid and (if required) refreshes the token.
      *
      * @return this instance.
      */
     public RsStorageClient refreshToken() {
         if (!validBefore(System.currentTimeMillis() + 600000L)) {
+            authenticateUser(response -> null);
+        }
+        return this;
+    }
+
+    /**
+     * Refreshes the token if it expires before the specified milliseconds.
+     *
+     * @param millis the milliseconds
+     * @return this instance.
+     */
+    public RsStorageClient refreshToken(final long millis) {
+        if (!validBefore(millis)) {
             authenticateUser(response -> null);
         }
         return this;
@@ -431,6 +444,15 @@ public class RsStorageClient {
         }
     }
 
+    /**
+     * Deletes an object identified by given container name and object name.
+     *
+     * @param <T> return value type parameter
+     * @param containerName the container name
+     * @param objectName the object name
+     * @param function the function to be applied with the response.
+     * @return the value function results.
+     */
     public <T> T deleteObject(final String containerName,
                               final String objectName,
                               final Function<Response, T> function) {
