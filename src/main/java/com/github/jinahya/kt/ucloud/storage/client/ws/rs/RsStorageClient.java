@@ -17,6 +17,7 @@ package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
 import static java.util.Collections.singletonList;
 import java.util.Date;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -198,6 +199,11 @@ public class RsStorageClient {
         }
     }
 
+    public <T> T authenticateUser(
+            final BiFunction<RsStorageClient, Response, T> function) {
+        return authenticateUser(response -> function.apply(this, response));
+    }
+
     /**
      * Checks if the authentication token is valid before specified
      * milliseconds.
@@ -210,17 +216,34 @@ public class RsStorageClient {
                && tokenExpires.getTime() >= millis;
     }
 
-    /**
-     * Refreshes the token if it expires before the specified milliseconds.
-     *
-     * @param millis the milliseconds
-     * @return this instance.
-     */
-    public RsStorageClient refreshToken(final long millis) {
+//    /**
+//     * Refreshes the token if it expires before the specified milliseconds.
+//     *
+//     * @param millis the milliseconds
+//     * @return this instance.
+//     */
+//    public RsStorageClient refreshToken(final long millis) {
+//        if (!validBefore(millis)) {
+//            authenticateUser(response -> null);
+//        }
+//        return this;
+//    }
+    public <T> T refreshToken(
+            final long millis,
+            final Function<Response, T> function) {
         if (!validBefore(millis)) {
-            authenticateUser(r -> null);
+            return authenticateUser(function);
         }
-        return this;
+        return function.apply(null);
+    }
+
+    public <T> T refreshToken(
+            final long millis,
+            final BiFunction<RsStorageClient, Response, T> function) {
+        if (!validBefore(millis)) {
+            return authenticateUser(function);
+        }
+        return function.apply(this, null);
     }
 
     /**
@@ -256,19 +279,32 @@ public class RsStorageClient {
         }
     }
 
-    /**
-     * Creates or updates container identified by given name.
-     *
-     * @param <T> return value type parameter
-     * @param containerName the container name
-     * @param function the function applied with the response
-     * @return the value function results
-     */
-    public <T> T updateContainer(final String containerName,
-                                 final Function<Response, T> function) {
-        return updateContainer(containerName, null, function);
+    public <T> T updateContainer(
+            final String containerName,
+            final MultivaluedMap<String, Object> headers,
+            final BiFunction<RsStorageClient, Response, T> function) {
+        return updateContainer(containerName, headers,
+                               response -> function.apply(this, response));
     }
 
+//    /**
+//     * Creates or updates container identified by given name.
+//     *
+//     * @param <T> return value type parameter
+//     * @param containerName the container name
+//     * @param function the function applied with the response
+//     * @return the value function results
+//     */
+//    public <T> T updateContainer(final String containerName,
+//                                 final Function<Response, T> function) {
+//        return updateContainer(containerName, null, function);
+//    }
+//
+//    public <T> T updateContainer(
+//            final String containerName,
+//            final BiFunction<RsStorageClient, Response, T> function) {
+//        return updateContainer(containerName, null, function);
+//    }
     /**
      * Deletes a container identified by given name and returns the result .
      *
@@ -300,24 +336,37 @@ public class RsStorageClient {
         }
     }
 
-    /**
-     * Deletes a container identified by given name.
-     *
-     * @param <T> return value type parameter
-     * @param containerName the container name
-     * @param function the function applies with the response
-     * @return the value function results.
-     */
-    public <T> T deleteContainer(final String containerName,
-                                 final Function<Response, T> function) {
-        return deleteContainer(containerName, null, function);
+    public <T> T deleteContainer(
+            final String containerName,
+            final MultivaluedMap<String, Object> headers,
+            final BiFunction<RsStorageClient, Response, T> function) {
+        return deleteContainer(containerName, headers,
+                               response -> function.apply(this, response));
     }
 
+//    /**
+//     * Deletes a container identified by given name.
+//     *
+//     * @param <T> return value type parameter
+//     * @param containerName the container name
+//     * @param function the function applies with the response
+//     * @return the value function results.
+//     */
+//    public <T> T deleteContainer(final String containerName,
+//                                 final Function<Response, T> function) {
+//        return deleteContainer(containerName, null, function);
+//    }
+//
+//    public <T> T deleteContainer(
+//            final String containerName,
+//            final BiFunction<RsStorageClient, Response, T> function) {
+//        return deleteContainer(containerName, null, function);
+//    }
     // ------------------------------------------------------------------ object
     public <T> T readObject(final String containerName, final String objectName,
                             final MultivaluedMap<String, Object> headers,
                             final Function<Response, T> function) {
-        updateContainer(containerName, r -> null);
+        updateContainer(containerName, null, response -> null);
         final Client client = ClientBuilder.newClient();
         try {
             final Invocation.Builder builder = buildObject(
@@ -338,11 +387,24 @@ public class RsStorageClient {
         }
     }
 
-    public <T> T readObject(final String containerName, final String objectName,
-                            final Function<Response, T> function) {
-        return readObject(containerName, objectName, null, function);
+    public <T> T readObject(
+            final String containerName, final String objectName,
+            final MultivaluedMap<String, Object> headers,
+            final BiFunction<RsStorageClient, Response, T> function) {
+        return readObject(containerName, objectName, headers,
+                          response -> function.apply(this, response));
     }
 
+//    public <T> T readObject(final String containerName, final String objectName,
+//                            final Function<Response, T> function) {
+//        return readObject(containerName, objectName, null, function);
+//    }
+//
+//    public <T> T readObject(
+//            final String containerName, final String objectName,
+//            final BiFunction<RsStorageClient, Response, T> function) {
+//        return readObject(containerName, objectName, null, function);
+//    }
     /**
      * Updates an object.
      *
@@ -359,7 +421,7 @@ public class RsStorageClient {
                               final MultivaluedMap<String, Object> headers,
                               final Entity<?> entity,
                               final Function<Response, T> function) {
-        updateContainer(containerName, r -> null);
+        updateContainer(containerName, null, response -> null);
         final Client client = ClientBuilder.newClient();
         try {
             final Invocation.Builder builder = buildObject(
@@ -380,12 +442,27 @@ public class RsStorageClient {
         }
     }
 
-    public <T> T updateObject(final String containerName,
-                              final String objectName, final Entity<?> entity,
-                              final Function<Response, T> function) {
-        return updateObject(containerName, objectName, null, entity, function);
+    public <T> T updateObject(
+            final String containerName, final String objectName,
+            final MultivaluedMap<String, Object> headers,
+            final Entity<?> entity,
+            final BiFunction<RsStorageClient, Response, T> function) {
+        return updateObject(containerName, objectName, headers, entity,
+                            response -> function.apply(this, response));
     }
 
+//    public <T> T updateObject(final String containerName,
+//                              final String objectName, final Entity<?> entity,
+//                              final Function<Response, T> function) {
+//        return updateObject(containerName, objectName, null, entity, function);
+//    }
+//
+//    public <T> T updateObject(
+//            final String containerName, final String objectName,
+//            final Entity<?> entity,
+//            final BiFunction<RsStorageClient, Response, T> function) {
+//        return updateObject(containerName, objectName, null, entity, function);
+//    }
     /**
      * Deletes an object.
      *
@@ -420,21 +497,35 @@ public class RsStorageClient {
         }
     }
 
-    /**
-     * Deletes an object identified by given container name and object name.
-     *
-     * @param <T> return value type parameter
-     * @param containerName the container name
-     * @param objectName the object name
-     * @param function the function to be applied with the response.
-     * @return the value function results.
-     */
-    public <T> T deleteObject(final String containerName,
-                              final String objectName,
-                              final Function<Response, T> function) {
-        return deleteObject(containerName, objectName, null, function);
+    public <T> T deleteObject(
+            final String containerName, final String objectName,
+            final MultivaluedMap<String, Object> headers,
+            final BiFunction<RsStorageClient, Response, T> function) {
+        return deleteObject(containerName, objectName, headers,
+                            response -> function.apply(this, response)
+        );
     }
 
+//    /**
+//     * Deletes an object identified by given container name and object name.
+//     *
+//     * @param <T> return value type parameter
+//     * @param containerName the container name
+//     * @param objectName the object name
+//     * @param function the function to be applied with the response.
+//     * @return the value function results.
+//     */
+//    public <T> T deleteObject(final String containerName,
+//                              final String objectName,
+//                              final Function<Response, T> function) {
+//        return deleteObject(containerName, objectName, null, function);
+//    }
+//
+//    public <T> T deleteObject(
+//            final String containerName, final String objectName,
+//            final BiFunction<RsStorageClient, Response, T> function) {
+//        return deleteObject(containerName, objectName, null, function);
+//    }
     // -------------------------------------------------------------- storageUrl
     public String getStorageUrl() {
         return storageUrl;

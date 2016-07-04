@@ -57,19 +57,19 @@ public class RsStorageClientIT {
     @Test(enabled = true)
     public void authenticateUser() {
         final RsStorageClient client = client();
-        client.authenticateUser(r -> {
-            final StatusType statusInfo = r.getStatusInfo();
+        client.authenticateUser(response -> {
+            final StatusType statusInfo = response.getStatusInfo();
             final int statusCode = statusInfo.getStatusCode();
             final String reasonPhrase = statusInfo.getReasonPhrase();
             assertEquals(statusCode, Status.OK.getStatusCode());
             logger.debug(RsStorageClient.HEADER_X_STORAGE_URL + ": {}",
-                         r.getHeaderString(
+                         response.getHeaderString(
                                  RsStorageClient.HEADER_X_STORAGE_URL));
             logger.debug(RsStorageClient.HEADER_X_AUTH_TOKEN + ": {}",
-                         r.getHeaderString(
+                         response.getHeaderString(
                                  RsStorageClient.HEADER_X_AUTH_TOKEN));
             logger.debug(RsStorageClient.HEADER_X_AUTH_TOKEN_EXPIRES + ": {}",
-                         r.getHeaderString(
+                         response.getHeaderString(
                                  RsStorageClient.HEADER_X_AUTH_TOKEN_EXPIRES));
             return null;
         });
@@ -85,10 +85,11 @@ public class RsStorageClientIT {
     @Test(enabled = true)
     public void container() {
         final RsStorageClient client = client();
-        client.authenticateUser(r -> null);
+        client.authenticateUser(response -> null);
         final String containerName = getClass().getName();
         client.updateContainer(
                 containerName,
+                null,
                 response -> {
                     final StatusType status = response.getStatusInfo();
                     final int statusCode = status.getStatusCode();
@@ -97,6 +98,7 @@ public class RsStorageClientIT {
                 });
         client.deleteContainer(
                 containerName,
+                null,
                 response -> {
                     final StatusType status = response.getStatusInfo();
                     final int statusCode = status.getStatusCode();
@@ -109,7 +111,7 @@ public class RsStorageClientIT {
     @Test(enabled = true)
     public void object() {
         final RsStorageClient client = client();
-        client.authenticateUser(r -> null);
+        client.authenticateUser(response -> null);
         final String containerName = getClass().getPackage().getName();
         final String objectName = getClass().getPackage().getName();
         final Random random = new SecureRandom();
@@ -149,6 +151,7 @@ public class RsStorageClientIT {
         }
         client.deleteContainer(
                 containerName,
+                null,
                 response -> {
                     final StatusType status = response.getStatusInfo();
                     final int statusCode = status.getStatusCode();
