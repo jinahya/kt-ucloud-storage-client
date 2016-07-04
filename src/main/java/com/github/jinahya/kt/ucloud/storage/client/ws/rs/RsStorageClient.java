@@ -202,18 +202,17 @@ public class RsStorageClient {
                && tokenExpires.getTime() >= millis;
     }
 
-    /**
-     * Check if the token is valid and (if required) refreshes the token.
-     *
-     * @return this instance.
-     */
-    public RsStorageClient refreshToken() {
-        if (!validBefore(System.currentTimeMillis() + 600000L)) {
-            authenticateUser(response -> null);
-        }
-        return this;
-    }
-
+//    /**
+//     * Check if the token is valid and (if required) refreshes the token.
+//     *
+//     * @return this instance.
+//     */
+//    public RsStorageClient refreshToken() {
+//        if (!validBefore(System.currentTimeMillis() + 600000L)) {
+//            authenticateUser(response -> null);
+//        }
+//        return this;
+//    }
     /**
      * Refreshes the token if it expires before the specified milliseconds.
      *
@@ -222,7 +221,7 @@ public class RsStorageClient {
      */
     public RsStorageClient refreshToken(final long millis) {
         if (!validBefore(millis)) {
-            authenticateUser(response -> null);
+            authenticateUser(r -> null);
         }
         return this;
     }
@@ -343,6 +342,7 @@ public class RsStorageClient {
     public <T> T readObject(final String containerName, final String objectName,
                             final MultivaluedMap<String, Object> headers,
                             final Function<Response, T> function) {
+        updateContainer(containerName, r -> null);
         final Client client = ClientBuilder.newClient();
         try {
             final Invocation.Builder builder
@@ -384,6 +384,7 @@ public class RsStorageClient {
                               final MultivaluedMap<String, Object> headers,
                               final Entity<?> entity,
                               final Function<Response, T> function) {
+        updateContainer(containerName, r -> null);
         final Client client = ClientBuilder.newClient();
         try {
             final Invocation.Builder builder
@@ -459,11 +460,11 @@ public class RsStorageClient {
         return deleteObject(containerName, objectName, null, function);
     }
 
-    private String authUrl;
+    private final String authUrl;
 
-    private String authUser;
+    private final String authUser;
 
-    private String authPass;
+    private final String authPass;
 
     private String storageUrl;
 
