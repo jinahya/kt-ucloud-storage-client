@@ -65,11 +65,10 @@ public class RsStorageClientIT {
     }
 
     @Test(enabled = true)
-    public void test1() {
+    public void container() {
         final RsStorageClient client = client();
         client.authenticateUser(response -> null);
-        final String containerName = client.getClass().getPackage().getName();
-        final String objectName = client.getClass().getName().replaceAll("\\.", "/");
+        final String containerName = getClass().getName();
         client.updateContainer(
                 containerName,
                 response -> {
@@ -78,37 +77,58 @@ public class RsStorageClientIT {
                     final String reasonPhrase = status.getReasonPhrase();
                     return null;
                 });
-        final Random random = new SecureRandom();
-        final byte[] bytes = new byte[random.nextInt(1024)];
-        random.nextBytes(bytes);
-        final Entity entity = Entity.entity(
-                bytes, MediaType.APPLICATION_OCTET_STREAM);
-        client.updateObject(
-                containerName, objectName, null, entity,
+        client.deleteContainer(
+                containerName,
                 response -> {
-                    final StatusType status = response.getStatusInfo();
-                    final int statusCode = status.getStatusCode();
-                    final String reasonPhrase = status.getReasonPhrase();
-                    assertEquals(statusCode, Status.CREATED.getStatusCode());
-                    return null;
-                });
-        client.readObject(containerName, objectName, null, response -> {
-                      final StatusType status = response.getStatusInfo();
-                      final int statusCode = status.getStatusCode();
-                      final String reasonPhrase = status.getReasonPhrase();
-                      assertEquals(statusCode, Status.OK.getStatusCode());
-                      final byte[] b = response.readEntity(byte[].class);
-                      assertEquals(b, bytes);
-                      return null;
-                  });
-        client.deleteObject(
-                containerName, objectName, null, response -> {
                     final StatusType status = response.getStatusInfo();
                     final int statusCode = status.getStatusCode();
                     final String reasonPhrase = status.getReasonPhrase();
                     assertEquals(statusCode, Status.NO_CONTENT.getStatusCode());
                     return null;
                 });
+    }
+
+    @Test(enabled = true)
+    public void object() {
+        final RsStorageClient client = client();
+        client.authenticateUser(r -> null);
+        final String containerName = getClass().getPackage().getName();
+        final String objectName = getClass().getPackage().getName();
+        final Random random = new SecureRandom();
+        for (int i = 0; i < 10; i++) {
+            final byte[] bytes = new byte[random.nextInt(1024)];
+            random.nextBytes(bytes);
+            final Entity entity = Entity.entity(
+                    bytes, MediaType.APPLICATION_OCTET_STREAM);
+            client.updateObject(
+                    containerName, objectName, null, entity,
+                    response -> {
+                        final StatusType status = response.getStatusInfo();
+                        final int statusCode = status.getStatusCode();
+                        final String reasonPhrase = status.getReasonPhrase();
+                        assertEquals(
+                                statusCode, Status.CREATED.getStatusCode());
+                        return null;
+                    });
+            client.readObject(containerName, objectName, null, response -> {
+                          final StatusType status = response.getStatusInfo();
+                          final int statusCode = status.getStatusCode();
+                          final String reasonPhrase = status.getReasonPhrase();
+                          assertEquals(statusCode, Status.OK.getStatusCode());
+                          final byte[] b = response.readEntity(byte[].class);
+                          assertEquals(b, bytes);
+                          return null;
+                      });
+            client.deleteObject(
+                    containerName, objectName, null, response -> {
+                        final StatusType status = response.getStatusInfo();
+                        final int statusCode = status.getStatusCode();
+                        final String reasonPhrase = status.getReasonPhrase();
+                        assertEquals(
+                                statusCode, Status.NO_CONTENT.getStatusCode());
+                        return null;
+                    });
+        }
         client.deleteContainer(
                 containerName,
                 response -> {
