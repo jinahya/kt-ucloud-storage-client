@@ -10,7 +10,9 @@ final String url; // authentication url
 final String user; // access key ID
 final String pass; // secret key
 final RsStorageClient client = new RsStorageClient(url, user, pass);
-// get the token for the first time.
+```
+### authenticate user
+```java
 final int statusCode = client.authenticateUser(r -> r.getStatusCode());
 assert statusCode == 200;
 ```
@@ -40,5 +42,27 @@ assert status == 204;
 ## object
 
 ### create/update
+```java
+client.refreshToken(System.currenTimeMillis() + 600000L);
+final Entity<?> entity = getSome();
+final int status = client.updateObject(
+    "containerName", "objectName", entity, r -> r.getStatusCode());
+```
 ### read
+```java
+client.refreshToken(System.currenTimeMillis() + 600000L);
+client.readObject(
+    "containerName", "objectName", r -> {
+        // mess with the Response(r) here
+        return null;
+    });
+```
 ### delete
+```java
+client.refreshToken(System.currenTimeMillis() + 600000L);
+client.deleteObject(
+    "containerName", "objectName", r -> {
+        // mess with the Response(r) here
+        return null;
+    });
+```
