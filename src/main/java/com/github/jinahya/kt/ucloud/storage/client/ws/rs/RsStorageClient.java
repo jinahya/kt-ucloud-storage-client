@@ -26,6 +26,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 /**
  * A client using JAX-RS.
@@ -50,6 +51,9 @@ public class RsStorageClient {
     public static final String HEADER_X_AUTH_NEW_TOKEN = "X-Auth-New-Token";
 
     public static final String HEADER_X_AUTH_TOKEN = "X-Auth-Token";
+
+    public static final String HEADER_X_AUTH_TOKEN_EXPIRES
+            = "X-Auth-Token-Expires";
 
     public static final String HEADER_X_STORAGE_URL = "X-Storage-Url";
 
@@ -159,7 +163,7 @@ public class RsStorageClient {
     }
 
     /**
-     * Authenticates user.
+     * Authenticates user and applies given function with the response.
      *
      * @param <T> return value type parameter.
      * @param function the function to be applied with an response.
@@ -172,11 +176,15 @@ public class RsStorageClient {
                     client, authUrl, authUser, authPass);
             try {
                 final int statusCode = response.getStatus();
-                if (statusCode == 200) {
+                if (statusCode == Status.OK.getStatusCode()
+                    || statusCode == Status.NO_CONTENT.getStatusCode()) {
                     storageUrl = response.getHeaderString(HEADER_X_STORAGE_URL);
+                    assert storageUrl != null;
                     authToken = response.getHeaderString(HEADER_X_AUTH_TOKEN);
-                    final String expires
-                            = response.getHeaderString("X-Auth-Token-Expires");
+                    assert authToken != null;
+                    final String expires = response.getHeaderString(
+                            HEADER_X_AUTH_TOKEN_EXPIRES);
+                    assert expires != null;
                     tokenExpires = new Date(
                             System.currentTimeMillis()
                             + (Long.parseLong(expires) * 1000L));
@@ -202,17 +210,6 @@ public class RsStorageClient {
                && tokenExpires.getTime() >= millis;
     }
 
-//    /**
-//     * Check if the token is valid and (if required) refreshes the token.
-//     *
-//     * @return this instance.
-//     */
-//    public RsStorageClient refreshToken() {
-//        if (!validBefore(System.currentTimeMillis() + 600000L)) {
-//            authenticateUser(response -> null);
-//        }
-//        return this;
-//    }
     /**
      * Refreshes the token if it expires before the specified milliseconds.
      *
@@ -224,31 +221,6 @@ public class RsStorageClient {
             authenticateUser(r -> null);
         }
         return this;
-    }
-
-    /**
-     * Targets a container identified by given name using specified client.
-     *
-     * @param client the client
-     * @param containerName the container name
-     * @return a web target
-     */
-    public WebTarget targetContainer(final Client client,
-                                     final String containerName) {
-        return targetContainer(client, storageUrl, containerName);
-    }
-
-    /**
-     * Creates an invocation builder for a container identified by given name
-     * using specified client.
-     *
-     * @param client the client
-     * @param containerName the container name
-     * @return an invocation builder.
-     */
-    public Invocation.Builder buildContainer(final Client client,
-                                             final String containerName) {
-        return buildContainer(client, storageUrl, containerName, authToken);
     }
 
     /**
@@ -265,8 +237,8 @@ public class RsStorageClient {
                                  final Function<Response, T> function) {
         final Client client = ClientBuilder.newClient();
         try {
-            final Invocation.Builder builder
-                    = buildContainer(client, containerName);
+            final Invocation.Builder builder = buildContainer(
+                    client, storageUrl, containerName, authToken);
             if (headers != null) {
                 headers.replace(HEADER_X_AUTH_TOKEN, singletonList(authToken));
                 builder.headers(headers);
@@ -284,6 +256,14 @@ public class RsStorageClient {
         }
     }
 
+    /**
+     * Creates or updates container identified by given name.
+     *
+     * @param <T> return value type parameter
+     * @param containerName the container name
+     * @param function the function applied with the response
+     * @return the value function results
+     */
     public <T> T updateContainer(final String containerName,
                                  final Function<Response, T> function) {
         return updateContainer(containerName, null, function);
@@ -303,8 +283,8 @@ public class RsStorageClient {
                                  final Function<Response, T> function) {
         final Client client = ClientBuilder.newClient();
         try {
-            final Invocation.Builder builder
-                    = buildContainer(client, containerName);
+            final Invocation.Builder builder = buildContainer(
+                    client, storageUrl, containerName, authToken);
             if (headers != null) {
                 headers.replace(HEADER_X_AUTH_TOKEN, singletonList(authToken));
                 builder.headers(headers);
@@ -320,33 +300,28 @@ public class RsStorageClient {
         }
     }
 
+    /**
+     * Deletes a container identified by given name.
+     *
+     * @param <T> return value type parameter
+     * @param containerName the container name
+     * @param function the function applies with the response
+     * @return the value function results.
+     */
     public <T> T deleteContainer(final String containerName,
                                  final Function<Response, T> function) {
         return deleteContainer(containerName, null, function);
     }
 
     // ------------------------------------------------------------------ object
-    public WebTarget targetObject(final Client client,
-                                  final String containerName,
-                                  final String objectName) {
-        return targetObject(client, storageUrl, containerName, objectName);
-    }
-
-    public Invocation.Builder buildObject(final Client client,
-                                          final String containerName,
-                                          final String objectName) {
-        return buildObject(client, storageUrl, containerName, objectName,
-                           authToken);
-    }
-
     public <T> T readObject(final String containerName, final String objectName,
                             final MultivaluedMap<String, Object> headers,
                             final Function<Response, T> function) {
         updateContainer(containerName, r -> null);
         final Client client = ClientBuilder.newClient();
         try {
-            final Invocation.Builder builder
-                    = buildObject(client, containerName, objectName);
+            final Invocation.Builder builder = buildObject(
+                    client, storageUrl, containerName, objectName, authToken);
             if (headers != null) {
                 headers.replace(HEADER_X_AUTH_TOKEN, singletonList(authToken));
                 builder.headers(headers);
@@ -387,8 +362,8 @@ public class RsStorageClient {
         updateContainer(containerName, r -> null);
         final Client client = ClientBuilder.newClient();
         try {
-            final Invocation.Builder builder
-                    = buildObject(client, containerName, objectName);
+            final Invocation.Builder builder = buildObject(
+                    client, storageUrl, containerName, objectName, authToken);
             if (headers != null) {
                 headers.replace(HEADER_X_AUTH_TOKEN, singletonList(authToken));
                 builder.headers(headers);
@@ -427,8 +402,8 @@ public class RsStorageClient {
                               final Function<Response, T> function) {
         final Client client = ClientBuilder.newClient();
         try {
-            final Invocation.Builder builder
-                    = buildObject(client, containerName, objectName);
+            final Invocation.Builder builder = buildObject(
+                    client, storageUrl, containerName, objectName, authToken);
             if (headers != null) {
                 headers.replace(HEADER_X_AUTH_TOKEN, singletonList(authToken));
                 builder.headers(headers);
@@ -458,6 +433,19 @@ public class RsStorageClient {
                               final String objectName,
                               final Function<Response, T> function) {
         return deleteObject(containerName, objectName, null, function);
+    }
+
+    // -------------------------------------------------------------- storageUrl
+    public String getStorageUrl() {
+        return storageUrl;
+    }
+
+    // ------------------------------------------------------------ tokenExpires
+    public Date getTokenExpires() {
+        if (tokenExpires == null) {
+            return null;
+        }
+        return new Date(tokenExpires.getTime());
     }
 
     private final String authUrl;

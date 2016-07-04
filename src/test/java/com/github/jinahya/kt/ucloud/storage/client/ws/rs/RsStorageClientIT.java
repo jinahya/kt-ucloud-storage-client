@@ -16,6 +16,7 @@
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
 import java.security.SecureRandom;
+import java.util.Date;
 import java.util.Random;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -26,6 +27,8 @@ import org.testng.SkipException;
 import org.testng.annotations.Test;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  *
@@ -53,21 +56,36 @@ public class RsStorageClientIT {
 
     @Test(enabled = true)
     public void authenticateUser() {
-        client().authenticateUser(response -> {
-            logger.debug("xStorageUrl: {}",
-                         response.getHeaderString("X-Storage-Url"));
-            logger.debug("xAuthToken: {}",
-                         response.getHeaderString("X-Auth-Token"));
-            logger.debug("xAuthTokenExpires: {}",
-                         response.getHeaderString("X-Auth-Token-Expires"));
+        final RsStorageClient client = client();
+        client.authenticateUser(r -> {
+            final StatusType statusInfo = r.getStatusInfo();
+            final int statusCode = statusInfo.getStatusCode();
+            final String reasonPhrase = statusInfo.getReasonPhrase();
+            assertEquals(statusCode, Status.OK.getStatusCode());
+            logger.debug(RsStorageClient.HEADER_X_STORAGE_URL + ": {}",
+                         r.getHeaderString(
+                                 RsStorageClient.HEADER_X_STORAGE_URL));
+            logger.debug(RsStorageClient.HEADER_X_AUTH_TOKEN + ": {}",
+                         r.getHeaderString(
+                                 RsStorageClient.HEADER_X_AUTH_TOKEN));
+            logger.debug(RsStorageClient.HEADER_X_AUTH_TOKEN_EXPIRES + ": {}",
+                         r.getHeaderString(
+                                 RsStorageClient.HEADER_X_AUTH_TOKEN_EXPIRES));
             return null;
         });
+        final String storageUrl = client.getStorageUrl();
+        logger.debug("client.storageUrl: {}", storageUrl);
+        assertNotNull(storageUrl);
+        final Date tokenExpires = client.getTokenExpires();
+        logger.debug("client.tokenExpires: {}", tokenExpires);
+        assertNotNull(tokenExpires);
+        assertTrue(tokenExpires.after(new Date()));
     }
 
     @Test(enabled = true)
     public void container() {
         final RsStorageClient client = client();
-        client.authenticateUser(response -> null);
+        client.authenticateUser(r -> null);
         final String containerName = getClass().getName();
         client.updateContainer(
                 containerName,
