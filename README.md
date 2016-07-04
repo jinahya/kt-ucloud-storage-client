@@ -9,7 +9,8 @@ a simple client for [kt ucloud storage](https://ucloudbiz.olleh.com/portal/ktclo
 final String authUrl; // authentication url
 final String authUser; // access key ID
 final String authPass; // secret key
-final RsStorageClient client = new RsStorageClient(authUrl, authUser, authPass);
+final RsStorageClient client
+    = new RsStorageClient(authUrl, authUser, authPass);
 ```
 ### authenticate user
 ```java
