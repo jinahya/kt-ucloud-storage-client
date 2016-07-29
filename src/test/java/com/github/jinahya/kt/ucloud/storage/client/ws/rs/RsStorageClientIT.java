@@ -15,13 +15,22 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Date;
 import java.util.Random;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Response.StatusType;
+import javax.xml.ws.spi.http.HttpHandler;
 import org.slf4j.Logger;
 import org.testng.SkipException;
 import org.testng.annotations.Test;
@@ -87,15 +96,46 @@ public class RsStorageClientIT {
         final RsStorageClient client = client();
         client.authenticateUser(response -> null);
         final String containerName = getClass().getName();
+        logger.debug("updating container...");
         client.updateContainer(
                 containerName,
-                null,
+                null, // params
+                null, // headers
                 response -> {
                     final StatusType status = response.getStatusInfo();
+                    assertEquals(status.getFamily(), Status.Family.SUCCESSFUL);
                     final int statusCode = status.getStatusCode();
                     final String reasonPhrase = status.getReasonPhrase();
                     return null;
                 });
+        logger.debug("reading container...");
+        {
+            final MultivaluedMap<String, Object> params = new MultivaluedHashMap<>();
+            //params.putSingle("limit", 10);
+            //params.putSingle("format", "string");
+            final MultivaluedMap<String, Object> headers = new MultivaluedHashMap<>();
+            //headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
+            client.readContainer(
+                    containerName,
+                    params,
+                    headers,
+                    response -> {
+                        final StatusType status = response.getStatusInfo();
+                        assertEquals(status.getStatusCode(), Status.OK.getStatusCode());
+                        try {
+                            try (InputStream stream = response.readEntity(InputStream.class)) {
+                                try (final BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+                                    for (String line; (line = reader.readLine()) != null;) {
+                                        logger.debug("objectName: {}", line);
+                                    }
+                                }
+                            }
+                        } catch (final IOException ioe) {
+                        }
+                        return null;
+                    });
+        }
+        logger.debug("deleting container...");
         client.deleteContainer(
                 containerName,
                 null,
@@ -108,7 +148,7 @@ public class RsStorageClientIT {
                 });
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void object() {
         final RsStorageClient client = client();
         client.authenticateUser(response -> null);
@@ -130,6 +170,19 @@ public class RsStorageClientIT {
                                 statusCode, Status.CREATED.getStatusCode());
                         return null;
                     });
+//            client.readContainer(containerName, new MultivaluedHashMap<>(), new MultivaluedHashMap<>(), response -> {
+//                             try {
+//                                 try (InputStream stream = response.readEntity(InputStream.class)) {
+//                                     try (final BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+//                                         for (String line; (line = reader.readLine()) != null;) {
+//                                             logger.debug("objectName: {}", line);
+//                                         }
+//                                     }
+//                                 }
+//                             } catch (final IOException ioe) {
+//                             }
+//                             return null;
+//                         });
             client.readObject(containerName, objectName, null, response -> {
                           final StatusType status = response.getStatusInfo();
                           final int statusCode = status.getStatusCode();

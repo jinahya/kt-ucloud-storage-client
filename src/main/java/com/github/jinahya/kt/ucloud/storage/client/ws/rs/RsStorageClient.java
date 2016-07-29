@@ -15,16 +15,27 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
+import java.util.Collection;
 import static java.util.Collections.singletonList;
 import java.util.Date;
+import java.util.List;
+import static java.util.Optional.ofNullable;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import static java.util.logging.Logger.getLogger;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.ClientRequestContext;
+import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -35,6 +46,9 @@ import javax.ws.rs.core.Response.Status;
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
 public class RsStorageClient {
+
+    private static final Logger logger
+            = getLogger(RsStorageClient.class.getName());
 
     public static final String AUTH_URL_STANDARD_KOR_CENTER
             = "https://api.ucloudbiz.olleh.com/storage/v1/auth";
@@ -81,6 +95,19 @@ public class RsStorageClient {
                 .invoke();
     }
 
+    public static WebTarget targetContainer(
+            final Client client, final String storageUrl,
+            final String containerName,
+            final MultivaluedMap<String, Object> params) {
+        logger.log(Level.INFO, "targetContainer({0}, {1}, {2}, {3})",
+                   new Object[]{client, storageUrl, containerName, params});
+        final WebTarget target = client.target(storageUrl).path(containerName);
+        if (params != null) {
+            params.forEach((name, values) -> target.queryParam(name, values));
+        }
+        return target;
+    }
+
     /**
      * Targets container.
      *
@@ -88,11 +115,27 @@ public class RsStorageClient {
      * @param storageUrl the storage URL
      * @param containerName container name
      * @return a target.
+     * @deprecated Use
+     * {@link #targetContainer(javax.ws.rs.client.Client, java.lang.String, java.lang.String, javax.ws.rs.core.MultivaluedMap)}
      */
+    @Deprecated
     public static WebTarget targetContainer(final Client client,
                                             final String storageUrl,
                                             final String containerName) {
-        return client.target(storageUrl).path(containerName);
+        return targetContainer(client, storageUrl, containerName, null);
+    }
+
+    public static Invocation.Builder buildContainer(
+            final Client client, final String storageUrl,
+            final String containerName,
+            final MultivaluedMap<String, Object> params,
+            final String authToken) {
+        logger.log(Level.INFO, "buildContainer({0}, {1}, {2}, {3}, {4})",
+                   new Object[]{client, storageUrl, containerName, params,
+                                authToken});
+        return targetContainer(client, storageUrl, containerName, params)
+                .request()
+                .header(HEADER_X_AUTH_TOKEN, authToken);
     }
 
     /**
@@ -103,14 +146,30 @@ public class RsStorageClient {
      * @param containerName container name
      * @param authToken authentication token.
      * @return an invocation builder.
+     * @deprecated Use
+     * {@link #buildContainer(javax.ws.rs.client.Client, java.lang.String, java.lang.String, javax.ws.rs.core.MultivaluedHashMap, java.lang.String)}
      */
-    public static Invocation.Builder buildContainer(final Client client,
-                                                    final String storageUrl,
-                                                    final String containerName,
-                                                    final String authToken) {
-        return targetContainer(client, storageUrl, containerName)
-                .request()
-                .header(HEADER_X_AUTH_TOKEN, authToken);
+    @Deprecated
+    public static Invocation.Builder buildContainer(
+            final Client client, final String storageUrl,
+            final String containerName, final String authToken) {
+        return buildContainer(client, storageUrl, containerName, null,
+                              authToken);
+    }
+
+    public static WebTarget targetObject(
+            final Client client, final String storageUrl,
+            final String containerName, final String objectName,
+            final MultivaluedMap<String, Object> params) {
+        final WebTarget target
+                = client.target(storageUrl).path(containerName)
+                .path(objectName);
+        if (params != null) {
+            params.forEach((name, values) -> target.queryParam(name, values));
+        }
+//        final WebTarget target = targetContainer(
+//                client, storageUrl, containerName, params).path(objectName);
+        return target;
     }
 
     /**
@@ -121,12 +180,16 @@ public class RsStorageClient {
      * @param containerName the container name
      * @param objectName the object name
      * @return a target.
+     * @deprecated Use
+     * {@link #targetObject(javax.ws.rs.client.Client, java.lang.String, java.lang.String, java.lang.String, javax.ws.rs.core.MultivaluedMap)}
      */
+    @Deprecated
     public static WebTarget targetObject(final Client client,
                                          final String storageUrl,
                                          final String containerName,
                                          final String objectName) {
-        return client.target(storageUrl).path(containerName).path(objectName);
+        return targetObject(client, storageUrl, containerName, objectName,
+                            null);
     }
 
     /**
@@ -234,6 +297,52 @@ public class RsStorageClient {
     }
 
     /**
+     * Reads container.
+     *
+     * @param <T> result type parameter
+     * @param containerName container name
+     * @param params query parameters
+     * @param headers request headers.
+     * @param function the function to be applied with the response
+     * @return the value the function results.
+     */
+    public <T> T readContainer(final String containerName,
+                               final MultivaluedMap<String, Object> params,
+                               final MultivaluedMap<String, Object> headers,
+                               final Function<Response, T> function) {
+        authenticateUser(response -> null);
+        final Client client = ClientBuilder.newClient();
+        try {
+            client.register((ClientRequestFilter) requestContext -> {
+                System.out.println("---> request.method: " + requestContext.getMethod());
+                System.out.println("---> request.uri: " + requestContext.getUri());
+                System.out.println("---> request.headers: " + requestContext.getHeaders());
+                System.out.println("---> request.entity: " + requestContext.getEntity());
+            });
+            final Invocation.Builder builder = buildContainer(
+                    client, storageUrl, containerName, params, authToken);
+            if (headers != null) {
+//                final List<Object> accepts = headers.remove(HttpHeaders.ACCEPT);
+//                ofNullable(accepts).filter(Collection::isEmpty).ifPresent(v -> builder.accept(v.get(0).toString()));
+                headers.putSingle(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+                logger.info("--> headers: " + headers);
+                builder.headers(headers);
+            }
+            logger.log(Level.INFO, "builder: {0}", builder);
+            final Invocation invocation = builder.buildGet();
+//            final Response response = builder.get();
+            final Response response = invocation.invoke();
+            try {
+                return function.apply(response);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
+    }
+
+    /**
      * Updates container.
      *
      * @param <T> return value type parameter
@@ -241,16 +350,53 @@ public class RsStorageClient {
      * @param headers additional request headers
      * @param function the function to be applied with the response.
      * @return the value applied.
+     * @deprecated
      */
+    @Deprecated
     public <T> T updateContainer(final String containerName,
                                  final MultivaluedMap<String, Object> headers,
                                  final Function<Response, T> function) {
         final Client client = ClientBuilder.newClient();
         try {
+            client.register((ClientRequestFilter) requestContext -> {
+                System.out.println("---> request.method: " + requestContext.getMethod());
+                System.out.println("---> request.uri: " + requestContext.getUri());
+                System.out.println("---> request.headers: " + requestContext.getHeaders());
+            });
             final Invocation.Builder builder = buildContainer(
                     client, storageUrl, containerName, authToken);
             if (headers != null) {
-                headers.replace(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+                builder.headers(headers);
+            }
+            final Response response = builder
+                    .put(Entity.entity(
+                            new byte[0], MediaType.APPLICATION_OCTET_STREAM));
+            try {
+                return function.apply(response);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
+    }
+
+    public <T> T updateContainer(final String containerName,
+                                 final MultivaluedMap<String, Object> params,
+                                 final MultivaluedMap<String, Object> headers,
+                                 final Function<Response, T> function) {
+        final Client client = ClientBuilder.newClient();
+        try {
+            client.register((ClientRequestFilter) requestContext -> {
+                System.out.println("---> request.method: " + requestContext.getMethod());
+                System.out.println("---> request.uri: " + requestContext.getUri());
+                System.out.println("---> request.headers: " + requestContext.getHeaders());
+            });
+            final Invocation.Builder builder = buildContainer(
+                    client, storageUrl, containerName, params, authToken);
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
                 builder.headers(headers);
             }
             final Response response = builder
@@ -300,7 +446,7 @@ public class RsStorageClient {
             final Invocation.Builder builder = buildContainer(
                     client, storageUrl, containerName, authToken);
             if (headers != null) {
-                headers.replace(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
                 builder.headers(headers);
             }
             final Response response = builder.delete();
@@ -331,7 +477,7 @@ public class RsStorageClient {
             final Invocation.Builder builder = buildObject(
                     client, storageUrl, containerName, objectName, authToken);
             if (headers != null) {
-                headers.replace(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
                 builder.headers(headers);
             }
             final Invocation invocation = builder.buildGet();
@@ -376,7 +522,7 @@ public class RsStorageClient {
             final Invocation.Builder builder = buildObject(
                     client, storageUrl, containerName, objectName, authToken);
             if (headers != null) {
-                headers.replace(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
                 builder.headers(headers);
             }
             final Invocation invocation = builder.buildPut(entity);
@@ -419,7 +565,7 @@ public class RsStorageClient {
             final Invocation.Builder builder = buildObject(
                     client, storageUrl, containerName, objectName, authToken);
             if (headers != null) {
-                headers.replace(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
                 builder.headers(headers);
             }
             final Invocation invocation = builder.buildDelete();
