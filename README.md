@@ -4,6 +4,10 @@
 
 a simple client for [kt ucloud storage](https://ucloudbiz.olleh.com/portal/ktcloudportal.epc.productintro.ss.info.html).
 
+## verify
+```
+$ mvn -P(jersey|cxf|resteasy) -DauthUrl="" -DauthUser="" -DauthPass="" clean verify
+```
 ## basic usage
 ```java
 final String url; // authentication url
