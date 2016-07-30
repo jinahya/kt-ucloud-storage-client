@@ -6,64 +6,102 @@ a simple client for [kt ucloud storage](https://ucloudbiz.olleh.com/portal/ktclo
 
 ## basic usage
 ```java
-final String authUrl; // authentication url
-final String authUser; // access key ID
-final String authPass; // secret key
-final RsStorageClient client
-    = new RsStorageClient(authUrl, authUser, authPass);
+final String url; // authentication url
+final String user; // access key ID
+final String pass; // secret key
+final StorageClient client = new StorageClient(url, user, pass);
 ```
 ### authenticate user
 ```java
-final int statusCode = client.authenticateUser(r -> r.getStatusCode());
+final int statusCode = client.authenticateUser(r -> r.getStatus());
 assert statusCode == 200;
-```
-### refresh token
-```java
-// make it sure the token is valid in next 10 minutes
-client.refreshToken(System.currentTimeMillis() + 600000L);
 ```
 
 ## container
 ### create/update
-```
-client.refreshToken(System.currentTimeMillis() + 600000L);
-final int status = client.updateContainer(
-    "containerName",
-    r -> r.getStatusCode());
-assert status == 201 || status == 202;
-```
-### delete
-```
-client.refreshToken(System.currentTimeMillis() + 600000L);
-final int status = client.deleteContainer(
-    "containerName",
-    r -> r.getStatusCode());
-assert status == 204;
-```
-## object
-
-### create/update
 ```java
-client.refreshToken(System.currenTimeMillis() + 600000L);
-final Entity<?> entity = getSome();
-final int status = client.updateObject(
-    "containerName", "objectName", entity, r -> r.getStatusCode());
+final Family family = client.updateContainer(
+    "containerName",
+    null, // query paramters; MultivaluedMap<String, Object>
+    null, // request heaers; MultivaluedMap<String, Object>
+    r -> r.getStatusInfo().getFamily());
+assert family == Family.SUCCESSFUL;
 ```
 ### read
 ```java
-client.refreshToken(System.currenTimeMillis() + 600000L);
-client.readObject(
-    "containerName", "objectName", r -> {
-        // mess with the Response(r) here
-        return null;
-    });
+final Family family = client.readContainer(
+    "containerName",
+    null, // query paramters; MultivaluedMap<String, Object>
+    null, // request heaers; MultivaluedMap<String, Object>
+    r -> r.getStatusInfo().getFamily());
+assert family == Family.SUCCESSFUL;
+```
+#### consuming object names
+```java
+// clear the container
+client.withObjectNames(
+        containerName,
+        null,
+        null,
+        (on, c) -> {
+            c.deleteObject(
+                    containerName,
+                    on,
+                    null,
+                    null,
+                    r -> {
+                        // this is an object deletion result
+                    }
+            );
+        }
+);
 ```
 ### delete
 ```java
-client.refreshToken(System.currenTimeMillis() + 600000L);
-client.deleteObject(
-    "containerName", "objectName", r -> {
+client.deleteContainer(
+    "containerName",
+    null,
+    null,
+    r -> {
+    }
+);
+```
+## object
+### create/update
+```java
+final Entity<?> entity = getSome();
+final int status = client.updateObject(
+    "containerName",
+    "objectName",
+    null,
+    null,
+    entity,
+    r -> {
         // mess with the Response(r) here
-        return null;
-    });
+    }
+);
+```
+### read
+```java
+client.readObject(
+    "containerName",
+    "objectName",
+    null,
+    null,
+    r -> {
+        // mess with the Response(r) here
+    }
+);
+```
+### delete
+```java
+client.deleteObject(
+    "containerName",
+    "objectName",
+    null,
+    null,
+    r -> {
+        // mess with the Response(r) here
+    }
+);
 ```

@@ -5,12 +5,12 @@
   <parent>
     <groupId>com.github.jinahya</groupId>
     <artifactId>jinahya-parent</artifactId>
-    <version>0.7.3</version>
+    <version>0.7.4</version>
   </parent>
 
   <groupId>com.github.jinahya</groupId>
   <artifactId>kt-ucloud-storage-client-jax-rs</artifactId>
-  <version>0.1.7</version>
+  <version>0.1.8</version>
   <packaging>jar</packaging>
 
   <name>${project.artifactId}</name>
@@ -21,7 +21,7 @@
     <connection>scm:git:git@github.com:jinahya/${project.artifactId}.git</connection>
     <developerConnection>scm:git:git@github.com:jinahya/${project.artifactId}.git</developerConnection>
     <url>https://github.com/jinahya/${project.artifactId}</url>
-    <tag>0.1.7</tag>
+    <tag>0.1.8</tag>
   </scm>
   <issueManagement>
     <system>GitHub Issues</system>
@@ -40,24 +40,12 @@
       <version>1.1.7</version>
       <scope>test</scope>
     </dependency>
-    <!--    <dependency>
-      <groupId>javax.validation</groupId>
-      <artifactId>validation-api</artifactId>
-      <version>1.1.0.Final</version>
-      <scope>provided</scope>
-    </dependency>-->
     <dependency>
       <groupId>javax.ws.rs</groupId>
       <artifactId>javax.ws.rs-api</artifactId>
       <version>2.0.1</version>
       <scope>provided</scope>
     </dependency>
-    <!--    <dependency>
-      <groupId>org.glassfish.jersey.bundles</groupId>
-      <artifactId>jaxrs-ri</artifactId>
-      <version>2.23.1</version>
-      <scope>test</scope>
-    </dependency>-->
     <dependency>
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
@@ -65,7 +53,7 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-  
+
   <build>
     <plugins>
       <plugin>
@@ -123,7 +111,7 @@
           <scope>test</scope>
         </dependency>
       </dependencies>
-    </profile>    
+    </profile>
     <profile>
       <id>cxf</id>
       <dependencies>
@@ -134,7 +122,7 @@
           <scope>test</scope>
         </dependency>
       </dependencies>
-    </profile>    
+    </profile>
     <profile>
       <id>resteasy</id>
       <dependencies>
