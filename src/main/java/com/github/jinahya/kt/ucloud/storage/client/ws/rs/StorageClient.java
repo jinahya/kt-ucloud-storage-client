@@ -36,6 +36,8 @@ import java.util.logging.Logger;
 import static java.util.logging.Logger.getLogger;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.ClientRequestFilter;
+import javax.ws.rs.client.ClientResponseFilter;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
@@ -78,6 +80,12 @@ public class StorageClient {
             = "X-Auth-Token-Expires";
 
     public static final String HEADER_X_STORAGE_URL = "X-Storage-Url";
+
+    public static final String HEADER_X_CONTAINER_OBJECT_COUNT
+            = "X-Container-Object-Count";
+
+    public static final String HEADER_X_CONTAINER_BYTES_USED
+            = "X-Container-Bytes-Used";
 
     /**
      * Authenticates with given arguments.
@@ -382,6 +390,53 @@ public class StorageClient {
         );
     }
 
+    public <T> T peekContainer(
+            final String containerName,
+            final MultivaluedMap<String, Object> params,
+            final MultivaluedMap<String, Object> headers,
+            final BiFunction<Response, StorageClient, T> function) {
+        final Client client = ClientBuilder.newClient();
+        try {
+            client.register((ClientRequestFilter) requestContext -> {
+                System.out.println("peekContainer.request.method: "
+                                   + requestContext.getMethod());
+                System.out.println("peekContainer.request.uri: "
+                                   + requestContext.getUri());
+                requestContext.getHeaders().entrySet().forEach(e -> {
+                    e.getValue().forEach(value -> {
+                        System.out.println("peekContainer.request.header: " + e.getKey()
+                                           + ": " + value);
+                    });
+                });
+            });
+            client.register((ClientResponseFilter) (requestContext, responseContext) -> {
+                final StatusType statusInfo = responseContext.getStatusInfo();
+                System.out.println("peekContainer.response.status: " + statusInfo.getStatusCode() + " " + statusInfo.getReasonPhrase());
+                responseContext.getHeaders().entrySet().forEach(e -> {
+                    e.getValue().forEach(value -> {
+                        System.out.println(
+                                "peekContainer.response.header: " + e.getKey()
+                                + ": " + value);
+                    });
+                });
+            });
+            final Invocation.Builder builder = buildContainer(
+                    client, storageUrl, containerName, params, authToken);
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+                builder.headers(headers);
+            }
+            final Response response = builder.head();
+            try {
+                return function == null ? null : function.apply(response, this);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
+    }
+
     /**
      * Reads container.
      *
@@ -676,6 +731,31 @@ public class StorageClient {
                 ofNullable(consumer)
                 .map(c -> (Consumer<Response>) r -> c.accept(r, this))
                 .orElse(null));
+    }
+
+    public <T> T peekObject(
+            final String containerName, final String objectName,
+            final MultivaluedMap<String, Object> params,
+            final MultivaluedMap<String, Object> headers,
+            final BiFunction<Response, StorageClient, T> function) {
+        final Client client = ClientBuilder.newClient();
+        try {
+            final Invocation.Builder builder = buildObject(
+                    client, storageUrl, containerName, objectName, params,
+                    authToken);
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+                builder.headers(headers);
+            }
+            final Response response = builder.head();
+            try {
+                return function == null ? null : function.apply(response, this);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
     }
 
     public <T> T readObject(final String containerName, final String objectName,

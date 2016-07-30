@@ -73,19 +73,25 @@ public class StorageClientIT {
         client = client();
     }
 
-    private void status(final StatusType statusInfo, final Family expected) {
+    private void status(final StatusType statusInfo,
+                        final Family expected) {
         final Family family = statusInfo.getFamily();
-        assertEquals(family, expected);
         final int statusCode = statusInfo.getStatusCode();
         final String reasonPhrase = statusInfo.getReasonPhrase();
-        logger.debug("-> {} {}", statusCode, reasonPhrase);
+        logger.debug("-> status: {} {}", statusCode, reasonPhrase);
+        assertEquals(family, expected);
     }
 
-    private void status(final Response response, final Family expected) {
+    private void response(final Response response, final Family expected) {
         status(response.getStatusInfo(), expected);
+        response.getHeaders().entrySet().forEach(e -> {
+            e.getValue().forEach(value -> {
+                logger.debug("-> header: {}: {}", e.getKey(), value);
+            });
+        });
     }
 
-    private void print(final Response response, final Charset charset)
+    private void body(final Response response, final Charset charset)
             throws IOException {
         final StatusType statusInfo = response.getStatusInfo();
         if (statusInfo.getStatusCode() != Status.OK.getStatusCode()) {
@@ -174,8 +180,25 @@ public class StorageClientIT {
     }
 
     @Test(dependsOnMethods = {"updateObjects"}, enabled = true)
-    public void readContainer() {
-        logger.debug("reading objects...");
+    public void peekContainer() {
+        logger.debug("peeking container...");
+        final MultivaluedMap<String, Object> params = new MultivaluedHashMap<>();
+        final MultivaluedMap<String, Object> headers = new MultivaluedHashMap<>();
+        headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
+        client.peekContainer(
+                containerName,
+                null,
+                headers,
+                (r, c) -> {
+                    response(r, Family.SUCCESSFUL);
+                    return null;
+                });
+    }
+
+    @Test(dependsOnMethods = {"peekContainer"}, enabled = true)
+//    @Test(dependsOnMethods = {"updateObjects"}, enabled = true)
+    public void readObjectsInfo() {
+        logger.debug("reading objects info...");
         final MultivaluedMap<String, Object> params = new MultivaluedHashMap<>();
         final MultivaluedMap<String, Object> headers = new MultivaluedHashMap<>();
         asList(MediaType.TEXT_PLAIN, MediaType.APPLICATION_XML,
@@ -190,7 +213,7 @@ public class StorageClientIT {
                             (r, c) -> {
                                 status(r.getStatusInfo(), Family.SUCCESSFUL);
                                 try {
-                                    print(r, StandardCharsets.UTF_8);
+                                    body(r, StandardCharsets.UTF_8);
                                 } catch (final IOException ioe) {
                                     logger.error("failed to read", ioe);
                                 }
@@ -199,7 +222,25 @@ public class StorageClientIT {
                 });
     }
 
-    @Test(dependsOnMethods = {"readContainer"}, enabled = true)
+    @Test(dependsOnMethods = {"readObjectsInfo"}, enabled = true)
+    public void peekObjects() {
+        logger.debug("peeking objects...");
+        for (int i = 0; i < objectCount; i++) {
+            final String objectName = Integer.toString(i);
+            logger.debug("peeking object named: " + objectName);
+            client.peekObject(
+                    containerName,
+                    objectName,
+                    null,
+                    null,
+                    (r, c) -> {
+                        response(r, Family.SUCCESSFUL);
+                        return null;
+                    });
+        }
+    }
+
+    @Test(dependsOnMethods = {"peekObjects"}, enabled = true)
     public void deleteObjects() {
         logger.debug("deleting objects...");
         client.withObjectNames(
@@ -238,5 +279,5 @@ public class StorageClientIT {
 
     private final String containerName = getClass().getName();
 
-    private final int objectCount = 10;
+    private final int objectCount = 2;
 }
