@@ -102,6 +102,15 @@ public class StorageClient {
                 .invoke();
     }
 
+    /**
+     * Targets a container.
+     *
+     * @param client a client
+     * @param storageUrl storage URL
+     * @param containerName container name
+     * @param params query parameters
+     * @return a target
+     */
     public static WebTarget targetContainer(
             final Client client, final String storageUrl,
             final String containerName,
@@ -119,6 +128,16 @@ public class StorageClient {
         return target;
     }
 
+    /**
+     * Builds for a container.
+     *
+     * @param client a client
+     * @param storageUrl storage URL
+     * @param containerName container name
+     * @param params query parameters
+     * @param authToken authorization token
+     * @return a builder.
+     */
     public static Invocation.Builder buildContainer(
             final Client client, final String storageUrl,
             final String containerName,
@@ -129,6 +148,16 @@ public class StorageClient {
                 .header(HEADER_X_AUTH_TOKEN, authToken);
     }
 
+    /**
+     * Targets an object.
+     *
+     * @param client a client
+     * @param storageUrl the storage URL
+     * @param containerName container name
+     * @param objectName object name
+     * @param params query parameters
+     * @return a target
+     */
     public static WebTarget targetObject(
             final Client client, final String storageUrl,
             final String containerName, final String objectName,
@@ -137,8 +166,11 @@ public class StorageClient {
             return targetContainer(client, storageUrl, containerName, params)
                     .path(objectName);
         }
-        WebTarget target = client.target(storageUrl).path(containerName)
-                .path(objectName);
+        WebTarget target
+                = requireNonNull(client, "null client")
+                .target(requireNonNull(storageUrl, "null storageUrl"))
+                .path(requireNonNull(containerName, "containerName"))
+                .path(requireNonNull(objectName, "null objectName"));
         if (params != null) {
             for (final Entry<String, List<Object>> entry : params.entrySet()) {
                 final String name = entry.getKey();
@@ -149,6 +181,17 @@ public class StorageClient {
         return target;
     }
 
+    /**
+     * Builds for an object.
+     *
+     * @param client a client
+     * @param storageUrl storage URL
+     * @param containerName container name
+     * @param objectName object name
+     * @param params query parameters
+     * @param authToken authorization token
+     * @return a builder
+     */
     public static Invocation.Builder buildObject(
             final Client client, final String storageUrl,
             final String containerName, final String objectName,
@@ -206,7 +249,7 @@ public class StorageClient {
                     final int statusCode = statusInfo.getStatusCode();
                     final String reasonPhrase = statusInfo.getReasonPhrase();
                     logger.log(Level.SEVERE,
-                               "failed to authenticate user; {0} {1}",
+                               "failed to authenticate user; status: {0} {1}",
                                new Object[]{statusCode, reasonPhrase});
                 }
                 return function == null ? null : function.apply(response);
