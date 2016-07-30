@@ -379,7 +379,9 @@ public class StorageClient {
      * {@link #authenticateUser(java.util.function.Function)}.
      * @see #isValid(java.util.concurrent.TimeUnit, long)
      * @see #authenticateUser(java.util.function.Function)
+     * @deprecated
      */
+    @Deprecated
     public <T> T ensureValid(final TimeUnit unit, final long duration,
                              final Function<Response, T> function) {
         if (!isValid(unit, duration)) {
@@ -388,17 +390,23 @@ public class StorageClient {
         return null;
     }
 
+    @Deprecated
     public <T> T ensureValid(
             final TimeUnit unit, long duration,
             final BiFunction<Response, StorageClient, T> function) {
-        return ensureValid(
-                unit,
-                duration,
-                ofNullable(function)
-                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
-                .orElse(null));
+//        return ensureValid(
+//                unit,
+//                duration,
+//                ofNullable(function)
+//                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
+//                .orElse(null));
+        if (!isValid(unit, duration)) {
+            return authenticateUser(function);
+        }
+        return null;
     }
 
+    @Deprecated
     public StorageClient ensureValid(final TimeUnit unit, final long duration,
                                      final Consumer<Response> consumer) {
         return ensureValid(
@@ -413,6 +421,7 @@ public class StorageClient {
         );
     }
 
+    @Deprecated
     public StorageClient ensureValid(
             final TimeUnit unit,
             final long duration,
