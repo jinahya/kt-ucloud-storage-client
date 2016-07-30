@@ -398,27 +398,27 @@ public class StorageClient {
         final Client client = ClientBuilder.newClient();
         try {
             client.register((ClientRequestFilter) requestContext -> {
-                System.out.println("peekContainer.request.method: "
-                                   + requestContext.getMethod());
-                System.out.println("peekContainer.request.uri: "
-                                   + requestContext.getUri());
-                requestContext.getHeaders().entrySet().forEach(e -> {
-                    e.getValue().forEach(value -> {
-                        System.out.println("peekContainer.request.header: " + e.getKey()
-                                           + ": " + value);
-                    });
-                });
+//                System.out.println("peekContainer.request.method: "
+//                                   + requestContext.getMethod());
+//                System.out.println("peekContainer.request.uri: "
+//                                   + requestContext.getUri());
+//                requestContext.getHeaders().entrySet().forEach(e -> {
+//                    e.getValue().forEach(value -> {
+//                        System.out.println("peekContainer.request.header: " + e.getKey()
+//                                           + ": " + value);
+//                    });
+//                });
             });
             client.register((ClientResponseFilter) (requestContext, responseContext) -> {
-                final StatusType statusInfo = responseContext.getStatusInfo();
-                System.out.println("peekContainer.response.status: " + statusInfo.getStatusCode() + " " + statusInfo.getReasonPhrase());
-                responseContext.getHeaders().entrySet().forEach(e -> {
-                    e.getValue().forEach(value -> {
-                        System.out.println(
-                                "peekContainer.response.header: " + e.getKey()
-                                + ": " + value);
-                    });
-                });
+//                final StatusType statusInfo = responseContext.getStatusInfo();
+//                System.out.println("peekContainer.response.status: " + statusInfo.getStatusCode() + " " + statusInfo.getReasonPhrase());
+//                responseContext.getHeaders().entrySet().forEach(e -> {
+//                    e.getValue().forEach(value -> {
+//                        System.out.println(
+//                                "peekContainer.response.header: " + e.getKey()
+//                                + ": " + value);
+//                    });
+//                });
             });
             final Invocation.Builder builder = buildContainer(
                     client, storageUrl, containerName, params, authToken);
