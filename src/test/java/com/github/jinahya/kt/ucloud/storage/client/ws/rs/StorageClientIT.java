@@ -149,8 +149,9 @@ public class StorageClientIT {
                 containerName,
                 null, // params
                 null, // headers
-                r -> {
+                (r, c) -> {
                     status(r.getStatusInfo(), Family.SUCCESSFUL);
+                    return null;
                 }
         );
     }
@@ -172,8 +173,9 @@ public class StorageClientIT {
                     null, // params
                     null, // headers
                     entity,
-                    r -> {
+                    (r, c) -> {
                         status(r.getStatusInfo(), Family.SUCCESSFUL);
+                        return null;
                     }
             );
         }
@@ -217,6 +219,7 @@ public class StorageClientIT {
                                 } catch (final IOException ioe) {
                                     logger.error("failed to read", ioe);
                                 }
+                                return null;
                             }
                     );
                 });
@@ -254,8 +257,9 @@ public class StorageClientIT {
                             on,
                             null,
                             null,
-                            r -> {
+                            (r, c2) -> {
                                 status(r.getStatusInfo(), Family.SUCCESSFUL);
+                                return null;
                             }
                     );
                 }
@@ -269,8 +273,9 @@ public class StorageClientIT {
                 containerName,
                 null,
                 null,
-                r -> {
+                (r, c) -> {
                     status(r.getStatusInfo(), Family.SUCCESSFUL);
+                    return null;
                 }
         );
     }

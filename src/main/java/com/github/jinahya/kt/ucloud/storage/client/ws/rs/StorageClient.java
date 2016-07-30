@@ -233,7 +233,9 @@ public class StorageClient {
      * @param function the function to be applied with an response.
      * @return the value applied or {@code null} if the {@code function} is
      * {@code null}
+     * @deprecated
      */
+    @Deprecated
     public <T> T authenticateUser(final Function<Response, T> function) {
         final Client client = ClientBuilder.newClient();
         try {
@@ -271,12 +273,45 @@ public class StorageClient {
 
     public <T> T authenticateUser(
             final BiFunction<Response, StorageClient, T> function) {
-        return authenticateUser(
-                ofNullable(function)
-                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
-                .orElse(null));
+//        return authenticateUser(
+//                ofNullable(function)
+//                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
+//                .orElse(null));
+        final Client client = ClientBuilder.newClient();
+        try {
+            final Response response = authenticateUser(
+                    client, authUrl, authUser, authPass);
+            try {
+                final StatusType statusInfo = response.getStatusInfo();
+                final Family family = statusInfo.getFamily();
+                if (family == Family.SUCCESSFUL) {
+                    storageUrl = response.getHeaderString(HEADER_X_STORAGE_URL);
+                    assert storageUrl != null;
+                    authToken = response.getHeaderString(HEADER_X_AUTH_TOKEN);
+                    assert authToken != null;
+                    final String authTokenExpires_ = response.getHeaderString(
+                            HEADER_X_AUTH_TOKEN_EXPIRES);
+                    assert authTokenExpires_ != null;
+                    this.authTokenExpires = new Date(
+                            System.currentTimeMillis()
+                            + (Long.parseLong(authTokenExpires_) * 1000L));
+                } else {
+                    final int statusCode = statusInfo.getStatusCode();
+                    final String reasonPhrase = statusInfo.getReasonPhrase();
+                    logger.log(Level.SEVERE,
+                               "failed to authenticate user; status: {0} {1}",
+                               new Object[]{statusCode, reasonPhrase});
+                }
+                return function == null ? null : function.apply(response, this);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
     }
 
+    @Deprecated
     public StorageClient authenticateUser(final Consumer<Response> consumer) {
         return authenticateUser(
                 ofNullable(consumer)
@@ -288,6 +323,7 @@ public class StorageClient {
         );
     }
 
+    @Deprecated
     public StorageClient authenticateUser(
             final BiConsumer<Response, StorageClient> consumer) {
         return authenticateUser(
@@ -390,6 +426,21 @@ public class StorageClient {
         );
     }
 
+    /**
+     * Requests {@value javax.ws.rs.HttpMethod#HEAD} for a container. Currently,
+     * the server responds
+     * {@link javax.ws.rs.core.Response.Status#NOT_ACCEPTABLE} when requested
+     * without {@value javax.ws.rs.core.HttpHeaders#ACCEPT} with
+     * {@value javax.ws.rs.core.MediaType#TEXT_HTML}.
+     *
+     * @param <T> result type parameter
+     * @param containerName the name of the container
+     * @param params query parameters
+     * @param headers request headers.
+     * @param function the function to be applied with the response and this
+     * client.
+     * @return the value the function results.
+     */
     public <T> T peekContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
@@ -447,7 +498,9 @@ public class StorageClient {
      * @param function the function to be applied with the response
      * @return the value the function results or else if {@code function} is
      * {@code null}
+     * @deprecated
      */
+    @Deprecated
     public <T> T readContainer(final String containerName,
                                final MultivaluedMap<String, Object> params,
                                final MultivaluedMap<String, Object> headers,
@@ -476,14 +529,32 @@ public class StorageClient {
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
             final BiFunction<Response, StorageClient, T> function) {
-        return readContainer(
-                containerName, params, headers,
-                ofNullable(function)
-                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
-                .orElse(null)
-        );
+//        return readContainer(
+//                containerName, params, headers,
+//                ofNullable(function)
+//                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
+//                .orElse(null)
+//        );
+        final Client client = ClientBuilder.newClient();
+        try {
+            final Invocation.Builder builder = buildContainer(
+                    client, storageUrl, containerName, params, authToken);
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+                builder.headers(headers);
+            }
+            final Response response = builder.get();
+            try {
+                return function == null ? null : function.apply(response, this);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
     }
 
+    @Deprecated
     public StorageClient readContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
@@ -502,6 +573,7 @@ public class StorageClient {
         );
     }
 
+    @Deprecated
     public StorageClient readContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
@@ -582,6 +654,20 @@ public class StorageClient {
         );
     }
 
+    /**
+     * Creates or updates a container.
+     *
+     * @param <T> result type parameter
+     * @param containerName container name
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function the function to be applied with the response; may be
+     * {@code null}
+     * @return the value the function results; {@code null} if the
+     * {@code function} is {@code null}
+     * @deprecated
+     */
+    @Deprecated
     public <T> T updateContainer(final String containerName,
                                  final MultivaluedMap<String, Object> params,
                                  final MultivaluedMap<String, Object> headers,
@@ -596,9 +682,10 @@ public class StorageClient {
                 headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
                 builder.headers(headers);
             }
-            final Response response = builder
-                    .put(Entity.entity(
-                            new byte[0], MediaType.APPLICATION_OCTET_STREAM));
+//            final Response response = builder
+//                    .put(Entity.entity(
+//                            new byte[0], MediaType.APPLICATION_OCTET_STREAM));
+            final Response response = builder.put(Entity.text(""));
             try {
                 return function == null ? null : function.apply(response);
             } finally {
@@ -614,16 +701,39 @@ public class StorageClient {
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
             final BiFunction<Response, StorageClient, T> function) {
-        return updateContainer(
-                containerName,
-                params,
-                headers,
-                ofNullable(function)
-                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
-                .orElse(null)
-        );
+//        return updateContainer(
+//                containerName,
+//                params,
+//                headers,
+//                ofNullable(function)
+//                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
+//                .orElse(null)
+//        );
+        final Client client = ClientBuilder.newClient();
+        try {
+            final Invocation.Builder builder = buildContainer(
+                    client, storageUrl,
+                    requireNonNull(containerName, "null containerName"),
+                    params, authToken);
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+                builder.headers(headers);
+            }
+//            final Response response = builder
+//                    .put(Entity.entity(
+//                            new byte[0], MediaType.APPLICATION_OCTET_STREAM));
+            final Response response = builder.put(Entity.text(""));
+            try {
+                return function == null ? null : function.apply(response, this);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
     }
 
+    @Deprecated
     public StorageClient updateContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
@@ -641,6 +751,7 @@ public class StorageClient {
                 .orElse(r -> this));
     }
 
+    @Deprecated
     public StorageClient updateContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
@@ -667,6 +778,7 @@ public class StorageClient {
      * @return the value function results or {@code null} if the
      * {@code function} is {@code null}.
      */
+    @Deprecated
     public <T> T deleteContainer(final String containerName,
                                  final MultivaluedMap<String, Object> params,
                                  final MultivaluedMap<String, Object> headers,
@@ -695,13 +807,31 @@ public class StorageClient {
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
             final BiFunction<Response, StorageClient, T> function) {
-        return deleteContainer(
-                containerName, params, headers,
-                ofNullable(function)
-                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
-                .orElse(null));
+//        return deleteContainer(
+//                containerName, params, headers,
+//                ofNullable(function)
+//                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
+//                .orElse(null));
+        final Client client = ClientBuilder.newClient();
+        try {
+            final Invocation.Builder builder = buildContainer(
+                    client, storageUrl, containerName, params, authToken);
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+                builder.headers(headers);
+            }
+            final Response response = builder.delete();
+            try {
+                return function == null ? null : function.apply(response, this);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
     }
 
+    @Deprecated
     public StorageClient deleteContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
@@ -719,6 +849,7 @@ public class StorageClient {
                 .orElse(r -> this));
     }
 
+    @Deprecated
     public StorageClient deleteContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
@@ -758,6 +889,7 @@ public class StorageClient {
         }
     }
 
+    @Deprecated
     public <T> T readObject(final String containerName, final String objectName,
                             final MultivaluedMap<String, Object> params,
                             final MultivaluedMap<String, Object> headers,
@@ -788,13 +920,33 @@ public class StorageClient {
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
             final BiFunction<Response, StorageClient, T> function) {
-        return readObject(
-                containerName, objectName, params, headers,
-                ofNullable(function)
-                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
-                .orElse(null));
+//        return readObject(
+//                containerName, objectName, params, headers,
+//                ofNullable(function)
+//                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
+//                .orElse(null));
+        final Client client = ClientBuilder.newClient();
+        try {
+            final Invocation.Builder builder = buildObject(
+                    client, storageUrl, containerName, objectName, params,
+                    authToken);
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+                builder.headers(headers);
+            }
+            final Invocation invocation = builder.buildGet();
+            final Response response = invocation.invoke();
+            try {
+                return function == null ? null : function.apply(response, this);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
     }
 
+    @Deprecated
     public StorageClient readObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
@@ -813,6 +965,7 @@ public class StorageClient {
                 .orElse(r -> this));
     }
 
+    @Deprecated
     public StorageClient readObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
@@ -829,6 +982,7 @@ public class StorageClient {
         );
     }
 
+    @Deprecated
     public <T> T updateObject(final String containerName,
                               final String objectName,
                               final MultivaluedMap<String, Object> params,
@@ -863,17 +1017,39 @@ public class StorageClient {
             final MultivaluedMap<String, Object> headers,
             final Entity<?> entity,
             final BiFunction<Response, StorageClient, T> function) {
-        return updateObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                entity,
-                ofNullable(function)
-                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
-                .orElse(null));
+//        return updateObject(
+//                containerName,
+//                objectName,
+//                params,
+//                headers,
+//                entity,
+//                ofNullable(function)
+//                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
+//                .orElse(null));
+        updateContainer(containerName, null, null,
+                        (BiFunction<Response, StorageClient, Void>) null);
+        final Client client = ClientBuilder.newClient();
+        try {
+            final Invocation.Builder builder = buildObject(
+                    client, storageUrl, containerName, objectName, params,
+                    authToken);
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+                builder.headers(headers);
+            }
+            final Invocation invocation = builder.buildPut(entity);
+            final Response response = invocation.invoke();
+            try {
+                return function == null ? null : function.apply(response, this);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
     }
 
+    @Deprecated
     public StorageClient updateObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
@@ -893,6 +1069,7 @@ public class StorageClient {
         );
     }
 
+    @Deprecated
     public StorageClient updateObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
@@ -920,7 +1097,9 @@ public class StorageClient {
      * @param headers additional headers; may be {@code null}.
      * @param function a function applies with the response.
      * @return a value the function results
+     * @deprecated
      */
+    @Deprecated
     public <T> T deleteObject(final String containerName,
                               final String objectName,
                               final MultivaluedMap<String, Object> params,
@@ -952,16 +1131,36 @@ public class StorageClient {
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
             final BiFunction<Response, StorageClient, T> function) {
-        return deleteObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                ofNullable(function)
-                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
-                .orElse(null));
+//        return deleteObject(
+//                containerName,
+//                objectName,
+//                params,
+//                headers,
+//                ofNullable(function)
+//                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
+//                .orElse(null));
+        final Client client = ClientBuilder.newClient();
+        try {
+            final Invocation.Builder builder = buildObject(
+                    client, storageUrl, containerName, objectName, params,
+                    authToken);
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+                builder.headers(headers);
+            }
+            final Invocation invocation = builder.buildDelete();
+            final Response response = invocation.invoke();
+            try {
+                return function == null ? null : function.apply(response, this);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
     }
 
+    @Deprecated
     public StorageClient deleteObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
@@ -981,6 +1180,7 @@ public class StorageClient {
         );
     }
 
+    @Deprecated
     public StorageClient deleteObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
