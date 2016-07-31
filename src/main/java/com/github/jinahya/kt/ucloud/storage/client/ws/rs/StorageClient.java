@@ -24,13 +24,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
 import static java.util.Objects.requireNonNull;
-import static java.util.Optional.ofNullable;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static java.util.logging.Logger.getLogger;
@@ -226,15 +223,56 @@ public class StorageClient {
         this.authPass = authPass;
     }
 
-    /**
-     * Authenticates user and applies given function with the response.
-     *
-     * @param <T> return value type parameter.
-     * @param function the function to be applied with an response.
-     * @return the value applied or {@code null} if the {@code function} is
-     * {@code null}
-     */
-    public <T> T authenticateUser(final Function<Response, T> function) {
+//    /**
+//     * Authenticates user and applies given function with the response.
+//     *
+//     * @param <T> return value type parameter.
+//     * @param function the function to be applied with an response.
+//     * @return the value applied or {@code null} if the {@code function} is
+//     * {@code null}
+//     * @deprecated
+//     */
+//    @Deprecated
+//    public <T> T authenticateUser(final Function<Response, T> function) {
+//        final Client client = ClientBuilder.newClient();
+//        try {
+//            final Response response = authenticateUser(
+//                    client, authUrl, authUser, authPass);
+//            try {
+//                final StatusType statusInfo = response.getStatusInfo();
+//                final Family family = statusInfo.getFamily();
+//                if (family == Family.SUCCESSFUL) {
+//                    storageUrl = response.getHeaderString(HEADER_X_STORAGE_URL);
+//                    assert storageUrl != null;
+//                    authToken = response.getHeaderString(HEADER_X_AUTH_TOKEN);
+//                    assert authToken != null;
+//                    final String authTokenExpires_ = response.getHeaderString(
+//                            HEADER_X_AUTH_TOKEN_EXPIRES);
+//                    assert authTokenExpires_ != null;
+//                    this.authTokenExpires = new Date(
+//                            System.currentTimeMillis()
+//                            + (Long.parseLong(authTokenExpires_) * 1000L));
+//                } else {
+//                    final int statusCode = statusInfo.getStatusCode();
+//                    final String reasonPhrase = statusInfo.getReasonPhrase();
+//                    logger.log(Level.SEVERE,
+//                               "failed to authenticate user; status: {0} {1}",
+//                               new Object[]{statusCode, reasonPhrase});
+//                }
+//                return function == null ? null : function.apply(response);
+//            } finally {
+//                response.close();
+//            }
+//        } finally {
+//            client.close();
+//        }
+//    }
+    public <T> T authenticateUser(
+            final BiFunction<Response, StorageClient, T> function) {
+//        return authenticateUser(
+//                ofNullable(function)
+//                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
+//                .orElse(null));
         final Client client = ClientBuilder.newClient();
         try {
             final Response response = authenticateUser(
@@ -260,7 +298,7 @@ public class StorageClient {
                                "failed to authenticate user; status: {0} {1}",
                                new Object[]{statusCode, reasonPhrase});
                 }
-                return function == null ? null : function.apply(response);
+                return function == null ? null : function.apply(response, this);
             } finally {
                 response.close();
             }
@@ -269,33 +307,25 @@ public class StorageClient {
         }
     }
 
-    public <T> T authenticateUser(
-            final BiFunction<Response, StorageClient, T> function) {
-        return authenticateUser(
-                ofNullable(function)
-                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
-                .orElse(null));
-    }
-
-    public StorageClient authenticateUser(final Consumer<Response> consumer) {
-        return authenticateUser(
-                ofNullable(consumer)
-                .map(c -> (Function<Response, StorageClient>) r -> {
-                    c.accept(r);
-                    return this;
-                })
-                .orElse(r -> this)
-        );
-    }
-
-    public StorageClient authenticateUser(
-            final BiConsumer<Response, StorageClient> consumer) {
-        return authenticateUser(
-                ofNullable(consumer)
-                .map(c -> (Consumer<Response>) r -> c.accept(r, this))
-                .orElse(null));
-    }
-
+//    @Deprecated
+//    public StorageClient authenticateUser(final Consumer<Response> consumer) {
+//        return authenticateUser(
+//                ofNullable(consumer)
+//                .map(c -> (Function<Response, StorageClient>) r -> {
+//                    c.accept(r);
+//                    return this;
+//                })
+//                .orElse(r -> this)
+//        );
+//    }
+//    @Deprecated
+//    public StorageClient authenticateUser(
+//            final BiConsumer<Response, StorageClient> consumer) {
+//        return authenticateUser(
+//                ofNullable(consumer)
+//                .map(c -> (Consumer<Response>) r -> c.accept(r, this))
+//                .orElse(null));
+//    }
     /**
      * Invalidates this client by purging the authorization token.
      *
@@ -324,72 +354,92 @@ public class StorageClient {
         return isValid(System.currentTimeMillis() + unit.toMillis(duration));
     }
 
+//    /**
+//     * Ensures the authorization token is valid for given time. This method
+//     * checks the value of {@link #isValid(java.util.concurrent.TimeUnit, long)}
+//     * with given {@code unit} and {@code duration} and invokes
+//     * {@link #authenticateUser(java.util.function.Function)} with given
+//     * {@code function}. Note that the {@code funtion} will never be applied if
+//     * {@link #isValid(java.util.concurrent.TimeUnit, long)} yields {@code true}
+//     * with given {@code unit} and {@code duration} and the return value of this
+//     * method is {@code null}.
+//     *
+//     * @param <T> result type parameter
+//     * @param unit time unit
+//     * @param duration time duration
+//     * @param function the function to be applied with the web response.
+//     * @return {@code null} if the authorization token is valid in given time or
+//     * the {@code funtion} is {@code null}. Or the value of
+//     * {@link #authenticateUser(java.util.function.Function)}.
+//     * @see #isValid(java.util.concurrent.TimeUnit, long)
+//     * @see #authenticateUser(java.util.function.Function)
+//     * @deprecated
+//     */
+//    @Deprecated
+//    public <T> T ensureValid(final TimeUnit unit, final long duration,
+//                             final Function<Response, T> function) {
+//        if (!isValid(unit, duration)) {
+//            return authenticateUser(function);
+//        }
+//        return null;
+//    }
+//    @Deprecated
+//    public <T> T ensureValid(
+//            final TimeUnit unit, long duration,
+//            final BiFunction<Response, StorageClient, T> function) {
+////        return ensureValid(
+////                unit,
+////                duration,
+////                ofNullable(function)
+////                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
+////                .orElse(null));
+//        if (!isValid(unit, duration)) {
+//            return authenticateUser(function);
+//        }
+//        return null;
+//    }
+//    @Deprecated
+//    public StorageClient ensureValid(final TimeUnit unit, final long duration,
+//                                     final Consumer<Response> consumer) {
+//        return ensureValid(
+//                unit,
+//                duration,
+//                ofNullable(consumer)
+//                .map(c -> (Function<Response, StorageClient>) r -> {
+//                    c.accept(r);
+//                    return this;
+//                })
+//                .orElse(r -> this)
+//        );
+//    }
+//    @Deprecated
+//    public StorageClient ensureValid(
+//            final TimeUnit unit,
+//            final long duration,
+//            final BiConsumer<Response, StorageClient> consumer) {
+//        return ensureValid(
+//                unit,
+//                duration,
+//                ofNullable(consumer)
+//                .map(c -> (Consumer<Response>) r -> c.accept(r, this))
+//                .orElse(null)
+//        );
+//    }
     /**
-     * Ensures the authorization token is valid for given time. This method
-     * checks the value of {@link #isValid(java.util.concurrent.TimeUnit, long)}
-     * with given {@code unit} and {@code duration} and invokes
-     * {@link #authenticateUser(java.util.function.Function)} with given
-     * {@code function}. Note that the {@code funtion} will never be applied if
-     * {@link #isValid(java.util.concurrent.TimeUnit, long)} yields {@code true}
-     * with given {@code unit} and {@code duration} and the return value of this
-     * method is {@code null}.
+     * Requests {@value javax.ws.rs.HttpMethod#HEAD} for a container. Currently,
+     * the server responds
+     * {@link javax.ws.rs.core.Response.Status#NOT_ACCEPTABLE} when requested
+     * without {@value javax.ws.rs.core.HttpHeaders#ACCEPT} with
+     * {@value javax.ws.rs.core.MediaType#TEXT_HTML}.
      *
      * @param <T> result type parameter
-     * @param unit time unit
-     * @param duration time duration
-     * @param function the function to be applied with the web response.
-     * @return {@code null} if the authorization token is valid in given time or
-     * the {@code funtion} is {@code null}. Or the value of
-     * {@link #authenticateUser(java.util.function.Function)}.
-     * @see #isValid(java.util.concurrent.TimeUnit, long)
-     * @see #authenticateUser(java.util.function.Function)
+     * @param containerName the name of the container
+     * @param params query parameters
+     * @param headers request headers.
+     * @param function the function to be applied with the response and this
+     * client.
+     * @return the value the function results.
      */
-    public <T> T ensureValid(final TimeUnit unit, final long duration,
-                             final Function<Response, T> function) {
-        if (!isValid(unit, duration)) {
-            return authenticateUser(function);
-        }
-        return null;
-    }
-
-    public <T> T ensureValid(
-            final TimeUnit unit, long duration,
-            final BiFunction<Response, StorageClient, T> function) {
-        return ensureValid(
-                unit,
-                duration,
-                ofNullable(function)
-                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
-                .orElse(null));
-    }
-
-    public StorageClient ensureValid(final TimeUnit unit, final long duration,
-                                     final Consumer<Response> consumer) {
-        return ensureValid(
-                unit,
-                duration,
-                ofNullable(consumer)
-                .map(c -> (Function<Response, StorageClient>) r -> {
-                    c.accept(r);
-                    return this;
-                })
-                .orElse(r -> this)
-        );
-    }
-
-    public StorageClient ensureValid(
-            final TimeUnit unit,
-            final long duration,
-            final BiConsumer<Response, StorageClient> consumer) {
-        return ensureValid(
-                unit,
-                duration,
-                ofNullable(consumer)
-                .map(c -> (Consumer<Response>) r -> c.accept(r, this))
-                .orElse(null)
-        );
-    }
-
     public <T> T peekContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
@@ -437,21 +487,52 @@ public class StorageClient {
         }
     }
 
-    /**
-     * Reads container.
-     *
-     * @param <T> result type parameter
-     * @param containerName container name
-     * @param params query parameters
-     * @param headers request headers.
-     * @param function the function to be applied with the response
-     * @return the value the function results or else if {@code function} is
-     * {@code null}
-     */
-    public <T> T readContainer(final String containerName,
-                               final MultivaluedMap<String, Object> params,
-                               final MultivaluedMap<String, Object> headers,
-                               final Function<Response, T> function) {
+//    /**
+//     * Reads container.
+//     *
+//     * @param <T> result type parameter
+//     * @param containerName container name
+//     * @param params query parameters
+//     * @param headers request headers.
+//     * @param function the function to be applied with the response
+//     * @return the value the function results or else if {@code function} is
+//     * {@code null}
+//     * @deprecated
+//     */
+//    @Deprecated
+//    public <T> T readContainer(final String containerName,
+//                               final MultivaluedMap<String, Object> params,
+//                               final MultivaluedMap<String, Object> headers,
+//                               final Function<Response, T> function) {
+//        final Client client = ClientBuilder.newClient();
+//        try {
+//            final Invocation.Builder builder = buildContainer(
+//                    client, storageUrl, containerName, params, authToken);
+//            if (headers != null) {
+//                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+//                builder.headers(headers);
+//            }
+//            final Response response = builder.get();
+//            try {
+//                return function == null ? null : function.apply(response);
+//            } finally {
+//                response.close();
+//            }
+//        } finally {
+//            client.close();
+//        }
+//    }
+    public <T> T readContainer(
+            final String containerName,
+            final MultivaluedMap<String, Object> params,
+            final MultivaluedMap<String, Object> headers,
+            final BiFunction<Response, StorageClient, T> function) {
+//        return readContainer(
+//                containerName, params, headers,
+//                ofNullable(function)
+//                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
+//                .orElse(null)
+//        );
         final Client client = ClientBuilder.newClient();
         try {
             final Invocation.Builder builder = buildContainer(
@@ -462,7 +543,7 @@ public class StorageClient {
             }
             final Response response = builder.get();
             try {
-                return function == null ? null : function.apply(response);
+                return function == null ? null : function.apply(response, this);
             } finally {
                 response.close();
             }
@@ -471,73 +552,106 @@ public class StorageClient {
         }
     }
 
-    public <T> T readContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, StorageClient, T> function) {
-        return readContainer(
-                containerName, params, headers,
-                ofNullable(function)
-                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
-                .orElse(null)
-        );
-    }
-
-    public StorageClient readContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Consumer<Response> consumer) {
-        return readContainer(
-                containerName,
-                params,
-                headers,
-                ofNullable(consumer)
-                .map(c -> (Function<Response, StorageClient>) r -> {
-                    c.accept(r);
-                    return this;
-                })
-                .orElse(r -> this)
-        );
-    }
-
-    public StorageClient readContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, StorageClient> consumer) {
-        return readContainer(
-                containerName,
-                params,
-                headers,
-                ofNullable(consumer)
-                .map(c -> (Consumer<Response>) r -> c.accept(r, this))
-                .orElse(null)
-        );
-    }
-
-    private void lines(final Response response, final Consumer<String> consumer)
+//    @Deprecated
+//    public StorageClient readContainer(
+//            final String containerName,
+//            final MultivaluedMap<String, Object> params,
+//            final MultivaluedMap<String, Object> headers,
+//            final Consumer<Response> consumer) {
+//        return readContainer(
+//                containerName,
+//                params,
+//                headers,
+//                ofNullable(consumer)
+//                .map(c -> (Function<Response, StorageClient>) r -> {
+//                    c.accept(r);
+//                    return this;
+//                })
+//                .orElse(r -> this)
+//        );
+//    }
+//    @Deprecated
+//    public StorageClient readContainer(
+//            final String containerName,
+//            final MultivaluedMap<String, Object> params,
+//            final MultivaluedMap<String, Object> headers,
+//            final BiConsumer<Response, StorageClient> consumer) {
+//        return readContainer(
+//                containerName,
+//                params,
+//                headers,
+//                ofNullable(consumer)
+//                .map(c -> (Consumer<Response>) r -> c.accept(r, this))
+//                .orElse(null)
+//        );
+//    }
+//    private void lines(final Response response, final Consumer<String> consumer)
+//            throws IOException {
+//        try (InputStream stream = response.readEntity(InputStream.class);
+//             InputStreamReader reader = new InputStreamReader(
+//                     stream, StandardCharsets.UTF_8);
+//             BufferedReader buffered = new BufferedReader(reader);) {
+//            buffered.lines().forEach(consumer::accept);
+//        }
+//    }
+    private void lines(final Response response,
+                       final BiConsumer<String, StorageClient> consumer)
             throws IOException {
         try (InputStream stream = response.readEntity(InputStream.class);
              InputStreamReader reader = new InputStreamReader(
                      stream, StandardCharsets.UTF_8);
              BufferedReader buffered = new BufferedReader(reader);) {
-            buffered.lines().forEach(consumer::accept);
+            buffered.lines().forEach(line -> consumer.accept(line, this));
         }
     }
 
-    public StorageClient withObjectNames(
+//    public StorageClient readContainerObjectNames(
+//            final String containerName,
+//            MultivaluedMap<String, Object> params,
+//            MultivaluedMap<String, Object> headers,
+//            final Consumer<String> consumer) {
+//        if (headers == null) {
+//            headers = new MultivaluedHashMap<>();
+//        }
+//        headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
+//        return readContainer(
+//                containerName,
+//                params,
+//                headers,
+//                (r, c) -> {
+//                    final StatusType statusInfo = r.getStatusInfo();
+//                    final Family family = statusInfo.getFamily();
+//                    if (family != Family.SUCCESSFUL) {
+//                        logger.log(Level.SEVERE,
+//                                   "failed to read object names; {0} {1}",
+//                                   new Object[]{statusInfo.getStatusCode(),
+//                                                statusInfo.getReasonPhrase()});
+//                        return null;
+//                    }
+//                    if (consumer != null) {
+//                        try {
+//                            lines(r, consumer);
+//                        } catch (final IOException ioe) {
+//                            logger.log(Level.SEVERE, "failed to read container",
+//                                       ioe);
+//                        }
+//                    }
+//                    return null;
+//                });
+//    }
+    public StorageClient readContainerObjectNames(
             final String containerName,
-            MultivaluedMap<String, Object> params,
+            final MultivaluedMap<String, Object> params,
             MultivaluedMap<String, Object> headers,
-            final Consumer<String> consumer) {
-        if (false) {
-            if (params == null) {
-                params = new MultivaluedHashMap<>();
-            }
-            params.putSingle("format", "string");
-        }
+            final BiConsumer<String, StorageClient> consumer) {
+//        return readContainerObjectNames(
+//                containerName,
+//                params,
+//                headers,
+//                ofNullable(consumer)
+//                .map(c -> (Consumer<String>) r -> c.accept(r, this))
+//                .orElse(null)
+//        );
         if (headers == null) {
             headers = new MultivaluedHashMap<>();
         }
@@ -546,7 +660,7 @@ public class StorageClient {
                 containerName,
                 params,
                 headers,
-                r -> {
+                (r, c) -> {
                     final StatusType statusInfo = r.getStatusInfo();
                     final Family family = statusInfo.getFamily();
                     if (family != Family.SUCCESSFUL) {
@@ -554,7 +668,7 @@ public class StorageClient {
                                    "failed to read object names; {0} {1}",
                                    new Object[]{statusInfo.getStatusCode(),
                                                 statusInfo.getReasonPhrase()});
-                        return;
+                        return null;
                     }
                     if (consumer != null) {
                         try {
@@ -564,28 +678,64 @@ public class StorageClient {
                                        ioe);
                         }
                     }
+                    return null;
                 });
     }
 
-    public StorageClient withObjectNames(
+//    /**
+//     * Creates or updates a container.
+//     *
+//     * @param <T> result type parameter
+//     * @param containerName container name
+//     * @param params query parameters; may be {@code null}
+//     * @param headers request headers; may be {@code null}
+//     * @param function the function to be applied with the response; may be
+//     * {@code null}
+//     * @return the value the function results; {@code null} if the
+//     * {@code function} is {@code null}
+//     * @deprecated
+//     */
+//    @Deprecated
+//    public <T> T updateContainer(final String containerName,
+//                                 final MultivaluedMap<String, Object> params,
+//                                 final MultivaluedMap<String, Object> headers,
+//                                 final Function<Response, T> function) {
+//        final Client client = ClientBuilder.newClient();
+//        try {
+//            final Invocation.Builder builder = buildContainer(
+//                    client, storageUrl,
+//                    requireNonNull(containerName, "null containerName"),
+//                    params, authToken);
+//            if (headers != null) {
+//                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+//                builder.headers(headers);
+//            }
+////            final Response response = builder
+////                    .put(Entity.entity(
+////                            new byte[0], MediaType.APPLICATION_OCTET_STREAM));
+//            final Response response = builder.put(Entity.text(""));
+//            try {
+//                return function == null ? null : function.apply(response);
+//            } finally {
+//                response.close();
+//            }
+//        } finally {
+//            client.close();
+//        }
+//    }
+    public <T> T updateContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiConsumer<String, StorageClient> consumer) {
-        return StorageClient.this.withObjectNames(
-                containerName,
-                params,
-                headers,
-                ofNullable(consumer)
-                .map(c -> (Consumer<String>) r -> c.accept(r, this))
-                .orElse(null)
-        );
-    }
-
-    public <T> T updateContainer(final String containerName,
-                                 final MultivaluedMap<String, Object> params,
-                                 final MultivaluedMap<String, Object> headers,
-                                 final Function<Response, T> function) {
+            final BiFunction<Response, StorageClient, T> function) {
+//        return updateContainer(
+//                containerName,
+//                params,
+//                headers,
+//                ofNullable(function)
+//                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
+//                .orElse(null)
+//        );
         final Client client = ClientBuilder.newClient();
         try {
             final Invocation.Builder builder = buildContainer(
@@ -596,11 +746,12 @@ public class StorageClient {
                 headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
                 builder.headers(headers);
             }
-            final Response response = builder
-                    .put(Entity.entity(
-                            new byte[0], MediaType.APPLICATION_OCTET_STREAM));
+//            final Response response = builder
+//                    .put(Entity.entity(
+//                            new byte[0], MediaType.APPLICATION_OCTET_STREAM));
+            final Response response = builder.put(Entity.text(""));
             try {
-                return function == null ? null : function.apply(response);
+                return function == null ? null : function.apply(response, this);
             } finally {
                 response.close();
             }
@@ -609,68 +760,82 @@ public class StorageClient {
         }
     }
 
-    public <T> T updateContainer(
+//    @Deprecated
+//    public StorageClient updateContainer(
+//            final String containerName,
+//            final MultivaluedMap<String, Object> params,
+//            final MultivaluedMap<String, Object> headers,
+//            final Consumer<Response> consumer) {
+//        return updateContainer(
+//                containerName,
+//                params,
+//                headers,
+//                ofNullable(consumer)
+//                .map(c -> (Function<Response, StorageClient>) r -> {
+//                    c.accept(r);
+//                    return this;
+//                })
+//                .orElse(r -> this));
+//    }
+//    @Deprecated
+//    public StorageClient updateContainer(
+//            final String containerName,
+//            final MultivaluedMap<String, Object> params,
+//            final MultivaluedMap<String, Object> headers,
+//            final BiConsumer<Response, StorageClient> consumer) {
+//        return updateContainer(
+//                containerName,
+//                params,
+//                headers,
+//                ofNullable(consumer)
+//                .map(c -> (Consumer<Response>) r -> c.accept(r, this))
+//                .orElse(null)
+//        );
+//    }
+//    /**
+//     * Deletes a container identified by given name and returns the result .
+//     *
+//     * @param <T> return value type parameter
+//     * @param containerName the container name
+//     * @param params query parameters
+//     * @param headers additional request headers
+//     * @param function the function to be applied with the response.
+//     * @return the value function results or {@code null} if the
+//     * {@code function} is {@code null}.
+//     */
+//    @Deprecated
+//    public <T> T deleteContainer(final String containerName,
+//                                 final MultivaluedMap<String, Object> params,
+//                                 final MultivaluedMap<String, Object> headers,
+//                                 final Function<Response, T> function) {
+//        final Client client = ClientBuilder.newClient();
+//        try {
+//            final Invocation.Builder builder = buildContainer(
+//                    client, storageUrl, containerName, params, authToken);
+//            if (headers != null) {
+//                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+//                builder.headers(headers);
+//            }
+//            final Response response = builder.delete();
+//            try {
+//                return function == null ? null : function.apply(response);
+//            } finally {
+//                response.close();
+//            }
+//        } finally {
+//            client.close();
+//        }
+//    }
+    public <T> T deleteContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
             final BiFunction<Response, StorageClient, T> function) {
-        return updateContainer(
-                containerName,
-                params,
-                headers,
-                ofNullable(function)
-                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
-                .orElse(null)
-        );
-    }
-
-    public StorageClient updateContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Consumer<Response> consumer) {
-        return updateContainer(
-                containerName,
-                params,
-                headers,
-                ofNullable(consumer)
-                .map(c -> (Function<Response, StorageClient>) r -> {
-                    c.accept(r);
-                    return this;
-                })
-                .orElse(r -> this));
-    }
-
-    public StorageClient updateContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, StorageClient> consumer) {
-        return updateContainer(
-                containerName,
-                params,
-                headers,
-                ofNullable(consumer)
-                .map(c -> (Consumer<Response>) r -> c.accept(r, this))
-                .orElse(null)
-        );
-    }
-
-    /**
-     * Deletes a container identified by given name and returns the result .
-     *
-     * @param <T> return value type parameter
-     * @param containerName the container name
-     * @param params query parameters
-     * @param headers additional request headers
-     * @param function the function to be applied with the response.
-     * @return the value function results or {@code null} if the
-     * {@code function} is {@code null}.
-     */
-    public <T> T deleteContainer(final String containerName,
-                                 final MultivaluedMap<String, Object> params,
-                                 final MultivaluedMap<String, Object> headers,
-                                 final Function<Response, T> function) {
+//        return deleteContainer(
+//                containerName, params, headers,
+//                ofNullable(function)
+//                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
+//                .orElse(null));
         final Client client = ClientBuilder.newClient();
         try {
             final Invocation.Builder builder = buildContainer(
@@ -681,7 +846,7 @@ public class StorageClient {
             }
             final Response response = builder.delete();
             try {
-                return function == null ? null : function.apply(response);
+                return function == null ? null : function.apply(response, this);
             } finally {
                 response.close();
             }
@@ -690,49 +855,37 @@ public class StorageClient {
         }
     }
 
-    public <T> T deleteContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, StorageClient, T> function) {
-        return deleteContainer(
-                containerName, params, headers,
-                ofNullable(function)
-                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
-                .orElse(null));
-    }
-
-    public StorageClient deleteContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Consumer<Response> consumer) {
-        return deleteContainer(
-                containerName,
-                params,
-                headers,
-                ofNullable(consumer)
-                .map(c -> (Function<Response, StorageClient>) r -> {
-                    c.accept(r);
-                    return this;
-                })
-                .orElse(r -> this));
-    }
-
-    public StorageClient deleteContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, StorageClient> consumer) {
-        return deleteContainer(
-                containerName,
-                params,
-                headers,
-                ofNullable(consumer)
-                .map(c -> (Consumer<Response>) r -> c.accept(r, this))
-                .orElse(null));
-    }
-
+//    @Deprecated
+//    public StorageClient deleteContainer(
+//            final String containerName,
+//            final MultivaluedMap<String, Object> params,
+//            final MultivaluedMap<String, Object> headers,
+//            final Consumer<Response> consumer) {
+//        return deleteContainer(
+//                containerName,
+//                params,
+//                headers,
+//                ofNullable(consumer)
+//                .map(c -> (Function<Response, StorageClient>) r -> {
+//                    c.accept(r);
+//                    return this;
+//                })
+//                .orElse(r -> this));
+//    }
+//    @Deprecated
+//    public StorageClient deleteContainer(
+//            final String containerName,
+//            final MultivaluedMap<String, Object> params,
+//            final MultivaluedMap<String, Object> headers,
+//            final BiConsumer<Response, StorageClient> consumer) {
+//        return deleteContainer(
+//                containerName,
+//                params,
+//                headers,
+//                ofNullable(consumer)
+//                .map(c -> (Consumer<Response>) r -> c.accept(r, this))
+//                .orElse(null));
+//    }
     public <T> T peekObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
@@ -758,10 +911,41 @@ public class StorageClient {
         }
     }
 
-    public <T> T readObject(final String containerName, final String objectName,
-                            final MultivaluedMap<String, Object> params,
-                            final MultivaluedMap<String, Object> headers,
-                            final Function<Response, T> function) {
+//    @Deprecated
+//    public <T> T readObject(final String containerName, final String objectName,
+//                            final MultivaluedMap<String, Object> params,
+//                            final MultivaluedMap<String, Object> headers,
+//                            final Function<Response, T> function) {
+//        final Client client = ClientBuilder.newClient();
+//        try {
+//            final Invocation.Builder builder = buildObject(
+//                    client, storageUrl, containerName, objectName, params,
+//                    authToken);
+//            if (headers != null) {
+//                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+//                builder.headers(headers);
+//            }
+//            final Invocation invocation = builder.buildGet();
+//            final Response response = invocation.invoke();
+//            try {
+//                return function == null ? null : function.apply(response);
+//            } finally {
+//                response.close();
+//            }
+//        } finally {
+//            client.close();
+//        }
+//    }
+    public <T> T readObject(
+            final String containerName, final String objectName,
+            final MultivaluedMap<String, Object> params,
+            final MultivaluedMap<String, Object> headers,
+            final BiFunction<Response, StorageClient, T> function) {
+//        return readObject(
+//                containerName, objectName, params, headers,
+//                ofNullable(function)
+//                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
+//                .orElse(null));
         final Client client = ClientBuilder.newClient();
         try {
             final Invocation.Builder builder = buildObject(
@@ -774,7 +958,7 @@ public class StorageClient {
             final Invocation invocation = builder.buildGet();
             final Response response = invocation.invoke();
             try {
-                return function == null ? null : function.apply(response);
+                return function == null ? null : function.apply(response, this);
             } finally {
                 response.close();
             }
@@ -783,59 +967,85 @@ public class StorageClient {
         }
     }
 
-    public <T> T readObject(
+//    @Deprecated
+//    public StorageClient readObject(
+//            final String containerName, final String objectName,
+//            final MultivaluedMap<String, Object> params,
+//            final MultivaluedMap<String, Object> headers,
+//            final Consumer<Response> consumer) {
+//        return readObject(
+//                containerName,
+//                objectName,
+//                params,
+//                headers,
+//                ofNullable(consumer)
+//                .map(c -> (Function<Response, StorageClient>) r -> {
+//                    c.accept(r);
+//                    return this;
+//                })
+//                .orElse(r -> this));
+//    }
+//    @Deprecated
+//    public StorageClient readObject(
+//            final String containerName, final String objectName,
+//            final MultivaluedMap<String, Object> params,
+//            final MultivaluedMap<String, Object> headers,
+//            final BiConsumer<Response, StorageClient> consumer) {
+//        return readObject(
+//                containerName,
+//                objectName,
+//                params,
+//                headers,
+//                ofNullable(consumer)
+//                .map(c -> (Consumer<Response>) r -> c.accept(r, this))
+//                .orElse(null)
+//        );
+//    }
+//    @Deprecated
+//    public <T> T updateObject(final String containerName,
+//                              final String objectName,
+//                              final MultivaluedMap<String, Object> params,
+//                              final MultivaluedMap<String, Object> headers,
+//                              final Entity<?> entity,
+//                              final Function<Response, T> function) {
+//        updateContainer(containerName, null, null, (Consumer<Response>) null);
+//        final Client client = ClientBuilder.newClient();
+//        try {
+//            final Invocation.Builder builder = buildObject(
+//                    client, storageUrl, containerName, objectName, params,
+//                    authToken);
+//            if (headers != null) {
+//                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+//                builder.headers(headers);
+//            }
+//            final Invocation invocation = builder.buildPut(entity);
+//            final Response response = invocation.invoke();
+//            try {
+//                return function == null ? null : function.apply(response);
+//            } finally {
+//                response.close();
+//            }
+//        } finally {
+//            client.close();
+//        }
+//    }
+    public <T> T updateObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
+            final Entity<?> entity,
             final BiFunction<Response, StorageClient, T> function) {
-        return readObject(
-                containerName, objectName, params, headers,
-                ofNullable(function)
-                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
-                .orElse(null));
-    }
-
-    public StorageClient readObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Consumer<Response> consumer) {
-        return readObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                ofNullable(consumer)
-                .map(c -> (Function<Response, StorageClient>) r -> {
-                    c.accept(r);
-                    return this;
-                })
-                .orElse(r -> this));
-    }
-
-    public StorageClient readObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, StorageClient> consumer) {
-        return readObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                ofNullable(consumer)
-                .map(c -> (Consumer<Response>) r -> c.accept(r, this))
-                .orElse(null)
-        );
-    }
-
-    public <T> T updateObject(final String containerName,
-                              final String objectName,
-                              final MultivaluedMap<String, Object> params,
-                              final MultivaluedMap<String, Object> headers,
-                              final Entity<?> entity,
-                              final Function<Response, T> function) {
-        updateContainer(containerName, null, null, (Consumer<Response>) null);
+//        return updateObject(
+//                containerName,
+//                objectName,
+//                params,
+//                headers,
+//                entity,
+//                ofNullable(function)
+//                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
+//                .orElse(null));
+        updateContainer(containerName, null, null,
+                        (BiFunction<Response, StorageClient, Void>) null);
         final Client client = ClientBuilder.newClient();
         try {
             final Invocation.Builder builder = buildObject(
@@ -848,7 +1058,7 @@ public class StorageClient {
             final Invocation invocation = builder.buildPut(entity);
             final Response response = invocation.invoke();
             try {
-                return function == null ? null : function.apply(response);
+                return function == null ? null : function.apply(response, this);
             } finally {
                 response.close();
             }
@@ -857,75 +1067,93 @@ public class StorageClient {
         }
     }
 
-    public <T> T updateObject(
+//    @Deprecated
+//    public StorageClient updateObject(
+//            final String containerName, final String objectName,
+//            final MultivaluedMap<String, Object> params,
+//            final MultivaluedMap<String, Object> headers,
+//            final Entity<?> entity, final Consumer<Response> consumer) {
+//        return updateObject(
+//                containerName,
+//                objectName,
+//                params,
+//                headers,
+//                entity,
+//                ofNullable(consumer)
+//                .map(c -> (Function<Response, StorageClient>) r -> {
+//                    c.accept(r);
+//                    return this;
+//                }).orElse(r -> this)
+//        );
+//    }
+//    @Deprecated
+//    public StorageClient updateObject(
+//            final String containerName, final String objectName,
+//            final MultivaluedMap<String, Object> params,
+//            final MultivaluedMap<String, Object> headers,
+//            final Entity<?> entity,
+//            final BiConsumer<Response, StorageClient> consumer) {
+//        return updateObject(
+//                containerName,
+//                objectName,
+//                params,
+//                headers,
+//                entity,
+//                ofNullable(consumer)
+//                .map(c -> (Consumer<Response>) r -> c.accept(r, this))
+//                .orElse(null));
+//    }
+//    /**
+//     * Deletes an object.
+//     *
+//     * @param <T> return value type parameter
+//     * @param containerName the container name
+//     * @param objectName the object name
+//     * @param params query parameters
+//     * @param headers additional headers; may be {@code null}.
+//     * @param function a function applies with the response.
+//     * @return a value the function results
+//     * @deprecated
+//     */
+//    @Deprecated
+//    public <T> T deleteObject(final String containerName,
+//                              final String objectName,
+//                              final MultivaluedMap<String, Object> params,
+//                              final MultivaluedMap<String, Object> headers,
+//                              final Function<Response, T> function) {
+//        final Client client = ClientBuilder.newClient();
+//        try {
+//            final Invocation.Builder builder = buildObject(
+//                    client, storageUrl, containerName, objectName, params,
+//                    authToken);
+//            if (headers != null) {
+//                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+//                builder.headers(headers);
+//            }
+//            final Invocation invocation = builder.buildDelete();
+//            final Response response = invocation.invoke();
+//            try {
+//                return function == null ? null : function.apply(response);
+//            } finally {
+//                response.close();
+//            }
+//        } finally {
+//            client.close();
+//        }
+//    }
+    public <T> T deleteObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final Entity<?> entity,
             final BiFunction<Response, StorageClient, T> function) {
-        return updateObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                entity,
-                ofNullable(function)
-                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
-                .orElse(null));
-    }
-
-    public StorageClient updateObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Entity<?> entity, final Consumer<Response> consumer) {
-        return updateObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                entity,
-                ofNullable(consumer)
-                .map(c -> (Function<Response, StorageClient>) r -> {
-                    c.accept(r);
-                    return this;
-                }).orElse(r -> this)
-        );
-    }
-
-    public StorageClient updateObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Entity<?> entity,
-            final BiConsumer<Response, StorageClient> consumer) {
-        return updateObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                entity,
-                ofNullable(consumer)
-                .map(c -> (Consumer<Response>) r -> c.accept(r, this))
-                .orElse(null));
-    }
-
-    /**
-     * Deletes an object.
-     *
-     * @param <T> return value type parameter
-     * @param containerName the container name
-     * @param objectName the object name
-     * @param params query parameters
-     * @param headers additional headers; may be {@code null}.
-     * @param function a function applies with the response.
-     * @return a value the function results
-     */
-    public <T> T deleteObject(final String containerName,
-                              final String objectName,
-                              final MultivaluedMap<String, Object> params,
-                              final MultivaluedMap<String, Object> headers,
-                              final Function<Response, T> function) {
+//        return deleteObject(
+//                containerName,
+//                objectName,
+//                params,
+//                headers,
+//                ofNullable(function)
+//                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
+//                .orElse(null));
         final Client client = ClientBuilder.newClient();
         try {
             final Invocation.Builder builder = buildObject(
@@ -938,7 +1166,7 @@ public class StorageClient {
             final Invocation invocation = builder.buildDelete();
             final Response response = invocation.invoke();
             try {
-                return function == null ? null : function.apply(response);
+                return function == null ? null : function.apply(response, this);
             } finally {
                 response.close();
             }
@@ -947,59 +1175,49 @@ public class StorageClient {
         }
     }
 
-    public <T> T deleteObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, StorageClient, T> function) {
-        return deleteObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                ofNullable(function)
-                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
-                .orElse(null));
-    }
-
-    public StorageClient deleteObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Consumer<Response> consumer) {
-        return deleteObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                ofNullable(consumer)
-                .map(c -> (Function<Response, StorageClient>) r -> {
-                    c.accept(r);
-                    return this;
-                })
-                .orElse(r -> this)
-        );
-    }
-
-    public StorageClient deleteObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, StorageClient> consumer) {
-        return deleteObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                ofNullable(consumer)
-                .map(c -> (Consumer<Response>) r -> c.accept(r, this))
-                .orElse(null)
-        );
-    }
-
+//    @Deprecated
+//    public StorageClient deleteObject(
+//            final String containerName, final String objectName,
+//            final MultivaluedMap<String, Object> params,
+//            final MultivaluedMap<String, Object> headers,
+//            final Consumer<Response> consumer) {
+//        return deleteObject(
+//                containerName,
+//                objectName,
+//                params,
+//                headers,
+//                ofNullable(consumer)
+//                .map(c -> (Function<Response, StorageClient>) r -> {
+//                    c.accept(r);
+//                    return this;
+//                })
+//                .orElse(r -> this)
+//        );
+//    }
+//    @Deprecated
+//    public StorageClient deleteObject(
+//            final String containerName, final String objectName,
+//            final MultivaluedMap<String, Object> params,
+//            final MultivaluedMap<String, Object> headers,
+//            final BiConsumer<Response, StorageClient> consumer) {
+//        return deleteObject(
+//                containerName,
+//                objectName,
+//                params,
+//                headers,
+//                ofNullable(consumer)
+//                .map(c -> (Consumer<Response>) r -> c.accept(r, this))
+//                .orElse(null)
+//        );
+//    }
     // -------------------------------------------------------------- storageUrl
     public String getStorageUrl() {
         return storageUrl;
+    }
+
+    // ---------------------------------------------------------------- authToken
+    public String getAuthToken() {
+        return authToken;
     }
 
     // ------------------------------------------------------------ tokenExpires
@@ -1010,6 +1228,7 @@ public class StorageClient {
         return new Date(authTokenExpires.getTime());
     }
 
+    // -------------------------------------------------------------------------
     private final String authUrl;
 
     private final String authUser;
