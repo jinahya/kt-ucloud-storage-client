@@ -17,7 +17,7 @@ final StorageClient client = new StorageClient(url, user, pass);
 ```
 ### authenticate user
 ```java
-final int statusCode = client.authenticateUser(r -> r.getStatus());
+final int statusCode = client.authenticateUser((r, c) -> r.getStatus());
 assert statusCode == 200;
 ```
 
@@ -28,7 +28,7 @@ final Family family = client.updateContainer(
     "containerName",
     null, // query paramters; MultivaluedMap<String, Object>
     null, // request heaers; MultivaluedMap<String, Object>
-    r -> r.getStatusInfo().getFamily());
+    (r, c) -> r.getStatusInfo().getFamily());
 assert family == Family.SUCCESSFUL;
 ```
 ### read
@@ -37,7 +37,7 @@ final Family family = client.readContainer(
     "containerName",
     null, // query paramters; MultivaluedMap<String, Object>
     null, // request heaers; MultivaluedMap<String, Object>
-    r -> r.getStatusInfo().getFamily());
+    (r, c) -> r.getStatusInfo().getFamily());
 assert family == Family.SUCCESSFUL;
 ```
 #### consuming object names
@@ -47,14 +47,15 @@ client.withObjectNames(
         containerName,
         null,
         null,
-        (on, c) -> {
+        (objectName, c) -> {
             c.deleteObject(
                     containerName,
-                    on,
+                    objectName,
                     null,
                     null,
-                    r -> {
+                    (r2, c2) -> {
                         // this is an object deletion result
+                        return null;
                     }
             );
         }
@@ -66,7 +67,8 @@ client.deleteContainer(
     "containerName",
     null,
     null,
-    r -> {
+    (r, c) -> {
+        return null;
     }
 );
 ```
@@ -80,8 +82,9 @@ final int status = client.updateObject(
     null,
     null,
     entity,
-    r -> {
+    (r, c) -> {
         // mess with the Response(r) here
+        return r.getStatus();
     }
 );
 ```
@@ -92,8 +95,9 @@ client.readObject(
     "objectName",
     null,
     null,
-    r -> {
+    (r, c) -> {
         // mess with the Response(r) here
+        return null;
     }
 );
 ```
@@ -104,8 +108,9 @@ client.deleteObject(
     "objectName",
     null,
     null,
-    r -> {
+    (r, c) -> {
         // mess with the Response(r) here
+        return null;
     }
 );
 ```
