@@ -25,7 +25,6 @@ import java.security.SecureRandom;
 import static java.util.Arrays.asList;
 import java.util.Date;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -108,7 +107,7 @@ public class StorageClientIT {
     @Test(enabled = true)
     public void authenticateUser() {
         logger.debug("authenticating user...");
-        client.authenticateUser(r -> {
+        client.authenticateUser((r, c) -> {
             status(r.getStatusInfo(), Family.SUCCESSFUL);
             logger.debug(StorageClient.HEADER_X_STORAGE_URL + ": {}",
                          r.getHeaderString(StorageClient.HEADER_X_STORAGE_URL));
@@ -117,6 +116,7 @@ public class StorageClientIT {
             logger.debug(StorageClient.HEADER_X_AUTH_TOKEN_EXPIRES + ": {}",
                          r.getHeaderString(
                                  StorageClient.HEADER_X_AUTH_TOKEN_EXPIRES));
+            return null;
         });
         final String storageUrl = client.getStorageUrl();
         logger.debug("client.storageUrl: {}", storageUrl);
@@ -127,22 +127,22 @@ public class StorageClientIT {
         assertTrue(tokenExpires.after(new Date()));
     }
 
+//    @Test(dependsOnMethods = {"authenticateUser"}, enabled = true)
+//    public void ensureValid() {
+//        logger.debug("ensuring valid...");
+//        client.invalidate();
+//        client.ensureValid(
+//                TimeUnit.MINUTES,
+//                10L,
+//                (r, c) -> {
+//                    if (r != null) {
+//                        status(r.getStatusInfo(), Family.SUCCESSFUL);
+//                    }
+//                    return null;
+//                }
+//        );
+//    }
     @Test(dependsOnMethods = {"authenticateUser"}, enabled = true)
-    public void ensureValid() {
-        logger.debug("ensuring valid...");
-        client.invalidate();
-        client.ensureValid(
-                TimeUnit.MINUTES,
-                10L,
-                r -> {
-                    if (r != null) {
-                        status(r.getStatusInfo(), Family.SUCCESSFUL);
-                    }
-                }
-        );
-    }
-
-    @Test(dependsOnMethods = {"ensureValid"}, enabled = true)
     public void updateContainer() {
         logger.debug("updateing container...");
         client.updateContainer(
@@ -246,7 +246,7 @@ public class StorageClientIT {
     @Test(dependsOnMethods = {"peekObjects"}, enabled = true)
     public void deleteObjects() {
         logger.debug("deleting objects...");
-        client.withObjectNames(
+        client.readContainerObjectNames(
                 containerName,
                 null,
                 null,
