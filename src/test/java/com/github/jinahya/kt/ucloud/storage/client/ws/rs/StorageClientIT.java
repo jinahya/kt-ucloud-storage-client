@@ -25,6 +25,7 @@ import java.security.SecureRandom;
 import static java.util.Arrays.asList;
 import java.util.Date;
 import java.util.Random;
+import java.util.function.Consumer;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -246,24 +247,17 @@ public class StorageClientIT {
     @Test(dependsOnMethods = {"peekObjects"}, enabled = true)
     public void deleteObjects() {
         logger.debug("deleting objects...");
-        client.readContainerObjectNames(
-                containerName,
-                null,
-                null,
-                (on, c) -> {
-                    logger.debug("deleting object named: " + on);
-                    c.deleteObject(
-                            containerName,
-                            on,
-                            null,
-                            null,
-                            (r, c2) -> {
-                                status(r.getStatusInfo(), Family.SUCCESSFUL);
-                                return null;
-                            }
-                    );
-                }
-        );
+        for (int i = 0; i < objectCount; i++) {
+            final String objectName = Integer.toString(i);
+            logger.debug("deleting object: " + objectName);
+            client.deleteObject(
+                    containerName,
+                    objectName,
+                    null,
+                    null,
+                    (Consumer<Response>) r -> response(r, Family.SUCCESSFUL)
+            );
+        }
     }
 
     @Test(dependsOnMethods = {"deleteObjects"}, enabled = true)
