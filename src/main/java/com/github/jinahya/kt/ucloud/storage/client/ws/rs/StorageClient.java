@@ -23,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
-import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -33,7 +32,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import static java.util.logging.Logger.getLogger;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -47,6 +45,8 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status.Family;
 import javax.ws.rs.core.Response.StatusType;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
 import static java.util.Objects.requireNonNull;
 import static java.util.logging.Logger.getLogger;
 
@@ -637,7 +637,7 @@ public class StorageClient {
       });
     }
 
-    public StorageClient readContainerObjectNames(
+    public StorageClient readContainerConsumeObjectNames(
             final String containerName,
             MultivaluedMap<String, Object> params,
             MultivaluedMap<String, Object> headers,
@@ -674,7 +674,7 @@ public class StorageClient {
             final MultivaluedMap<String, Object> params,
             MultivaluedMap<String, Object> headers,
             final BiConsumer<String, StorageClient> consumer) {
-        return readContainerObjectNames(
+        return readContainerConsumeObjectNames(
                 containerName,
                 params,
                 headers,
