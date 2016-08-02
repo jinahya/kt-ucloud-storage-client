@@ -43,6 +43,66 @@ import static org.testng.Assert.assertTrue;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  *
@@ -128,21 +188,6 @@ public class StorageClientIT {
         assertTrue(tokenExpires.after(new Date()));
     }
 
-//    @Test(dependsOnMethods = {"authenticateUser"}, enabled = true)
-//    public void ensureValid() {
-//        logger.debug("ensuring valid...");
-//        client.invalidate();
-//        client.ensureValid(
-//                TimeUnit.MINUTES,
-//                10L,
-//                (r, c) -> {
-//                    if (r != null) {
-//                        status(r.getStatusInfo(), Family.SUCCESSFUL);
-//                    }
-//                    return null;
-//                }
-//        );
-//    }
     @Test(dependsOnMethods = {"authenticateUser"}, enabled = true)
     public void updateContainer() {
         logger.debug("updateing container...");
@@ -185,25 +230,28 @@ public class StorageClientIT {
     @Test(dependsOnMethods = {"updateObjects"}, enabled = true)
     public void peekContainer() {
         logger.debug("peeking container...");
-        final MultivaluedMap<String, Object> params = new MultivaluedHashMap<>();
-        final MultivaluedMap<String, Object> headers = new MultivaluedHashMap<>();
+        final MultivaluedMap<String, Object> params
+                = new MultivaluedHashMap<>();
+        final MultivaluedMap<String, Object> headers
+                = new MultivaluedHashMap<>();
         headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
         client.peekContainer(
                 containerName,
                 null,
                 headers,
-                (r, c) -> {
+                r -> {
                     response(r, Family.SUCCESSFUL);
-                    return null;
-                });
+                }
+        );
     }
 
     @Test(dependsOnMethods = {"peekContainer"}, enabled = true)
-//    @Test(dependsOnMethods = {"updateObjects"}, enabled = true)
-    public void readObjectsInfo() {
-        logger.debug("reading objects info...");
-        final MultivaluedMap<String, Object> params = new MultivaluedHashMap<>();
-        final MultivaluedMap<String, Object> headers = new MultivaluedHashMap<>();
+    public void readContainerInfo() {
+        logger.debug("reading container info...");
+        final MultivaluedMap<String, Object> params
+                = new MultivaluedHashMap<>();
+        final MultivaluedMap<String, Object> headers
+                = new MultivaluedHashMap<>();
         asList(MediaType.TEXT_PLAIN, MediaType.APPLICATION_XML,
                MediaType.APPLICATION_JSON)
                 .forEach(mediaType -> {
@@ -224,9 +272,18 @@ public class StorageClientIT {
                             }
                     );
                 });
+        logger.debug("reading object names one by one...");
+        params.putSingle("limit", Integer.toString(1));
+        headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
+        client.readContainerObjectNamesAll(
+                containerName,
+                params,
+                headers,
+                on -> logger.debug("objectName: {}", on)
+        );
     }
 
-    @Test(dependsOnMethods = {"readObjectsInfo"}, enabled = true)
+    @Test(dependsOnMethods = {"readContainerInfo"}, enabled = true)
     public void peekObjects() {
         logger.debug("peeking objects...");
         for (int i = 0; i < objectCount; i++) {
