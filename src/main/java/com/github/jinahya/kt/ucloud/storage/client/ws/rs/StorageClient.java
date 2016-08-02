@@ -15,6 +15,11 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
@@ -26,6 +31,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import static java.util.logging.Logger.getLogger;
 import javax.ws.rs.WebApplicationException;
@@ -34,11 +40,15 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status.Family;
 import javax.ws.rs.core.Response.StatusType;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
 
 /**
  * A client using JAX-RS.
@@ -609,30 +619,69 @@ public class StorageClient {
         );
     }
 
-//    private void lines(final Response response, final Consumer<String> consumer)
-//            throws IOException {
-//        try (InputStream stream = response.readEntity(InputStream.class);
-//             InputStreamReader reader = new InputStreamReader(
-//                     stream, StandardCharsets.UTF_8);
-//             BufferedReader buffered = new BufferedReader(reader);) {
-//            buffered.lines().forEach(consumer::accept);
-//        }
-//    }
-//    private void lines(final Response response,
-//                       final BiConsumer<String, StorageClient> consumer)
-//            throws IOException {
-//        try (InputStream stream = response.readEntity(InputStream.class);
-//             InputStreamReader reader = new InputStreamReader(
-//                     stream, StandardCharsets.UTF_8);
-//             BufferedReader buffered = new BufferedReader(reader);) {
-//            buffered.lines().forEach(line -> consumer.accept(line, this));
-//        }
-//    }
-//    public StorageClient readContainerObjectNames(
-//            final String containerName,
-//            MultivaluedMap<String, Object> params,
-//            MultivaluedMap<String, Object> headers,
-//            final Consumer<String> consumer) {
+    private void lines(final Response response, final Consumer<String> consumer)
+            throws IOException {
+        try (InputStream stream = response.readEntity(InputStream.class);
+             InputStreamReader reader = new InputStreamReader(
+                     stream, StandardCharsets.UTF_8);
+             BufferedReader buffered = new BufferedReader(reader);) {
+            buffered.lines().forEach(consumer::accept);
+        }
+    }
+
+    private void lines(final Response response,
+                       final BiConsumer<String, StorageClient> consumer)
+            throws IOException {
+        lines(response, l -> {
+          consumer.accept(l, this);
+      });
+    }
+
+    public StorageClient readContainerObjectNames(
+            final String containerName,
+            MultivaluedMap<String, Object> params,
+            MultivaluedMap<String, Object> headers,
+            final Consumer<String> consumer) {
+        if (headers == null) {
+            headers = new MultivaluedHashMap<>();
+        }
+        headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
+        return readContainer(
+                containerName,
+                params,
+                headers,
+                r -> {
+                    final StatusType statusInfo = r.getStatusInfo();
+                    final Family family = statusInfo.getFamily();
+                    if (family != Family.SUCCESSFUL) {
+                        throw new WebApplicationException(
+                                "failed to read object names", r);
+                    }
+                    if (consumer != null) {
+                        try {
+                            lines(r, consumer);
+                        } catch (final IOException ioe) {
+                            logger.log(Level.SEVERE, "failed to read container",
+                                       ioe);
+                        }
+                    }
+                }
+        );
+    }
+
+    public StorageClient readContainerConsumeObjectNames(
+            final String containerName,
+            final MultivaluedMap<String, Object> params,
+            MultivaluedMap<String, Object> headers,
+            final BiConsumer<String, StorageClient> consumer) {
+        return readContainerObjectNames(
+                containerName,
+                params,
+                headers,
+                ofNullable(consumer)
+                .map(c -> (Consumer<String>) r -> c.accept(r, this))
+                .orElse(null)
+        );
 //        if (headers == null) {
 //            headers = new MultivaluedHashMap<>();
 //        }
@@ -641,46 +690,7 @@ public class StorageClient {
 //                containerName,
 //                params,
 //                headers,
-//                (r, c) -> {
-//                    final StatusType statusInfo = r.getStatusInfo();
-//                    final Family family = statusInfo.getFamily();
-//                    if (family != Family.SUCCESSFUL) {
-//                        throw new WebApplicationException("failed to read object names", r);
-//                    }
-//                    if (consumer != null) {
-//                        try {
-//                            lines(r, consumer);
-//                        } catch (final IOException ioe) {
-//                            logger.log(Level.SEVERE, "failed to read container",
-//                                       ioe);
-//                        }
-//                    }
-//                    return c;
-//                });
-//    }
-//
-//    public StorageClient readContainerObjectNames(
-//            final String containerName,
-//            final MultivaluedMap<String, Object> params,
-//            MultivaluedMap<String, Object> headers,
-//            final BiConsumer<String, StorageClient> consumer) {
-////        return readContainerObjectNames(
-////                containerName,
-////                params,
-////                headers,
-////                ofNullable(consumer)
-////                .map(c -> (Consumer<String>) r -> c.accept(r, this))
-////                .orElse(null)
-////        );
-//        if (headers == null) {
-//            headers = new MultivaluedHashMap<>();
-//        }
-//        headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
-//        return readContainer(
-//                containerName,
-//                params,
-//                headers,
-//                (r, c) -> {
+//                (BiConsumer<Response, StorageClient>) (r, c) -> {
 //                    final StatusType statusInfo = r.getStatusInfo();
 //                    final Family family = statusInfo.getFamily();
 //                    if (family != Family.SUCCESSFUL) {
@@ -688,7 +698,7 @@ public class StorageClient {
 //                                   "failed to read object names; {0} {1}",
 //                                   new Object[]{statusInfo.getStatusCode(),
 //                                                statusInfo.getReasonPhrase()});
-//                        return null;
+//                        return;
 //                    }
 //                    if (consumer != null) {
 //                        try {
@@ -698,9 +708,10 @@ public class StorageClient {
 //                                       ioe);
 //                        }
 //                    }
-//                    return null;
-//                });
-//    }
+//                }
+//        );
+    }
+
     /**
      * Creates or updates a container.
      *
