@@ -36,69 +36,9 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Response.Status.Family;
 import javax.ws.rs.core.Response.StatusType;
 import org.slf4j.Logger;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -138,7 +78,7 @@ public class StorageClientIT {
         final Family family = statusInfo.getFamily();
         final int statusCode = statusInfo.getStatusCode();
         final String reasonPhrase = statusInfo.getReasonPhrase();
-        logger.debug("-> status: {} {}", statusCode, reasonPhrase);
+        logger.debug("-> response.status: {} {}", statusCode, reasonPhrase);
         assertEquals(family, expected);
     }
 
@@ -146,7 +86,7 @@ public class StorageClientIT {
         status(response.getStatusInfo(), expected);
         response.getHeaders().entrySet().forEach(e -> {
             e.getValue().forEach(value -> {
-                logger.debug("-> header: {}: {}", e.getKey(), value);
+                logger.debug("-> response.header: {}: {}", e.getKey(), value);
             });
         });
     }
@@ -168,16 +108,8 @@ public class StorageClientIT {
     @Test(enabled = true)
     public void authenticateUser() {
         logger.debug("authenticating user...");
-        client.authenticateUser((r, c) -> {
-            status(r.getStatusInfo(), Family.SUCCESSFUL);
-            logger.debug(StorageClient.HEADER_X_STORAGE_URL + ": {}",
-                         r.getHeaderString(StorageClient.HEADER_X_STORAGE_URL));
-            logger.debug(StorageClient.HEADER_X_AUTH_TOKEN + ": {}",
-                         r.getHeaderString(StorageClient.HEADER_X_AUTH_TOKEN));
-            logger.debug(StorageClient.HEADER_X_AUTH_TOKEN_EXPIRES + ": {}",
-                         r.getHeaderString(
-                                 StorageClient.HEADER_X_AUTH_TOKEN_EXPIRES));
-            return null;
+        client.authenticateUser(r -> {
+            response(r, Family.SUCCESSFUL);
         });
         final String storageUrl = client.getStorageUrl();
         logger.debug("client.storageUrl: {}", storageUrl);
@@ -188,9 +120,24 @@ public class StorageClientIT {
         assertTrue(tokenExpires.after(new Date()));
     }
 
-    @Test(dependsOnMethods = {"authenticateUser"}, enabled = true)
+    @Test(dependsOnMethods = {"authenticateUser"})
+    public void peekStorage() {
+        logger.debug("peeking storage...");
+        final MultivaluedMap<String, Object> headers
+                = new MultivaluedHashMap<>();
+        headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
+        client.peekStorage(
+                null,
+                headers,
+                r -> {
+                    response(r, Family.SUCCESSFUL);
+                }
+        );
+    }
+
+    @Test(dependsOnMethods = {"peekStorage"}, enabled = true)
     public void updateContainer() {
-        logger.debug("updateing container...");
+        logger.debug("updating container...");
         client.updateContainer(
                 containerName,
                 null, // params

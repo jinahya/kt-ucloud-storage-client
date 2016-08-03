@@ -81,6 +81,15 @@ public class StorageClient {
 
     public static final String HEADER_X_STORAGE_URL = "X-Storage-Url";
 
+    public static final String HEADER_X_ACCOUNT_OBJECT_COUNT
+            = "X-Account-Object-Count";
+
+    public static final String HEADER_X_ACCOUNT_BYTES_USED
+            = "X-Account-Bytes-Used";
+
+    public static final String HEADER_X_ACCOUNT_CONTAINER_COUNT
+            = "X-Account-Container-Count";
+
     public static final String HEADER_X_CONTAINER_OBJECT_COUNT
             = "X-Container-Object-Count";
 
@@ -110,6 +119,30 @@ public class StorageClient {
                 .invoke();
     }
 
+    public static WebTarget targetStorage(
+            final Client client, final String storageUrl,
+            final MultivaluedMap<String, Object> params) {
+        WebTarget target = requireNonNull(client, "null client")
+                .target(requireNonNull(storageUrl, "null storageUrl"));
+        if (params != null) {
+            for (final Entry<String, List<Object>> entry : params.entrySet()) {
+                final String name = entry.getKey();
+                final Object[] values = entry.getValue().toArray();
+                target = target.queryParam(name, values);
+            }
+        }
+        return target;
+    }
+
+    public static Invocation.Builder buildStorage(
+            final Client client, final String storageUrl,
+            final MultivaluedMap<String, Object> params,
+            final String authToken) {
+        return targetStorage(client, storageUrl, params)
+                .request()
+                .header(HEADER_X_AUTH_TOKEN, authToken);
+    }
+
     /**
      * Targets a container.
      *
@@ -123,6 +156,10 @@ public class StorageClient {
             final Client client, final String storageUrl,
             final String containerName,
             final MultivaluedMap<String, Object> params) {
+        if (ThreadLocalRandom.current().nextBoolean()) {
+            return targetStorage(client, storageUrl, params)
+                    .path(requireNonNull(containerName, "null containerName"));
+        }
         WebTarget target = requireNonNull(client, "null client")
                 .target(requireNonNull(storageUrl, "null storageUrl"))
                 .path(requireNonNull(containerName, "null containerName"));
@@ -347,6 +384,73 @@ public class StorageClient {
         }
     }
 
+    // ----------------------------------------------------------------- storage
+    public <T> T peekStorage(final MultivaluedMap<String, Object> params,
+                             final MultivaluedMap<String, Object> headers,
+                             final Function<Response, T> function) {
+        ensureValid(TimeUnit.MINUTES, 10L);
+        final Client client = ClientBuilder.newClient();
+        try {
+            final Invocation.Builder builder = buildStorage(
+                    client, storageUrl, params, authToken);
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+                builder.headers(headers);
+            }
+            final Response response = builder.head();
+            try {
+                return function == null ? null : function.apply(response);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
+    }
+
+    public <T> T peekStorage(
+            final MultivaluedMap<String, Object> params,
+            final MultivaluedMap<String, Object> headers,
+            final BiFunction<Response, StorageClient, T> function) {
+        return peekStorage(
+                params,
+                headers,
+                ofNullable(function)
+                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
+                .orElse(null)
+        );
+    }
+
+    public StorageClient peekStorage(
+            final MultivaluedMap<String, Object> params,
+            final MultivaluedMap<String, Object> headers,
+            final Consumer<Response> consumer) {
+        return peekStorage(
+                params,
+                headers,
+                ofNullable(consumer)
+                .map(c -> (Function<Response, StorageClient>) r -> {
+                    c.accept(r);
+                    return this;
+                })
+                .orElse(r -> this)
+        );
+    }
+
+    public StorageClient peekStorage(
+            final MultivaluedMap<String, Object> params,
+            final MultivaluedMap<String, Object> headers,
+            final BiConsumer<Response, StorageClient> consumer) {
+        return peekStorage(
+                params,
+                headers,
+                ofNullable(consumer)
+                .map(f -> (Consumer<Response>) r -> f.accept(r, this))
+                .orElse(null)
+        );
+    }
+
+    // --------------------------------------------------------------- container
     public <T> T peekContainer(final String containerName,
                                final MultivaluedMap<String, Object> params,
                                final MultivaluedMap<String, Object> headers,
