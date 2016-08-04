@@ -42,6 +42,7 @@ import org.testng.annotations.Test;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -95,7 +96,7 @@ public class StorageClientIT {
             throws IOException {
         final StatusType statusInfo = response.getStatusInfo();
         if (statusInfo.getStatusCode() != Status.OK.getStatusCode()) {
-            logger.debug("status code is not " + Status.OK.name()
+            logger.debug("-> status code is not " + Status.OK.name()
                          + ". skipping...");
         }
         try (InputStream stream = response.readEntity(InputStream.class);
@@ -107,7 +108,7 @@ public class StorageClientIT {
 
     @Test(enabled = true)
     public void authenticateUser() {
-        logger.debug("authenticating user...");
+        logger.debug("-------------------------------- authenticating user...");
         client.authenticateUser(r -> {
             response(r, Family.SUCCESSFUL);
         });
@@ -122,7 +123,7 @@ public class StorageClientIT {
 
     @Test(dependsOnMethods = {"authenticateUser"})
     public void peekStorage() {
-        logger.debug("peeking storage...");
+        logger.debug("------------------------------------ peeking storage...");
         final MultivaluedMap<String, Object> headers
                 = new MultivaluedHashMap<>();
         headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
@@ -135,48 +136,106 @@ public class StorageClientIT {
         );
     }
 
-    @Test(dependsOnMethods = {"peekStorage"}, enabled = true)
-    public void updateContainer() {
-        logger.debug("updating container...");
-        client.updateContainer(
+    @Test(dependsOnMethods = {"peekStorage"})
+    public void readStorage() {
+        logger.debug("------------------------------------ reading storage...");
+        final MultivaluedMap<String, Object> headers
+                = new MultivaluedHashMap<>();
+        asList(MediaType.TEXT_PLAIN, MediaType.APPLICATION_XML,
+               MediaType.APPLICATION_JSON)
+                .forEach(t -> {
+                    headers.putSingle(HttpHeaders.ACCEPT, t);
+                    client.readStorage(
+                            null,
+                            headers,
+                            (r, c) -> {
+                                response(r, Family.SUCCESSFUL);
+                                try {
+                                    body(r, StandardCharsets.UTF_8);
+                                } catch (final IOException ioe) {
+                                    logger.error("failed to read body", ioe);
+                                }
+                            }
+                    );
+                });
+    }
+
+    @Test(dependsOnMethods = {"readStorage"})
+    public void updateStorage() {
+        logger.debug("----------------------------------- updating storage...");
+        {
+            final String headerName = "X-Account-Meta-Test";
+            final String headerValue = "test";
+            {
+                final MultivaluedMap<String, Object> headers
+                        = new MultivaluedHashMap<>();
+                headers.putSingle(headerName, headerValue);
+                client.updateStorage(
+                        null,
+                        headers,
+                        r -> {
+                            response(r, Family.SUCCESSFUL);
+                        });
+            }
+            {
+                final MultivaluedMap<String, Object> headers
+                        = new MultivaluedHashMap<>();
+                headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
+                client.peekStorage(
+                        null,
+                        headers,
+                        r -> {
+                            response(r, Family.SUCCESSFUL);
+                            assertEquals(r.getHeaderString(headerName),
+                                         headerValue);
+                        });
+            }
+        }
+        {
+            final String headerName = "X-Remove-Account-Meta-Test";
+            final String headerValue = "any";
+            {
+                final MultivaluedMap<String, Object> headers
+                        = new MultivaluedHashMap<>();
+                headers.putSingle(headerName, headerValue);
+                client.updateStorage(
+                        null,
+                        headers,
+                        r -> {
+                            response(r, Family.SUCCESSFUL);
+                        });
+            }
+            {
+                final MultivaluedMap<String, Object> headers
+                        = new MultivaluedHashMap<>();
+                headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
+                client.peekStorage(
+                        null,
+                        headers,
+                        r -> {
+                            response(r, Family.SUCCESSFUL);
+                            assertNull(r.getHeaderString(headerName));
+                        });
+            }
+        }
+    }
+
+    @Test(dependsOnMethods = {"updateStorage"}, enabled = true)
+    public void createContainer() {
+        logger.debug("--------------------------------- creating container...");
+        client.createContainer(
                 containerName,
                 null, // params
                 null, // headers
-                (r, c) -> {
-                    status(r.getStatusInfo(), Family.SUCCESSFUL);
-                    return null;
+                r -> {
+                    response(r, Family.SUCCESSFUL);
                 }
         );
     }
 
-    @Test(dependsOnMethods = {"updateContainer"}, enabled = true)
-    public void updateObjects() {
-        logger.debug("updating objects...");
-        final Random random = new SecureRandom();
-        for (int i = 0; i < objectCount; i++) {
-            final String objectName = Integer.toString(i);
-            logger.debug("updating object named: " + objectName);
-            final byte[] bytes = new byte[random.nextInt(1024)];
-            random.nextBytes(bytes);
-            final Entity<byte[]> entity = Entity.entity(
-                    bytes, MediaType.APPLICATION_OCTET_STREAM);
-            client.updateObject(
-                    containerName,
-                    objectName,
-                    null, // params
-                    null, // headers
-                    entity,
-                    (r, c) -> {
-                        status(r.getStatusInfo(), Family.SUCCESSFUL);
-                        return null;
-                    }
-            );
-        }
-    }
-
-    @Test(dependsOnMethods = {"updateObjects"}, enabled = true)
+    @Test(dependsOnMethods = {"createContainer"}, enabled = true)
     public void peekContainer() {
-        logger.debug("peeking container...");
+        logger.debug("---------------------------------- peeking container...");
         final MultivaluedMap<String, Object> params
                 = new MultivaluedHashMap<>();
         final MultivaluedMap<String, Object> headers
@@ -193,8 +252,8 @@ public class StorageClientIT {
     }
 
     @Test(dependsOnMethods = {"peekContainer"}, enabled = true)
-    public void readContainerInfo() {
-        logger.debug("reading container info...");
+    public void readContainer() {
+        logger.debug("---------------------------------- reading container...");
         final MultivaluedMap<String, Object> params
                 = new MultivaluedHashMap<>();
         final MultivaluedMap<String, Object> headers
@@ -230,9 +289,34 @@ public class StorageClientIT {
         );
     }
 
-    @Test(dependsOnMethods = {"readContainerInfo"}, enabled = true)
+    @Test(dependsOnMethods = {"readContainer"}, enabled = true)
+    public void createObjects() {
+        logger.debug("----------------------------------- creating objects...");
+        final Random random = new SecureRandom();
+        for (int i = 0; i < objectCount; i++) {
+            final String objectName = Integer.toString(i);
+            logger.debug("creating an object: " + objectName);
+            final byte[] bytes = new byte[random.nextInt(1024)];
+            random.nextBytes(bytes);
+            final Entity<byte[]> entity = Entity.entity(
+                    bytes, MediaType.APPLICATION_OCTET_STREAM);
+            client.createObject(
+                    containerName,
+                    objectName,
+                    null, // params
+                    null, // headers
+                    entity,
+                    (r, c) -> {
+                        status(r.getStatusInfo(), Family.SUCCESSFUL);
+                        return null;
+                    }
+            );
+        }
+    }
+
+    @Test(dependsOnMethods = {"createObjects"}, enabled = true)
     public void peekObjects() {
-        logger.debug("peeking objects...");
+        logger.debug("------------------------------------ peeking objects...");
         for (int i = 0; i < objectCount; i++) {
             final String objectName = Integer.toString(i);
             logger.debug("peeking object named: " + objectName);
@@ -250,7 +334,7 @@ public class StorageClientIT {
 
     @Test(dependsOnMethods = {"peekObjects"}, enabled = true)
     public void deleteObjects() {
-        logger.debug("deleting objects...");
+        logger.debug("----------------------------------- deleting objects...");
         for (int i = 0; i < objectCount; i++) {
             final String objectName = Integer.toString(i);
             logger.debug("deleting object: " + objectName);
@@ -266,7 +350,7 @@ public class StorageClientIT {
 
     @Test(dependsOnMethods = {"deleteObjects"}, enabled = true)
     public void deleteContainer() {
-        logger.debug("deleting container...");
+        logger.debug("--------------------------------- deleting container...");
         client.deleteContainer(
                 containerName,
                 null,
