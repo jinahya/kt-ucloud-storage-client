@@ -1109,7 +1109,7 @@ public class StorageClient {
                               final Entity<?> entity,
                               final Function<Response, T> function) {
         ensureValid(TimeUnit.MINUTES, 10L);
-        updateContainer(containerName, null, null, (Consumer<Response>) null);
+        createContainer(containerName, null, null, (Consumer<Response>) null);
         final Client client = ClientBuilder.newClient();
         try {
             final Invocation.Builder builder = buildObject(
