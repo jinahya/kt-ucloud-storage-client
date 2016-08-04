@@ -334,6 +334,11 @@ public class StorageClientIT {
     }
 
     @Test(dependsOnMethods = {"peekObjects"}, enabled = true)
+    public void updateObjects() {
+        logger.debug("----------------------------------- updating objects...");
+    }
+
+    @Test(dependsOnMethods = {"updateObjects"}, enabled = true)
     public void deleteObjects() {
         logger.debug("----------------------------------- deleting objects...");
         for (int i = 0; i < objectCount; i++) {
