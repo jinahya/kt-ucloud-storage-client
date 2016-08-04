@@ -98,6 +98,7 @@ public class StorageClientIT {
         if (statusInfo.getStatusCode() != Status.OK.getStatusCode()) {
             logger.debug("-> status code is not " + Status.OK.name()
                          + ". skipping...");
+            return;
         }
         try (InputStream stream = response.readEntity(InputStream.class);
              InputStreamReader reader = new InputStreamReader(stream, charset);
