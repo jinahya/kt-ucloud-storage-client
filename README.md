@@ -24,7 +24,7 @@ assert statusCode == 200;
 ## container
 ### create/update
 ```java
-final Family family = client.updateContainer(
+final Family family = client.createContainer(
     "containerName",
     null, // query paramters; MultivaluedMap<String, Object>
     null, // request heaers; MultivaluedMap<String, Object>
@@ -40,33 +40,12 @@ final Family family = client.readContainer(
     (r, c) -> r.getStatusInfo().getFamily());
 assert family == Family.SUCCESSFUL;
 ```
-#### consuming object names
-```java
-// clear the container
-client.withObjectNames(
-        containerName,
-        null,
-        null,
-        (objectName, c) -> {
-            c.deleteObject(
-                    containerName,
-                    objectName,
-                    null,
-                    null,
-                    (r2, c2) -> {
-                        // this is an object deletion result
-                        return null;
-                    }
-            );
-        }
-);
-```
 ### delete
 ```java
 client.deleteContainer(
     "containerName",
-    null,
-    null,
+    null, // query parameters
+    null, // request headers
     (r, c) -> {
         return null;
     }
@@ -76,7 +55,7 @@ client.deleteContainer(
 ### create/update
 ```java
 final Entity<?> entity = getSome();
-final int status = client.updateObject(
+final int status = client.createObject(
     "containerName",
     "objectName",
     null,
