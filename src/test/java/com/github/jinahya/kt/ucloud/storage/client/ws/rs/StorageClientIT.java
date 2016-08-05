@@ -25,6 +25,7 @@ import java.security.SecureRandom;
 import static java.util.Arrays.asList;
 import java.util.Date;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.HttpHeaders;
@@ -36,14 +37,14 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Response.Status.Family;
 import javax.ws.rs.core.Response.StatusType;
 import org.slf4j.Logger;
-import org.testng.SkipException;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
+import org.testng.SkipException;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  *
@@ -56,14 +57,17 @@ public class StorageClientIT {
     private static StorageClient client() {
         final String authUrl = System.getProperty("authUrl");
         if (authUrl == null) {
+            logger.error("missing property; authUrl; skipping...");
             throw new SkipException("missing property; authUrl");
         }
         final String authUser = System.getProperty("authUser");
         if (authUser == null) {
+            logger.error("missing property; authUser; skipping...");
             throw new SkipException("missing property; authUser");
         }
         final String authPass = System.getProperty("authPass");
         if (authPass == null) {
+            logger.error("missing proprety; authPass; skipping...");
             throw new SkipException("missing property; authPass");
         }
         return new StorageClient(authUrl, authUser, authPass);
@@ -116,10 +120,14 @@ public class StorageClientIT {
         final String storageUrl = client.getStorageUrl();
         logger.debug("client.storageUrl: {}", storageUrl);
         assertNotNull(storageUrl);
-        final Date tokenExpires = client.getAuthTokenExpires();
-        logger.debug("client.tokenExpires: {}", tokenExpires);
-        assertNotNull(tokenExpires);
-        assertTrue(tokenExpires.after(new Date()));
+        final String authToken = client.getAuthToken();
+        logger.debug("client.authToken: {}", authToken);
+        assertNotNull(authToken);
+        final Date authTokenExpires = client.getAuthTokenExpires();
+        logger.debug("client.authTokenExpires: {}", authTokenExpires);
+        assertNotNull(authTokenExpires);
+        assertTrue(authTokenExpires.after(new Date(
+                System.currentTimeMillis() + TimeUnit.HOURS.toMillis(23L))));
     }
 
     @Test(dependsOnMethods = {"authenticateUser"})

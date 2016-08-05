@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +33,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static java.util.logging.Logger.getLogger;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -43,14 +45,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Response.Status.Family;
 import javax.ws.rs.core.Response.StatusType;
-import static java.util.Objects.requireNonNull;
-import static java.util.logging.Logger.getLogger;
-import javax.ws.rs.core.Response.Status;
 
 /**
- * A client using JAX-RS.
+ * A client for accessing kt ucloud storage using JAX-RS.
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
@@ -97,7 +97,8 @@ public class StorageClient {
             = "X-Container-Bytes-Used";
 
     /**
-     * Authenticates with given arguments.
+     * Authenticates with given arguments. This method always set
+     * {@link #HEADER_X_AUTH_NEW_TOKEN}.
      *
      * @param client the client
      * @param authUrl authentication URL
@@ -119,6 +120,14 @@ public class StorageClient {
                 .invoke();
     }
 
+    /**
+     * Targets a storage.
+     *
+     * @param client a client to use
+     * @param storageUrl storage URL
+     * @param params query parameters; may be {@code null}
+     * @return a web target
+     */
     public static WebTarget targetStorage(
             final Client client, final String storageUrl,
             final MultivaluedMap<String, Object> params) {
@@ -134,6 +143,15 @@ public class StorageClient {
         return target;
     }
 
+    /**
+     * Builds for a storage.
+     *
+     * @param client a client to use
+     * @param storageUrl a storage URL
+     * @param params query parameters; may be {@code null}
+     * @param authToken an authorization token
+     * @return a builder.
+     */
     public static Invocation.Builder buildStorage(
             final Client client, final String storageUrl,
             final MultivaluedMap<String, Object> params,
@@ -176,11 +194,11 @@ public class StorageClient {
     /**
      * Builds for a container.
      *
-     * @param client a client
+     * @param client a client to use
      * @param storageUrl storage URL
      * @param containerName container name
-     * @param params query parameters
-     * @param authToken authorization token
+     * @param params query parameters; may be {@code null}
+     * @param authToken an authorization token
      * @return a builder.
      */
     public static Invocation.Builder buildContainer(
@@ -267,9 +285,11 @@ public class StorageClient {
      * Authenticates user and applies given function with the response.
      *
      * @param <T> return value type parameter.
-     * @param function the function to be applied with an response.
-     * @return the value applied or {@code null} if the {@code function} is
-     * {@code null}
+     * @param function a function to be applied with the server response.
+     * @return the value {@code function} results or {@code null} if the
+     * {@code function} is {@code null}
+     * @see #authenticateUser(javax.ws.rs.client.Client, java.lang.String,
+     * java.lang.String, java.lang.String)
      */
     public <T> T authenticateUser(final Function<Response, T> function) {
         final Client client = ClientBuilder.newClient();
@@ -317,6 +337,16 @@ public class StorageClient {
         }
     }
 
+    /**
+     * Authenticates user and applies given function with the response.
+     *
+     * @param <T> return value type parameter.
+     * @param function a function to be applied with the server response.
+     * @return the value {@code function} results or {@code null} if the
+     * {@code function} is {@code null}
+     * @see #authenticateUser(javax.ws.rs.client.Client, java.lang.String,
+     * java.lang.String, java.lang.String)
+     */
     public <T> T authenticateUser(
             final BiFunction<Response, StorageClient, T> function) {
         return authenticateUser(
@@ -345,7 +375,7 @@ public class StorageClient {
     }
 
     /**
-     * Invalidates this client by purging the authorization token.
+     * Invalidates this client by purging the authorization information.
      *
      * @return this client
      */
@@ -356,6 +386,14 @@ public class StorageClient {
         return this;
     }
 
+    /**
+     * Checks if the authorization information is valid until given
+     * milliseconds.
+     *
+     * @param until the milliseconds
+     * @return {@code true} if the token is value until given milliseconds,
+     * {@code false} otherwise.
+     */
     public boolean isValid(final long until) {
         if (storageUrl == null || authToken == null
             || authTokenExpires == null) {
@@ -385,6 +423,17 @@ public class StorageClient {
     }
 
     // ----------------------------------------------------------------- storage
+    /**
+     * Peeks a storage using {@link javax.ws.rs.HttpMethod#HEAD}.
+     *
+     * @param <T> result type parameter
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function the function to be applied with the response; may be
+     * {@code null}
+     * @return the value function results or {@code null} if the
+     * {@code function} is {@code null}
+     */
     public <T> T peekStorage(final MultivaluedMap<String, Object> params,
                              final MultivaluedMap<String, Object> headers,
                              final Function<Response, T> function) {
@@ -408,6 +457,19 @@ public class StorageClient {
         }
     }
 
+    /**
+     * Peeks a storage using {@link javax.ws.rs.HttpMethod#HEAD}.
+     *
+     * @param <T> result type parameter
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function the function to be applied with the response and this
+     * client; may be {@code null}
+     * @return the value function results or {@code null} if the
+     * {@code function} is {@code null}
+     * @see #peekStorage(javax.ws.rs.core.MultivaluedMap,
+     * javax.ws.rs.core.MultivaluedMap, java.util.function.Function)
+     */
     public <T> T peekStorage(
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
@@ -421,6 +483,17 @@ public class StorageClient {
         );
     }
 
+    /**
+     * Peeks a storage using {@link javax.ws.rs.HttpMethod#HEAD}.
+     *
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param consumer the consumer to be accepted with the response; may be
+     * {@code null}
+     * @return this client
+     * @see #peekStorage(javax.ws.rs.core.MultivaluedMap,
+     * javax.ws.rs.core.MultivaluedMap, java.util.function.Function)
+     */
     public StorageClient peekStorage(
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
@@ -437,6 +510,17 @@ public class StorageClient {
         );
     }
 
+    /**
+     * Peeks a storage using {@link javax.ws.rs.HttpMethod#HEAD}.
+     *
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param consumer the consumer to be accepted with the response and this
+     * client; may be {@code null}
+     * @return this client
+     * @see #peekStorage(javax.ws.rs.core.MultivaluedMap,
+     * javax.ws.rs.core.MultivaluedMap, java.util.function.Consumer)
+     */
     public StorageClient peekStorage(
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
@@ -450,6 +534,16 @@ public class StorageClient {
         );
     }
 
+    /**
+     * Reads a storage using {@link javax.ws.rs.HttpMethod#GET}.
+     *
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function a function to be applied with the server response; may be
+     * {@code null}
+     * @return the result {@code function} results or {@code null} if the
+     * {@code function} is {@code null}
+     */
     public <T> T readStorage(final MultivaluedMap<String, Object> params,
                              final MultivaluedMap<String, Object> headers,
                              final Function<Response, T> function) {
@@ -1415,15 +1509,17 @@ public class StorageClient {
     }
 
     /**
-     * Deletes an object.
+     * Deletes an object using {@link javax.ws.rs.HttpMethod#DELETE}.
      *
      * @param <T> return value type parameter
      * @param containerName the container name
      * @param objectName the object name
-     * @param params query parameters
-     * @param headers additional headers; may be {@code null}.
-     * @param function a function applies with the response.
-     * @return a value the function results
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}.
+     * @param function a function to be applied with the server response; may be
+     * {@code null}
+     * @return a value the {@code function} results or {@code null} if the
+     * {@code function} is {@code null}
      */
     public <T> T deleteObject(final String containerName,
                               final String objectName,
@@ -1503,16 +1599,31 @@ public class StorageClient {
     }
 
     // -------------------------------------------------------------- storageUrl
+    /**
+     * Returns the storage URL.
+     *
+     * @return the storage URL
+     */
     public String getStorageUrl() {
         return storageUrl;
     }
 
     // ---------------------------------------------------------------- authToken
+    /**
+     * Returns the authorization token.
+     *
+     * @return the authorization token.
+     */
     public String getAuthToken() {
         return authToken;
     }
 
     // ------------------------------------------------------------ tokenExpires
+    /**
+     * Return the date the authorization token expires.
+     *
+     * @return the date the authorization token expires.
+     */
     public Date getAuthTokenExpires() {
         if (authTokenExpires == null) {
             return null;
@@ -1527,9 +1638,9 @@ public class StorageClient {
 
     private final String authPass;
 
-    private String storageUrl;
+    private transient String storageUrl;
 
-    private String authToken;
+    private transient String authToken;
 
-    private Date authTokenExpires;
+    private transient Date authTokenExpires;
 }
