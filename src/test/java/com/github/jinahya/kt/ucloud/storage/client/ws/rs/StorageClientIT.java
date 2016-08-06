@@ -19,19 +19,16 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
-import static java.util.Arrays.asList;
-import java.util.Date;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
+import static java.util.Objects.requireNonNull;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.MultivaluedMap;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Response.Status.Family;
@@ -39,18 +36,47 @@ import javax.ws.rs.core.Response.StatusType;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-public class StorageClientIT {
+abstract class StorageClientIT {
 
     private static final Logger logger = getLogger(StorageClientIT.class);
 
@@ -73,13 +99,8 @@ public class StorageClientIT {
         return new StorageClient(authUrl, authUser, authPass);
     }
 
-    @BeforeClass
-    private void beforeClass() {
-        client = client();
-    }
-
-    private void status(final StatusType statusInfo,
-                        final Family expected) {
+    @Deprecated
+    static void status(final StatusType statusInfo, final Family expected) {
         final Family family = statusInfo.getFamily();
         final int statusCode = statusInfo.getStatusCode();
         final String reasonPhrase = statusInfo.getReasonPhrase();
@@ -87,8 +108,62 @@ public class StorageClientIT {
         assertEquals(family, expected);
     }
 
-    private void response(final Response response, final Family expected) {
+    @Deprecated
+    static void status(final Response response, final Family expected) {
         status(response.getStatusInfo(), expected);
+    }
+
+    static void status(final StatusType statusInfo, final Family expectedFamily,
+                       final int... expectedStatuses) {
+        requireNonNull(statusInfo, "null statusInfo");
+        final Family actualFamily = statusInfo.getFamily();
+        final int actualStatus = statusInfo.getStatusCode();
+        final String reasonPhrase = statusInfo.getReasonPhrase();
+        logger.debug("-> response.status: {} {}", actualStatus, reasonPhrase);
+        if (expectedFamily != null) {
+            assertEquals(actualFamily, expectedFamily);
+        }
+        if (expectedStatuses != null && expectedStatuses.length > 0) {
+            assertTrue(
+                    IntStream.of(expectedStatuses)
+                    .filter(v -> v == actualStatus)
+                    .findAny()
+                    .isPresent()
+            );
+        }
+    }
+
+    static void status(final Response response, final Family expectedFamily,
+                       final int... expectedStatuses) {
+        status(response.getStatusInfo(), expectedFamily, expectedStatuses);
+    }
+
+    static void status(final StatusType statusInfo, final Family expectedFamily,
+                       final Status... expectedStatuses) {
+        requireNonNull(statusInfo, "null statusInfo");
+        final Family actualFamily = statusInfo.getFamily();
+        final int statusCode = statusInfo.getStatusCode();
+        final String reasonPhrase = statusInfo.getReasonPhrase();
+        logger.debug("-> response.status: {} {}", statusCode, reasonPhrase);
+        if (expectedFamily != null) {
+            assertEquals(actualFamily, expectedFamily);
+        }
+        if (expectedStatuses != null && expectedStatuses.length > 0) {
+            assertTrue(
+                    Stream.of(expectedStatuses).map(Status::getStatusCode)
+                    .filter(v -> v == statusCode)
+                    .findAny()
+                    .isPresent()
+            );
+        }
+    }
+
+    static void status(final Response response, final Family expectedFamily,
+                       final Status... expectedStatuses) {
+        status(response.getStatusInfo(), expectedFamily, expectedStatuses);
+    }
+
+    static void headers(final Response response) {
         response.getHeaders().entrySet().forEach(e -> {
             e.getValue().forEach(value -> {
                 logger.debug("-> response.header: {}: {}", e.getKey(), value);
@@ -96,12 +171,11 @@ public class StorageClientIT {
         });
     }
 
-    private void body(final Response response, final Charset charset)
+    static void body(final Response response, final Charset charset)
             throws IOException {
-        final StatusType statusInfo = response.getStatusInfo();
-        if (statusInfo.getStatusCode() != Status.OK.getStatusCode()) {
-            logger.debug("-> status code is not " + Status.OK.name()
-                         + ". skipping...");
+        if (requireNonNull(response, "null response").getStatus()
+            != Status.OK.getStatusCode()) {
+            logger.debug("status is not " + Status.OK + "; skipping...");
             return;
         }
         try (InputStream stream = response.readEntity(InputStream.class);
@@ -111,274 +185,55 @@ public class StorageClientIT {
         }
     }
 
-    @Test(enabled = true)
-    public void authenticateUser() {
-        logger.debug("-------------------------------- authenticating user...");
-        client.authenticateUser(r -> {
-            response(r, Family.SUCCESSFUL);
+    static void body(final Response response) throws IOException {
+        if (requireNonNull(response, "null response").getStatus()
+            != Status.OK.getStatusCode()) {
+            logger.debug("status is not " + Status.OK + "; skipping...");
+            return;
+        }
+        try (Reader reader = response.readEntity(Reader.class);
+             BufferedReader buffered = new BufferedReader(reader);) {
+            buffered.lines().forEach(System.out::println);
+        }
+    }
+
+    @BeforeClass
+    void doBeforeClass() {
+        client = client().authenticateUser(r -> {
+            status(r, Family.SUCCESSFUL, Status.OK.getStatusCode());
         });
-        final String storageUrl = client.getStorageUrl();
-        logger.debug("client.storageUrl: {}", storageUrl);
-        assertNotNull(storageUrl);
-        final String authToken = client.getAuthToken();
-        logger.debug("client.authToken: {}", authToken);
-        assertNotNull(authToken);
-        final Date authTokenExpires = client.getAuthTokenExpires();
-        logger.debug("client.authTokenExpires: {}", authTokenExpires);
-        assertNotNull(authTokenExpires);
-        assertTrue(authTokenExpires.after(new Date(
-                System.currentTimeMillis() + TimeUnit.HOURS.toMillis(23L))));
     }
 
-    @Test(dependsOnMethods = {"authenticateUser"})
-    public void peekStorage() {
-        logger.debug("------------------------------------ peeking storage...");
-        final MultivaluedMap<String, Object> headers
-                = new MultivaluedHashMap<>();
-        headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
-        client.peekStorage(
-                null,
-                headers,
-                r -> {
-                    response(r, Family.SUCCESSFUL);
-                }
+    @AfterClass
+    void doAfterClass() {
+        // empty
+    }
+
+    <T> T apply(final Function<StorageClient, T> function) {
+        return requireNonNull(function, "null function").apply(client);
+    }
+
+    <U, R> R apply(final BiFunction<StorageClient, U, R> function,
+                   final Supplier<U> u) {
+        return apply(
+                c -> requireNonNull(function, "null function")
+                .apply(c, requireNonNull(u, "null u").get())
         );
     }
 
-    @Test(dependsOnMethods = {"peekStorage"})
-    public void readStorage() {
-        logger.debug("------------------------------------ reading storage...");
-        final MultivaluedMap<String, Object> headers
-                = new MultivaluedHashMap<>();
-        asList(MediaType.TEXT_PLAIN, MediaType.APPLICATION_XML,
-               MediaType.APPLICATION_JSON)
-                .forEach(t -> {
-                    headers.putSingle(HttpHeaders.ACCEPT, t);
-                    client.readStorage(
-                            null,
-                            headers,
-                            (r, c) -> {
-                                response(r, Family.SUCCESSFUL);
-                                try {
-                                    body(r, StandardCharsets.UTF_8);
-                                } catch (final IOException ioe) {
-                                    logger.error("failed to read body", ioe);
-                                }
-                            }
-                    );
-                });
+    void accept(final Consumer<StorageClient> consumer) {
+        apply(c -> {
+            requireNonNull(consumer, "null consumer").accept(c);
+            return null;
+        });
     }
 
-    @Test(dependsOnMethods = {"readStorage"})
-    public void updateStorage() {
-        logger.debug("----------------------------------- updating storage...");
-        {
-            final String headerName = "X-Account-Meta-Test";
-            final String headerValue = "test";
-            {
-                final MultivaluedMap<String, Object> headers
-                        = new MultivaluedHashMap<>();
-                headers.putSingle(headerName, headerValue);
-                client.updateStorage(
-                        null,
-                        headers,
-                        r -> {
-                            response(r, Family.SUCCESSFUL);
-                        });
-            }
-            {
-                final MultivaluedMap<String, Object> headers
-                        = new MultivaluedHashMap<>();
-                headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
-                client.peekStorage(
-                        null,
-                        headers,
-                        r -> {
-                            response(r, Family.SUCCESSFUL);
-                            assertEquals(r.getHeaderString(headerName),
-                                         headerValue);
-                        });
-            }
-        }
-        {
-            final String headerName = "X-Remove-Account-Meta-Test";
-            final String headerValue = "any";
-            {
-                final MultivaluedMap<String, Object> headers
-                        = new MultivaluedHashMap<>();
-                headers.putSingle(headerName, headerValue);
-                client.updateStorage(
-                        null,
-                        headers,
-                        r -> {
-                            response(r, Family.SUCCESSFUL);
-                        });
-            }
-            {
-                final MultivaluedMap<String, Object> headers
-                        = new MultivaluedHashMap<>();
-                headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
-                client.peekStorage(
-                        null,
-                        headers,
-                        r -> {
-                            response(r, Family.SUCCESSFUL);
-                            assertNull(r.getHeaderString(headerName));
-                        });
-            }
-        }
-    }
-
-    @Test(dependsOnMethods = {"updateStorage"}, enabled = true)
-    public void createContainer() {
-        logger.debug("--------------------------------- creating container...");
-        client.createContainer(
-                containerName,
-                null, // params
-                null, // headers
-                r -> {
-                    response(r, Family.SUCCESSFUL);
-                }
-        );
-    }
-
-    @Test(dependsOnMethods = {"createContainer"}, enabled = true)
-    public void peekContainer() {
-        logger.debug("---------------------------------- peeking container...");
-        final MultivaluedMap<String, Object> params
-                = new MultivaluedHashMap<>();
-        final MultivaluedMap<String, Object> headers
-                = new MultivaluedHashMap<>();
-        headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
-        client.peekContainer(
-                containerName,
-                null,
-                headers,
-                r -> {
-                    response(r, Family.SUCCESSFUL);
-                }
-        );
-    }
-
-    @Test(dependsOnMethods = {"peekContainer"}, enabled = true)
-    public void readContainer() {
-        logger.debug("---------------------------------- reading container...");
-        final MultivaluedMap<String, Object> params
-                = new MultivaluedHashMap<>();
-        final MultivaluedMap<String, Object> headers
-                = new MultivaluedHashMap<>();
-        asList(MediaType.TEXT_PLAIN, MediaType.APPLICATION_XML,
-               MediaType.APPLICATION_JSON)
-                .forEach(mediaType -> {
-                    logger.debug("reading in " + mediaType);
-                    headers.putSingle(HttpHeaders.ACCEPT, mediaType);
-                    client.readContainer(
-                            containerName,
-                            params,
-                            headers,
-                            (r, c) -> {
-                                status(r.getStatusInfo(), Family.SUCCESSFUL);
-                                try {
-                                    body(r, StandardCharsets.UTF_8);
-                                } catch (final IOException ioe) {
-                                    logger.error("failed to read", ioe);
-                                }
-                                return null;
-                            }
-                    );
-                });
-        logger.debug("reading object names one by one...");
-        params.putSingle("limit", Integer.toString(1));
-        headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
-        client.readContainerObjectNamesAll(
-                containerName,
-                params,
-                headers,
-                on -> logger.debug("objectName: {}", on)
-        );
-    }
-
-    @Test(dependsOnMethods = {"readContainer"}, enabled = true)
-    public void createObjects() {
-        logger.debug("----------------------------------- creating objects...");
-        final Random random = new SecureRandom();
-        for (int i = 0; i < objectCount; i++) {
-            final String objectName = Integer.toString(i);
-            logger.debug("creating an object: " + objectName);
-            final byte[] bytes = new byte[random.nextInt(1024)];
-            random.nextBytes(bytes);
-            final Entity<byte[]> entity = Entity.entity(
-                    bytes, MediaType.APPLICATION_OCTET_STREAM);
-            client.createObject(
-                    containerName,
-                    objectName,
-                    null, // params
-                    null, // headers
-                    entity,
-                    (r, c) -> {
-                        status(r.getStatusInfo(), Family.SUCCESSFUL);
-                        return null;
-                    }
-            );
-        }
-    }
-
-    @Test(dependsOnMethods = {"createObjects"}, enabled = true)
-    public void peekObjects() {
-        logger.debug("------------------------------------ peeking objects...");
-        for (int i = 0; i < objectCount; i++) {
-            final String objectName = Integer.toString(i);
-            logger.debug("peeking object named: " + objectName);
-            client.peekObject(
-                    containerName,
-                    objectName,
-                    null,
-                    null,
-                    (r, c) -> {
-                        response(r, Family.SUCCESSFUL);
-                        return null;
-                    });
-        }
-    }
-
-    @Test(dependsOnMethods = {"peekObjects"}, enabled = true)
-    public void updateObjects() {
-        logger.debug("----------------------------------- updating objects...");
-    }
-
-    @Test(dependsOnMethods = {"updateObjects"}, enabled = true)
-    public void deleteObjects() {
-        logger.debug("----------------------------------- deleting objects...");
-        for (int i = 0; i < objectCount; i++) {
-            final String objectName = Integer.toString(i);
-            logger.debug("deleting object: " + objectName);
-            client.deleteObject(
-                    containerName,
-                    objectName,
-                    null,
-                    null,
-                    (Consumer<Response>) r -> response(r, Family.SUCCESSFUL)
-            );
-        }
-    }
-
-    @Test(dependsOnMethods = {"deleteObjects"}, enabled = true)
-    public void deleteContainer() {
-        logger.debug("--------------------------------- deleting container...");
-        client.deleteContainer(
-                containerName,
-                null,
-                null,
-                (r, c) -> {
-                    status(r.getStatusInfo(), Family.SUCCESSFUL);
-                    return null;
-                }
+    <U> void accept(final BiConsumer<StorageClient, U> consumer,
+                    final Supplier<U> u) {
+        accept(c -> requireNonNull(consumer, "null consumer").accept(
+                c, requireNonNull(u, "null u").get())
         );
     }
 
     private StorageClient client;
-
-    private final String containerName = getClass().getName();
-
-    private final int objectCount = 2;
 }
