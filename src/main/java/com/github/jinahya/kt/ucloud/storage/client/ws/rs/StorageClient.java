@@ -112,7 +112,6 @@ public class StorageClient {
         Invocation.Builder builder = client
                 .target(requireNonNull(authUrl, "null authUrl"))
                 .request()
-                //                .request(MediaType.APPLICATION_JSON_TYPE)
                 .header(HEADER_X_AUTH_USER,
                         requireNonNull(authUser, "null authUser"))
                 .header(HEADER_X_AUTH_PASS,

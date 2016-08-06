@@ -32,21 +32,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
 import org.testng.annotations.Test;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.StorageClientIT.body;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.StorageClientIT.status;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.StorageClientIT.body;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.StorageClientIT.status;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.StorageClientIT.body;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.StorageClientIT.status;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
 
 /**
  *
