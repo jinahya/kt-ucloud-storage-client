@@ -11,7 +11,38 @@ a simple client for [kt ucloud storage](https://ucloudbiz.olleh.com/portal/ktclo
 ```
 $ mvn -P(jersey|cxf|resteasy) -DauthUrl="" -DauthUser="" -DauthPass="" clean verify
 ```
+## methods mapping
+http  |java        |notes
+------|------------|-----
+HEAD  |peek...     |reads resources' information
+GET   |read...     |reads resources
+PUT   |update...   |creates or updates resources
+POST  |configure...|creates, updates or removes metadata
+DELETE|delete...   |deletes resources
+## java methods
+There are, at most, four method types for each operations.
+```java
+// invoke and apply the function with the server response
+// and return the value the function results
+<T> T ...(..., Function<Response, T> function)
+```
+```java
+// invoke and apply the function with the server response and the client itself
+// and return the value the function results
+<T> T ...(..., BiFunction<Response, StorageClient, T> function)
+```
+```java
+// invoke and accept the consumer with the server response
+// and return the client itself.
+StorageClient ...(..., Consumer<Response> consumer)
+```
+```java
+// invoke and accept the consumer with the server response and the client itself
+// and return the client itself.
+StorageClient ...(..., BiConsumer<Response, StorageClient> consumer)
+```
 ## basic usage
+### create a new instance
 ```java
 final String url; // authentication url
 final String user; // access key ID
@@ -20,10 +51,17 @@ final StorageClient client = new StorageClient(url, user, pass);
 ```
 ### authenticate user
 ```java
-final int statusCode = client.authenticateUser((r, c) -> r.getStatus());
+final int statusCode = client.authenticateUser(
+    r -> {
+        return r.getStatus();
+    }
+);
 assert statusCode == 200;
 ```
-
+## account
+### `peekAccount`
+### `readAccount`
+#### `readAccountContainerNames`
 ## container
 ### create/update
 ```java
