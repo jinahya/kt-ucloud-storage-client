@@ -17,12 +17,23 @@ package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
 import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.StorageClientIT.headers;
 import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.StorageClientIT.status;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import static java.util.Arrays.asList;
+import java.util.Random;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Response.Status.Family;
+import static javax.ws.rs.core.Response.Status.Family.SUCCESSFUL;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 import org.testng.annotations.Test;
@@ -240,6 +251,28 @@ public class StorageClientObjectIT extends StorageClientIT {
             ));
         }
         {
+            logger.debug("------------------------------- creating objects...");
+            final Random random = new SecureRandom();
+            for (int i = 0; i < objectCount; i++) {
+                final String objectName = Integer.toString(i);
+                logger.debug("creating an object: " + objectName);
+                final byte[] bytes = new byte[random.nextInt(1024)];
+                random.nextBytes(bytes);
+                final Entity<byte[]> entity = Entity.entity(
+                        bytes, MediaType.APPLICATION_OCTET_STREAM);
+                accept(c -> c.updateObject(
+                        containerName,
+                        objectName,
+                        null, // params
+                        null, // headers
+                        entity,
+                        r -> {
+                            status(r, Family.SUCCESSFUL);
+                        }
+                ));
+            }
+        }
+        {
             logger.debug("------------------------------ peeking container...");
             final MultivaluedMap<String, Object> headers
                     = new MultivaluedHashMap<>();
@@ -254,35 +287,67 @@ public class StorageClientObjectIT extends StorageClientIT {
                     }
             ));
         }
+        {
+            logger.debug("------------------------------ reading container...");
+            final MultivaluedMap<String, Object> params
+                    = new MultivaluedHashMap<>();
+            final MultivaluedMap<String, Object> headers
+                    = new MultivaluedHashMap<>();
+            asList(TEXT_PLAIN, APPLICATION_XML, APPLICATION_JSON).forEach(t -> {
+                logger.debug("accepting " + t);
+                headers.putSingle(HttpHeaders.ACCEPT, t);
+                accept(c -> c.readContainer(
+                        containerName,
+                        params,
+                        headers,
+                        r -> {
+                            status(r, Family.SUCCESSFUL);
+                            try {
+                                body(r, StandardCharsets.UTF_8);
+                            } catch (final IOException ioe) {
+                                logger.error("failed to read", ioe);
+                            }
+                        }
+                ));
+            });
+        }
+        {
+            logger.debug("-------------------------------- deleting object...");
+            accept(c -> c.readContainerObjectNames(
+                    containerName,
+                    null,
+                    null,
+                    r -> r.getStatus() == Status.OK.getStatusCode(),
+                    l -> {
+                        logger.debug("deleting an object: " + l);
+                        c.deleteObject(
+                                containerName,
+                                l,
+                                null,
+                                null,
+                                r -> {
+                                    status(r, SUCCESSFUL, NO_CONTENT);
+                                }
+                        );
+                    }
+            ));
+        }
+        {
+            logger.debug("----------------------------- deleting container...");
+            accept(c -> c.deleteContainer(
+                    containerName,
+                    null,
+                    null,
+                    r -> {
+                        status(r, SUCCESSFUL, NO_CONTENT);
+                    }
+            ));
+        }
     }
 //
 //    @Test(dependsOnMethods = {"peekContainer"}, enabled = true)
 //    public void readContainer() {
-//        logger.debug("---------------------------------- reading container...");
-//        final MultivaluedMap<String, Object> params
-//                = new MultivaluedHashMap<>();
-//        final MultivaluedMap<String, Object> headers
-//                = new MultivaluedHashMap<>();
-//        asList(MediaType.TEXT_PLAIN, MediaType.APPLICATION_XML,
-//               MediaType.APPLICATION_JSON)
-//                .forEach(mediaType -> {
-//                    logger.debug("reading in " + mediaType);
-//                    headers.putSingle(HttpHeaders.ACCEPT, mediaType);
-//                    client.readContainer(
-//                            containerName,
-//                            params,
-//                            headers,
-//                            (r, c) -> {
-//                                status(r, Family.SUCCESSFUL);
-//                                try {
-//                                    body(r, StandardCharsets.UTF_8);
-//                                } catch (final IOException ioe) {
-//                                    logger.error("failed to read", ioe);
-//                                }
-//                                return null;
-//                            }
-//                    );
-//                });
+
 //        logger.debug("reading object names one by one...");
 //        params.putSingle("limit", Integer.toString(1));
 //        headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
@@ -297,27 +362,6 @@ public class StorageClientObjectIT extends StorageClientIT {
 //
 //    @Test(dependsOnMethods = {"readContainer"}, enabled = true)
 //    public void createObjects() {
-//        logger.debug("----------------------------------- creating objects...");
-//        final Random random = new SecureRandom();
-//        for (int i = 0; i < objectCount; i++) {
-//            final String objectName = Integer.toString(i);
-//            logger.debug("creating an object: " + objectName);
-//            final byte[] bytes = new byte[random.nextInt(1024)];
-//            random.nextBytes(bytes);
-//            final Entity<byte[]> entity = Entity.entity(
-//                    bytes, MediaType.APPLICATION_OCTET_STREAM);
-//            client.createObject(
-//                    containerName,
-//                    objectName,
-//                    null, // params
-//                    null, // headers
-//                    entity,
-//                    (r, c) -> {
-//                        status(r.getStatusInfo(), Family.SUCCESSFUL);
-//                        return null;
-//                    }
-//            );
-//        }
 //    }
 //
 //    @Test(dependsOnMethods = {"createObjects"}, enabled = true)
@@ -365,21 +409,10 @@ public class StorageClientObjectIT extends StorageClientIT {
 //
 //    @Test(dependsOnMethods = {"deleteObjects"}, enabled = true)
 //    public void deleteContainer() {
-//        logger.debug("--------------------------------- deleting container...");
-//        client.deleteContainer(
-//                containerName,
-//                null,
-//                null,
-//                (r, c) -> {
-//                    status(r.getStatusInfo(), Family.SUCCESSFUL);
-//                    return null;
-//                }
-//        );
 //    }
 //
 //    private StorageClient client;
 //
-
     private final String containerName = getClass().getName();
 
     private final int objectCount = 2;

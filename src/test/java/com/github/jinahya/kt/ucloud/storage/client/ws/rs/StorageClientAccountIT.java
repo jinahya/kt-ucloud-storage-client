@@ -112,8 +112,7 @@ public class StorageClientAccountIT extends StorageClientIT {
                         null,
                         headers,
                         r -> {
-                            status(r, Family.SUCCESSFUL,
-                                   Status.NO_CONTENT.getStatusCode());
+                            status(r, Family.SUCCESSFUL, Status.NO_CONTENT);
                             headers(r);
                         }
                 ));
@@ -126,8 +125,7 @@ public class StorageClientAccountIT extends StorageClientIT {
                         null,
                         headers,
                         r -> {
-                            status(r, Family.SUCCESSFUL,
-                                   Status.NO_CONTENT.getStatusCode());
+                            status(r, Family.SUCCESSFUL, Status.NO_CONTENT);
                             headers(r);
                             assertEquals(r.getHeaderString(headerName),
                                          headerValue);
@@ -146,8 +144,7 @@ public class StorageClientAccountIT extends StorageClientIT {
                         null,
                         headers,
                         r -> {
-                            status(r, Family.SUCCESSFUL,
-                                   Status.NO_CONTENT.getStatusCode());
+                            status(r, Family.SUCCESSFUL, Status.NO_CONTENT);
                             headers(r);
                         }
                 ));
@@ -160,8 +157,7 @@ public class StorageClientAccountIT extends StorageClientIT {
                         null,
                         headers,
                         r -> {
-                            status(r, Family.SUCCESSFUL,
-                                   Status.NO_CONTENT.getStatusCode());
+                            status(r, Family.SUCCESSFUL, Status.NO_CONTENT);
                             headers(r);
                             assertNull(r.getHeaderString(headerName));
                         }

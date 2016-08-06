@@ -27,7 +27,6 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -70,7 +69,7 @@ abstract class StorageClientIT {
         }
         client = new StorageClient(authUrl, authUser, authPass)
                 .authenticateUser(r -> {
-                    status(r, Family.SUCCESSFUL, Status.OK.getStatusCode());
+                    status(r, Family.SUCCESSFUL, Status.OK);
                 });
 //        client = client().authenticateUser(r -> {
 //            status(r, Family.SUCCESSFUL, Status.OK.getStatusCode());
@@ -101,47 +100,45 @@ abstract class StorageClientIT {
 //        }
 //        return new StorageClient(authUrl, authUser, authPass);
 //    }
-    @Deprecated
-    static void status(final StatusType statusInfo, final Family expected) {
-        final Family family = statusInfo.getFamily();
-        final int statusCode = statusInfo.getStatusCode();
-        final String reasonPhrase = statusInfo.getReasonPhrase();
-        logger.debug("-> response.status: {} {}", statusCode, reasonPhrase);
-        assertEquals(family, expected);
-    }
-
-    @Deprecated
-    static void status(final Response response, final Family expected) {
-        status(response.getStatusInfo(), expected);
-    }
-
-    @Deprecated
-    static void status(final StatusType statusInfo, final Family expectedFamily,
-                       final int... expectedStatuses) {
-        requireNonNull(statusInfo, "null statusInfo");
-        final Family actualFamily = statusInfo.getFamily();
-        final int actualStatus = statusInfo.getStatusCode();
-        final String reasonPhrase = statusInfo.getReasonPhrase();
-        logger.debug("-> response.status: {} {}", actualStatus, reasonPhrase);
-        if (expectedFamily != null) {
-            assertEquals(actualFamily, expectedFamily);
-        }
-        if (expectedStatuses != null && expectedStatuses.length > 0) {
-            assertTrue(
-                    IntStream.of(expectedStatuses)
-                    .filter(v -> v == actualStatus)
-                    .findAny()
-                    .isPresent()
-            );
-        }
-    }
-
-    @Deprecated
-    static void status(final Response response, final Family expectedFamily,
-                       final int... expectedStatuses) {
-        status(response.getStatusInfo(), expectedFamily, expectedStatuses);
-    }
-
+//    @Deprecated
+//    static void status(final StatusType statusInfo, final Family expected) {
+//        final Family family = statusInfo.getFamily();
+//        final int statusCode = statusInfo.getStatusCode();
+//        final String reasonPhrase = statusInfo.getReasonPhrase();
+//        logger.debug("-> response.status: {} {}", statusCode, reasonPhrase);
+//        assertEquals(family, expected);
+//    }
+//
+//    @Deprecated
+//    static void status(final Response response, final Family expected) {
+//        status(response.getStatusInfo(), expected);
+//    }
+//    @Deprecated
+//    static void status(final StatusType statusInfo, final Family expectedFamily,
+//                       final int... expectedStatuses) {
+//        requireNonNull(statusInfo, "null statusInfo");
+//        final Family actualFamily = statusInfo.getFamily();
+//        final int actualStatus = statusInfo.getStatusCode();
+//        final String reasonPhrase = statusInfo.getReasonPhrase();
+//        logger.debug("-> response.status: {} {}", actualStatus, reasonPhrase);
+//        if (expectedFamily != null) {
+//            assertEquals(actualFamily, expectedFamily);
+//        }
+//        if (expectedStatuses != null && expectedStatuses.length > 0) {
+//            assertTrue(
+//                    IntStream.of(expectedStatuses)
+//                    .filter(v -> v == actualStatus)
+//                    .findAny()
+//                    .isPresent()
+//            );
+//        }
+//    }
+//
+//    @Deprecated
+//    static void status(final Response response, final Family expectedFamily,
+//                       final int... expectedStatuses) {
+//        status(response.getStatusInfo(), expectedFamily, expectedStatuses);
+//    }
     static void status(final StatusType statusInfo, final Family expectedFamily,
                        final Status... expectedStatuses) {
         requireNonNull(statusInfo, "null statusInfo");
@@ -226,5 +223,4 @@ abstract class StorageClientIT {
                 c, requireNonNull(u, "null u").get())
         );
     }
-
 }

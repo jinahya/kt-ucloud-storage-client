@@ -56,5 +56,4 @@ public class AccountInfo extends ContainerInfo {
     // -------------------------------------------------------------------------
     @XmlElement(required = true)
     private int containerCount;
-
 }
