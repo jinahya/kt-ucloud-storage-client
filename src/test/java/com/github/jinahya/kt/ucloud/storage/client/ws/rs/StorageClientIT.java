@@ -38,39 +38,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNull;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
 
 /**
  *
@@ -80,7 +49,10 @@ abstract class StorageClientIT {
 
     private static final Logger logger = getLogger(StorageClientIT.class);
 
-    private static StorageClient client() {
+    private static StorageClient client;
+
+    @BeforeSuite
+    void doBeforeSuite() {
         final String authUrl = System.getProperty("authUrl");
         if (authUrl == null) {
             logger.error("missing property; authUrl; skipping...");
@@ -96,9 +68,39 @@ abstract class StorageClientIT {
             logger.error("missing proprety; authPass; skipping...");
             throw new SkipException("missing property; authPass");
         }
-        return new StorageClient(authUrl, authUser, authPass);
+        client = new StorageClient(authUrl, authUser, authPass)
+                .authenticateUser(r -> {
+                    status(r, Family.SUCCESSFUL, Status.OK.getStatusCode());
+                });
+//        client = client().authenticateUser(r -> {
+//            status(r, Family.SUCCESSFUL, Status.OK.getStatusCode());
+//        });
     }
 
+    @AfterSuite
+    void doAfterSuite() {
+        client.invalidate();
+        client = null;
+    }
+
+//    private static StorageClient client() {
+//        final String authUrl = System.getProperty("authUrl");
+//        if (authUrl == null) {
+//            logger.error("missing property; authUrl; skipping...");
+//            throw new SkipException("missing property; authUrl");
+//        }
+//        final String authUser = System.getProperty("authUser");
+//        if (authUser == null) {
+//            logger.error("missing property; authUser; skipping...");
+//            throw new SkipException("missing property; authUser");
+//        }
+//        final String authPass = System.getProperty("authPass");
+//        if (authPass == null) {
+//            logger.error("missing proprety; authPass; skipping...");
+//            throw new SkipException("missing property; authPass");
+//        }
+//        return new StorageClient(authUrl, authUser, authPass);
+//    }
     @Deprecated
     static void status(final StatusType statusInfo, final Family expected) {
         final Family family = statusInfo.getFamily();
@@ -113,6 +115,7 @@ abstract class StorageClientIT {
         status(response.getStatusInfo(), expected);
     }
 
+    @Deprecated
     static void status(final StatusType statusInfo, final Family expectedFamily,
                        final int... expectedStatuses) {
         requireNonNull(statusInfo, "null statusInfo");
@@ -133,6 +136,7 @@ abstract class StorageClientIT {
         }
     }
 
+    @Deprecated
     static void status(final Response response, final Family expectedFamily,
                        final int... expectedStatuses) {
         status(response.getStatusInfo(), expectedFamily, expectedStatuses);
@@ -197,18 +201,6 @@ abstract class StorageClientIT {
         }
     }
 
-    @BeforeClass
-    void doBeforeClass() {
-        client = client().authenticateUser(r -> {
-            status(r, Family.SUCCESSFUL, Status.OK.getStatusCode());
-        });
-    }
-
-    @AfterClass
-    void doAfterClass() {
-        // empty
-    }
-
     <T> T apply(final Function<StorageClient, T> function) {
         return requireNonNull(function, "null function").apply(client);
     }
@@ -235,5 +227,4 @@ abstract class StorageClientIT {
         );
     }
 
-    private StorageClient client;
 }

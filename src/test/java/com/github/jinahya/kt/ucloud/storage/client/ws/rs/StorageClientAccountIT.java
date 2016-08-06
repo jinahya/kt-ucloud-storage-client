@@ -26,6 +26,7 @@ import javax.ws.rs.core.Response.Status.Family;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import org.testng.annotations.Test;
 
@@ -33,6 +34,7 @@ import org.testng.annotations.Test;
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
+@Test(groups = {"account"})
 public class StorageClientAccountIT extends StorageClientIT {
 
     private static final Logger logger
@@ -48,9 +50,14 @@ public class StorageClientAccountIT extends StorageClientIT {
                 null,
                 headers,
                 r -> {
-                    status(r, Family.SUCCESSFUL,
-                           Status.NO_CONTENT.getStatusCode());
+                    status(r, Family.SUCCESSFUL, Status.NO_CONTENT);
                     headers(r);
+                    assertNotNull(r.getHeaderString(
+                            StorageClient.HEADER_X_ACCOUNT_CONTAINER_COUNT));
+                    assertNotNull(r.getHeaderString(
+                            StorageClient.HEADER_X_ACCOUNT_OBJECT_COUNT));
+                    assertNotNull(r.getHeaderString(
+                            StorageClient.HEADER_X_ACCOUNT_BYTES_USED));
                 }
         ));
     }
@@ -68,8 +75,7 @@ public class StorageClientAccountIT extends StorageClientIT {
                             null,
                             headers,
                             r -> {
-                                status(r, Family.SUCCESSFUL,
-                                       Status.OK.getStatusCode());
+                                status(r, Family.SUCCESSFUL, Status.OK);
                                 headers(r);
                                 try {
                                     body(r);

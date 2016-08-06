@@ -37,6 +37,7 @@ import org.testng.annotations.Test;
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
+@Test(dependsOnGroups = {"account"}, groups = {"container"})
 public class StorageClientContainerIT extends StorageClientIT {
 
     private static final Logger logger

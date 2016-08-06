@@ -40,6 +40,7 @@ import javax.ws.rs.HttpMethod;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
@@ -607,11 +608,18 @@ public class StorageClient {
         ensureValid();
         final Client client = ClientBuilder.newClient();
         try {
+            client.register((ClientRequestFilter) rc -> {
+                rc.getHeaders().forEach((n, vs) -> {
+                    vs.forEach(v -> System.out.println(n + ": " + v));
+                });
+            });
             final Response response = peekAccount(
                     client, storageUrl, params, authToken, headers);
+            headers.forEach((n, vs) -> {
+                vs.forEach(v -> System.out.println(n + ": " + v));
+            });
             try {
-                return requireNonNull(function, "null function")
-                        .apply(response);
+                return function.apply(response);
             } finally {
                 response.close();
             }
@@ -640,8 +648,7 @@ public class StorageClient {
                 params,
                 headers,
                 r -> {
-                    return requireNonNull(function, "null function")
-                    .apply(r, this);
+                    return function.apply(r, this);
                 }
         );
     }
@@ -664,7 +671,7 @@ public class StorageClient {
                 params,
                 headers,
                 r -> {
-                    requireNonNull(consumer, "null consumer").accept(r);
+                    consumer.accept(r);
                     return this;
                 }
         );
@@ -944,7 +951,7 @@ public class StorageClient {
                                final MultivaluedMap<String, Object> params,
                                final MultivaluedMap<String, Object> headers,
                                final Function<Response, T> function) {
-        ensureValid(TimeUnit.MINUTES, 10L);
+        ensureValid();
         final Client client = ClientBuilder.newClient();
         try {
             final Response response = peekContainer(
