@@ -42,96 +42,16 @@ StorageClient ...(..., Consumer<Response> consumer)
 StorageClient ...(..., BiConsumer<Response, StorageClient> consumer)
 ```
 ## java.net
-## javax.ws.rs
-### create a new instance
 ```java
 final String url; // authentication url
 final String user; // access key ID
 final String pass; // secret key
-final StorageClient client = new StorageClient(url, user, pass);
+final NetStorageClient client = new NetStorageClient(url, user, pass);
 ```
-### authenticate user
+## javax.ws.rs
 ```java
-final int statusCode = client.authenticateUser(
-    r -> {
-        return r.getStatus();
-    }
-);
-assert statusCode == 200;
-```
-## account
-### peek
-### read
-#### read container names
-## container
-### create/update
-```java
-final Family family = client.createContainer(
-    "containerName",
-    null, // query paramters; MultivaluedMap<String, Object>
-    null, // request heaers; MultivaluedMap<String, Object>
-    (r, c) -> r.getStatusInfo().getFamily());
-assert family == Family.SUCCESSFUL;
-```
-### read
-```java
-final Family family = client.readContainer(
-    "containerName",
-    null, // query paramters; MultivaluedMap<String, Object>
-    null, // request heaers; MultivaluedMap<String, Object>
-    (r, c) -> r.getStatusInfo().getFamily());
-assert family == Family.SUCCESSFUL;
-```
-### delete
-```java
-client.deleteContainer(
-    "containerName",
-    null, // query parameters
-    null, // request headers
-    (r, c) -> {
-        return null;
-    }
-);
-```
-## object
-### create/update
-```java
-final Entity<?> entity = getSome();
-final int status = client.createObject(
-    "containerName",
-    "objectName",
-    null,
-    null,
-    entity,
-    (r, c) -> {
-        // mess with the Response(r) here
-        return r.getStatus();
-    }
-);
-```
-### read
-```java
-client.readObject(
-    "containerName",
-    "objectName",
-    null,
-    null,
-    (r, c) -> {
-        // mess with the Response(r) here
-        return null;
-    }
-);
-```
-### delete
-```java
-client.deleteObject(
-    "containerName",
-    "objectName",
-    null,
-    null,
-    (r, c) -> {
-        // mess with the Response(r) here
-        return null;
-    }
-);
+final String url; // authentication url
+final String user; // access key ID
+final String pass; // secret key
+final WsRsStorageClient client = new WsRsStorageClient(url, user, pass);
 ```
