@@ -17,12 +17,15 @@ package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
 import java.io.IOException;
 import static java.util.Arrays.asList;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.Response.Status.Family;
+import static javax.ws.rs.core.Response.Status.Family.SUCCESSFUL;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.OK;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertEquals;
@@ -45,12 +48,12 @@ public class StorageClientAccountIT extends StorageClientIT {
         logger.debug("------------------------------------ peeking account...");
         final MultivaluedMap<String, Object> headers
                 = new MultivaluedHashMap<>();
-        headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
+        headers.putSingle(ACCEPT, TEXT_PLAIN);
         accept(c -> c.peekAccount(
                 null,
                 headers,
                 r -> {
-                    status(r, Family.SUCCESSFUL, Status.NO_CONTENT);
+                    status(r, SUCCESSFUL, NO_CONTENT);
                     headers(r);
                     assertNotNull(r.getHeaderString(
                             StorageClient.HEADER_X_ACCOUNT_CONTAINER_COUNT));
@@ -67,15 +70,14 @@ public class StorageClientAccountIT extends StorageClientIT {
         logger.debug("------------------------------------ reading account...");
         final MultivaluedMap<String, Object> headers
                 = new MultivaluedHashMap<>();
-        asList(MediaType.TEXT_PLAIN, MediaType.APPLICATION_XML,
-               MediaType.APPLICATION_JSON)
+        asList(TEXT_PLAIN, APPLICATION_XML, APPLICATION_JSON)
                 .forEach(t -> {
-                    headers.putSingle(HttpHeaders.ACCEPT, t);
+                    headers.putSingle(ACCEPT, t);
                     accept(c -> c.readAccount(
                             null,
                             headers,
                             r -> {
-                                status(r, Family.SUCCESSFUL, Status.OK);
+                                status(r, SUCCESSFUL, OK);
                                 headers(r);
                                 try {
                                     body(r);
@@ -93,7 +95,7 @@ public class StorageClientAccountIT extends StorageClientIT {
         accept(c -> c.readAccountContainerNames(
                 null,
                 null,
-                r -> r.getStatus() == Status.OK.getStatusCode(),
+                r -> r.getStatus() == OK.getStatusCode(),
                 l -> logger.debug("container name: {}", l))
         );
     }
@@ -112,7 +114,7 @@ public class StorageClientAccountIT extends StorageClientIT {
                         null,
                         headers,
                         r -> {
-                            status(r, Family.SUCCESSFUL, Status.NO_CONTENT);
+                            status(r, SUCCESSFUL, NO_CONTENT);
                             headers(r);
                         }
                 ));
@@ -120,12 +122,12 @@ public class StorageClientAccountIT extends StorageClientIT {
             {
                 final MultivaluedMap<String, Object> headers
                         = new MultivaluedHashMap<>();
-                headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
+                headers.putSingle(ACCEPT, TEXT_PLAIN);
                 accept(c -> c.peekAccount(
                         null,
                         headers,
                         r -> {
-                            status(r, Family.SUCCESSFUL, Status.NO_CONTENT);
+                            status(r, SUCCESSFUL, NO_CONTENT);
                             headers(r);
                             assertEquals(r.getHeaderString(headerName),
                                          headerValue);
@@ -144,7 +146,7 @@ public class StorageClientAccountIT extends StorageClientIT {
                         null,
                         headers,
                         r -> {
-                            status(r, Family.SUCCESSFUL, Status.NO_CONTENT);
+                            status(r, SUCCESSFUL, NO_CONTENT);
                             headers(r);
                         }
                 ));
@@ -152,12 +154,12 @@ public class StorageClientAccountIT extends StorageClientIT {
             {
                 final MultivaluedMap<String, Object> headers
                         = new MultivaluedHashMap<>();
-                headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
+                headers.putSingle(ACCEPT, TEXT_PLAIN);
                 accept(c -> c.peekAccount(
                         null,
                         headers,
                         r -> {
-                            status(r, Family.SUCCESSFUL, Status.NO_CONTENT);
+                            status(r, SUCCESSFUL, NO_CONTENT);
                             headers(r);
                             assertNull(r.getHeaderString(headerName));
                         }

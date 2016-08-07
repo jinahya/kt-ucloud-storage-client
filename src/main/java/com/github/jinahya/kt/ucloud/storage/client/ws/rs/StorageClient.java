@@ -105,6 +105,8 @@ public class StorageClient {
     public static final String HEADER_X_CONTAINER_BYTES_USED
             = "X-Container-Bytes-Used";
 
+    public static final String HEADER_X_COPY_FROM = "X-Copy-From";
+
     public static Response authenticateUser(final Client client,
                                             final String authUrl,
                                             final String authUser,
@@ -348,6 +350,51 @@ public class StorageClient {
         return builder.get();
     }
 
+    public static Response updateContainer(
+            final Client client, final String storageUrl,
+            final String containerName,
+            final MultivaluedMap<String, Object> params,
+            final String authToken,
+            final MultivaluedMap<String, Object> headers) {
+        Invocation.Builder builder = buildContainer(
+                client, storageUrl, containerName, params, authToken);
+        if (headers != null) {
+            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+            builder = builder.headers(headers);
+        }
+        return builder.put(Entity.text(""));
+    }
+
+    public static Response configureContainer(
+            final Client client, final String storageUrl,
+            final String containerName,
+            final MultivaluedMap<String, Object> params,
+            final String authToken,
+            final MultivaluedMap<String, Object> headers) {
+        final Invocation.Builder builder = buildContainer(
+                client, storageUrl, containerName, params, authToken);
+        if (headers != null) {
+            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+            builder.headers(headers);
+        }
+        return builder.post(null);
+    }
+
+    public static Response deleteContainer(
+            final Client client, final String storageUrl,
+            final String containerName,
+            final MultivaluedMap<String, Object> params,
+            final String authToken,
+            final MultivaluedMap<String, Object> headers) {
+        final Invocation.Builder builder = buildContainer(
+                client, storageUrl, containerName, params, authToken);
+        if (headers != null) {
+            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+            builder.headers(headers);
+        }
+        return builder.delete();
+    }
+
     // ------------------------------------------------------------------ object
     /**
      * Targets an object.
@@ -405,6 +452,88 @@ public class StorageClient {
                         requireNonNull(authToken, "null authToken"));
     }
 
+    public static Response peekObject(
+            final Client client, final String storageUrl,
+            final String containerName, final String objectName,
+            final MultivaluedMap<String, Object> params,
+            final String authToken,
+            final MultivaluedMap<String, Object> headers) {
+        final Invocation.Builder builder = buildObject(
+                client, storageUrl, containerName, objectName, params,
+                authToken);
+        if (headers != null) {
+            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+            builder.headers(headers);
+        }
+        return builder.head();
+    }
+
+    public static Response readObject(
+            final Client client, final String storageUrl,
+            final String containerName, final String objectName,
+            final MultivaluedMap<String, Object> params,
+            final String authToken,
+            final MultivaluedMap<String, Object> headers) {
+        final Invocation.Builder builder = buildObject(
+                client, storageUrl, containerName, objectName, params,
+                authToken);
+        if (headers != null) {
+            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+            builder.headers(headers);
+        }
+        return builder.get();
+    }
+
+    public static Response updateObject(
+            final Client client, final String storageUrl,
+            final String containerName, final String objectName,
+            final MultivaluedMap<String, Object> params,
+            final String authToken,
+            final MultivaluedMap<String, Object> headers,
+            final Entity<?> entity) {
+        final Invocation.Builder builder = buildObject(
+                client, storageUrl, containerName, objectName, params,
+                authToken);
+        if (headers != null) {
+            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+            builder.headers(headers);
+        }
+        return builder.put(entity);
+    }
+
+    public static Response configureObject(
+            final Client client, final String storageUrl,
+            final String containerName, final String objectName,
+            final MultivaluedMap<String, Object> params,
+            final String authToken,
+            final MultivaluedMap<String, Object> headers) {
+        final Invocation.Builder builder = buildObject(
+                client, storageUrl, containerName, objectName, params,
+                authToken);
+        if (headers != null) {
+            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+            builder.headers(headers);
+        }
+        return builder.post(null);
+    }
+
+    public static Response deleteObject(
+            final Client client, final String storageUrl,
+            final String containerName, final String objectName,
+            final MultivaluedMap<String, Object> params,
+            final String authToken,
+            final MultivaluedMap<String, Object> headers) {
+        final Invocation.Builder builder = buildObject(
+                client, storageUrl, containerName, objectName, params,
+                authToken);
+        if (headers != null) {
+            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+            builder.headers(headers);
+        }
+        return builder.delete();
+    }
+
+    // -------------------------------------------------------------------------
     /**
      * Creates a new instance.
      *
@@ -1187,17 +1316,19 @@ public class StorageClient {
                                  final MultivaluedMap<String, Object> params,
                                  final MultivaluedMap<String, Object> headers,
                                  final Function<Response, T> function) {
-        requireNonNull(function, "null function");
-        ensureValid(TimeUnit.MINUTES, 10L);
+        ensureValid();
         final Client client = ClientBuilder.newClient();
         try {
-            final Invocation.Builder builder = buildContainer(
-                    client, storageUrl, containerName, params, authToken);
-            if (headers != null) {
-                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-                builder.headers(headers);
-            }
-            final Response response = builder.put(Entity.text(""));
+//            final Invocation.Builder builder = buildContainer(
+//                    client, storageUrl, containerName, params, authToken);
+//            if (headers != null) {
+//                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+//                builder.headers(headers);
+//            }
+//            final Response response = builder.put(Entity.text(""));
+            final Response response = updateContainer(
+                    client, storageUrl, containerName, params, authToken,
+                    headers);
             try {
                 return function.apply(response);
             } finally {
@@ -1213,7 +1344,6 @@ public class StorageClient {
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
             final BiFunction<Response, StorageClient, T> function) {
-        requireNonNull(function, "null function");
         return updateContainer(
                 containerName,
                 params,
@@ -1260,7 +1390,7 @@ public class StorageClient {
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
             final Function<Response, T> function) {
-        ensureValid(TimeUnit.MINUTES, 10L);
+        ensureValid();
         final Client client = ClientBuilder.newClient();
         try {
             final Invocation.Builder builder = buildContainer(
@@ -1341,16 +1471,12 @@ public class StorageClient {
                                  final MultivaluedMap<String, Object> params,
                                  final MultivaluedMap<String, Object> headers,
                                  final Function<Response, T> function) {
-        ensureValid(TimeUnit.MINUTES, 10L);
+        ensureValid();
         final Client client = ClientBuilder.newClient();
         try {
-            final Invocation.Builder builder = buildContainer(
-                    client, storageUrl, containerName, params, authToken);
-            if (headers != null) {
-                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-                builder.headers(headers);
-            }
-            final Response response = builder.delete();
+            final Response response = deleteContainer(
+                    client, storageUrl, containerName, params, authToken,
+                    headers);
             try {
                 return function.apply(response);
             } finally {
@@ -1416,14 +1542,9 @@ public class StorageClient {
         ensureValid();
         final Client client = ClientBuilder.newClient();
         try {
-            final Invocation.Builder builder = buildObject(
+            final Response response = peekObject(
                     client, storageUrl, containerName, objectName, params,
-                    authToken);
-            if (headers != null) {
-                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-                builder.headers(headers);
-            }
-            final Response response = builder.head();
+                    authToken, headers);
             try {
                 return function.apply(response);
             } finally {
@@ -1490,15 +1611,9 @@ public class StorageClient {
         ensureValid();
         final Client client = ClientBuilder.newClient();
         try {
-            final Invocation.Builder builder = buildObject(
+            final Response response = readObject(
                     client, storageUrl, containerName, objectName, params,
-                    authToken);
-            if (headers != null) {
-                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-                builder.headers(headers);
-            }
-            final Invocation invocation = builder.buildGet();
-            final Response response = invocation.invoke();
+                    authToken, headers);
             try {
                 return function.apply(response);
             } finally {
@@ -1565,30 +1680,24 @@ public class StorageClient {
                               final Entity<?> entity,
                               final Function<Response, T> function) {
         ensureValid();
-        updateContainer(
-                containerName,
-                null,
-                null,
-                r -> {
-                    final StatusType statusInfo = r.getStatusInfo();
-                    final Family family = statusInfo.getFamily();
-                    if (family != Family.SUCCESSFUL) {
-                        throw new WebApplicationException(
-                                "failed to update container", r);
-                    }
-                }
-        );
+//        updateContainer(
+//                containerName,
+//                null,
+//                null,
+//                r -> {
+//                    final StatusType statusInfo = r.getStatusInfo();
+//                    final Family family = statusInfo.getFamily();
+//                    if (family != Family.SUCCESSFUL) {
+//                        throw new WebApplicationException(
+//                                "failed to update container", r);
+//                    }
+//                }
+//        );
         final Client client = ClientBuilder.newClient();
         try {
-            final Invocation.Builder builder = buildObject(
+            final Response response = updateObject(
                     client, storageUrl, containerName, objectName, params,
-                    authToken);
-            if (headers != null) {
-                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-                builder.headers(headers);
-            }
-            final Invocation invocation = builder.buildPut(entity);
-            final Response response = invocation.invoke();
+                    authToken, headers, entity);
             try {
                 return function.apply(response);
             } finally {
@@ -1661,14 +1770,9 @@ public class StorageClient {
         ensureValid();
         final Client client = ClientBuilder.newClient();
         try {
-            final Invocation.Builder builder = buildObject(
+            final Response response = configureObject(
                     client, storageUrl, containerName, objectName, params,
-                    authToken);
-            if (headers != null) {
-                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-                builder.headers(headers);
-            }
-            final Response response = builder.post(null);
+                    authToken, headers);
             try {
                 return function.apply(response);
             } finally {
@@ -1749,15 +1853,9 @@ public class StorageClient {
         ensureValid();
         final Client client = ClientBuilder.newClient();
         try {
-            final Invocation.Builder builder = buildObject(
+            final Response response = deleteObject(
                     client, storageUrl, containerName, objectName, params,
-                    authToken);
-            if (headers != null) {
-                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-                builder.headers(headers);
-            }
-            final Invocation invocation = builder.buildDelete();
-            final Response response = invocation.invoke();
+                    authToken, headers);
             try {
                 return function.apply(response);
             } finally {

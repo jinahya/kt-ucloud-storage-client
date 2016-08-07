@@ -19,14 +19,19 @@ import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.StorageClientIT.
 import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.StorageClientIT.headers;
 import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.StorageClientIT.status;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import static java.util.Arrays.asList;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.Response.Status.Family;
+import static javax.ws.rs.core.Response.Status.ACCEPTED;
+import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.Family.SUCCESSFUL;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.OK;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertNotNull;
@@ -51,8 +56,7 @@ public class StorageClientContainerIT extends StorageClientIT {
                 null, // params
                 null, // headers
                 r -> {
-                    status(r, Family.SUCCESSFUL, Status.CREATED,
-                           Status.ACCEPTED);
+                    status(r, SUCCESSFUL, CREATED, ACCEPTED);
                     headers(r);
                 }
         ));
@@ -63,13 +67,13 @@ public class StorageClientContainerIT extends StorageClientIT {
         logger.debug("---------------------------------- peeking container...");
         final MultivaluedMap<String, Object> headers
                 = new MultivaluedHashMap<>();
-        headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
+        headers.putSingle(ACCEPT, TEXT_PLAIN);
         accept(c -> c.peekContainer(
                 containerName,
                 null,
                 headers,
                 r -> {
-                    status(r, null, Status.NOT_FOUND, Status.NO_CONTENT);
+                    status(r, null, NOT_FOUND, NO_CONTENT);
                     headers(r);
                 }
         ));
@@ -80,18 +84,16 @@ public class StorageClientContainerIT extends StorageClientIT {
         logger.debug("---------------------------------- reading container...");
         final MultivaluedMap<String, Object> headers
                 = new MultivaluedHashMap<>();
-        asList(MediaType.TEXT_PLAIN, MediaType.APPLICATION_XML,
-               MediaType.APPLICATION_JSON)
+        asList(TEXT_PLAIN, APPLICATION_XML, APPLICATION_JSON)
                 .forEach(mediaType -> {
                     logger.debug("accepting " + mediaType);
-                    headers.putSingle(HttpHeaders.ACCEPT, mediaType);
+                    headers.putSingle(ACCEPT, mediaType);
                     accept(c -> c.readContainer(
                             containerName,
                             null,
                             headers,
                             r -> {
-                                status(r, null, Status.NOT_FOUND, Status.OK,
-                                       Status.NO_CONTENT);
+                                status(r, null, NOT_FOUND, OK, NO_CONTENT);
                                 try {
                                     body(r);
                                 } catch (final IOException ioe) {
@@ -109,7 +111,7 @@ public class StorageClientContainerIT extends StorageClientIT {
                 containerName,
                 null,
                 null,
-                r -> r.getStatus() == Status.OK.getStatusCode(),
+                r -> r.getStatus() == OK.getStatusCode(),
                 l -> {
                     logger.debug("object name: {}", l);
                 }
@@ -124,7 +126,7 @@ public class StorageClientContainerIT extends StorageClientIT {
                 null,
                 null,
                 r -> {
-                    status(r, Family.SUCCESSFUL, Status.NO_CONTENT);
+                    status(r, SUCCESSFUL, NO_CONTENT);
                 }
         ));
     }
@@ -138,8 +140,7 @@ public class StorageClientContainerIT extends StorageClientIT {
                     null, // params
                     null, // headers
                     r -> {
-                        status(r, Family.SUCCESSFUL, Status.CREATED,
-                               Status.ACCEPTED);
+                        status(r, SUCCESSFUL, CREATED, ACCEPTED);
                         headers(r);
                     }
             ));
@@ -148,13 +149,13 @@ public class StorageClientContainerIT extends StorageClientIT {
             logger.debug("------------------------------ peeking container...");
             final MultivaluedMap<String, Object> headers
                     = new MultivaluedHashMap<>();
-            headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
+            headers.putSingle(ACCEPT, TEXT_PLAIN);
             accept(c -> c.peekContainer(
                     containerName,
                     null,
                     headers,
                     r -> {
-                        status(r, Family.SUCCESSFUL, Status.NO_CONTENT);
+                        status(r, SUCCESSFUL, NO_CONTENT);
                         headers(r);
                         assertNotNull(r.getHeaderString(
                                 StorageClient.HEADER_X_CONTAINER_OBJECT_COUNT));
@@ -167,20 +168,18 @@ public class StorageClientContainerIT extends StorageClientIT {
             logger.debug("------------------------------ reading container...");
             final MultivaluedMap<String, Object> headers
                     = new MultivaluedHashMap<>();
-            asList(MediaType.TEXT_PLAIN, MediaType.APPLICATION_XML,
-                   MediaType.APPLICATION_JSON)
+            asList(TEXT_PLAIN, APPLICATION_XML, APPLICATION_JSON)
                     .forEach(mediaType -> {
                         logger.debug("accepting " + mediaType);
-                        headers.putSingle(HttpHeaders.ACCEPT, mediaType);
+                        headers.putSingle(ACCEPT, mediaType);
                         accept(c -> c.readContainer(
                                 containerName,
                                 null,
                                 headers,
                                 r -> {
-                                    status(r, Family.SUCCESSFUL, Status.OK,
-                                           Status.NO_CONTENT);
+                                    status(r, SUCCESSFUL, OK, NO_CONTENT);
                                     try {
-                                        body(r, StandardCharsets.UTF_8);
+                                        body(r);
                                     } catch (final IOException ioe) {
                                         fail("failed to read container", ioe);
                                     }
@@ -194,7 +193,7 @@ public class StorageClientContainerIT extends StorageClientIT {
                     containerName,
                     null,
                     null,
-                    r -> r.getStatus() == Status.OK.getStatusCode(),
+                    r -> r.getStatus() == OK.getStatusCode(),
                     l -> {
                         logger.debug("object name: {}", l);
                     }
@@ -207,7 +206,7 @@ public class StorageClientContainerIT extends StorageClientIT {
                     null,
                     null,
                     r -> {
-                        status(r, Family.SUCCESSFUL, Status.NO_CONTENT);
+                        status(r, SUCCESSFUL, NO_CONTENT);
                     }
             ));
         }
