@@ -19,6 +19,6 @@ package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-public class WsRsStorageClientTest {
+public class WsRsClientTest {
 
 }

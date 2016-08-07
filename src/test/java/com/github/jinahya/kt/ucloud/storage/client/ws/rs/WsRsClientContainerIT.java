@@ -15,9 +15,9 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsStorageClientIT.body;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsStorageClientIT.headers;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsStorageClientIT.status;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.body;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.headers;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.status;
 import java.io.IOException;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
@@ -37,16 +37,31 @@ import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
 import org.testng.annotations.Test;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.body;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.status;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.fail;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.body;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.status;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.fail;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.body;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.status;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.fail;
 
 /**
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-@Test(dependsOnGroups = {"account"}, groups = {"container"})
-public class WsRSStorageClientContainerIT extends WsRsStorageClientIT {
+@Test(dependsOnGroups = {"ws.rs.account"}, groups = {"ws.rs.container"})
+public class WsRsClientContainerIT extends WsRsClientIT {
 
     private static final Logger logger
-            = getLogger(WsRSStorageClientContainerIT.class);
+            = getLogger(WsRsClientContainerIT.class);
 
     @Test
     public void updateContainer() {
@@ -150,15 +165,18 @@ public class WsRSStorageClientContainerIT extends WsRsStorageClientIT {
             final MultivaluedMap<String, Object> headers
                     = new MultivaluedHashMap<>();
             headers.putSingle(ACCEPT, TEXT_PLAIN);
-            accept(c -> c.peekContainer(containerName,
-                                        null,
-                                        headers,
-                                        r -> {
-                                            status(r, SUCCESSFUL, NO_CONTENT);
-                                            headers(r);
-                                            assertNotNull(r.getHeaderString(WsRsStorageClient.HEADER_X_CONTAINER_OBJECT_COUNT));
-                                            assertNotNull(r.getHeaderString(WsRsStorageClient.HEADER_X_CONTAINER_BYTES_USED));
-                                        }
+            accept(c -> c.peekContainer(
+                    containerName,
+                    null,
+                    headers,
+                    r -> {
+                        status(r, SUCCESSFUL, NO_CONTENT);
+                        headers(r);
+                        assertNotNull(r.getHeaderString(
+                                WsRsClient.HEADER_X_CONTAINER_OBJECT_COUNT));
+                        assertNotNull(r.getHeaderString(
+                                WsRsClient.HEADER_X_CONTAINER_BYTES_USED));
+                    }
             ));
         }
         {

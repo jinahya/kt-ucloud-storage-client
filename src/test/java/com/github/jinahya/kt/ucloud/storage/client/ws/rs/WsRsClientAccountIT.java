@@ -32,16 +32,28 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import org.testng.annotations.Test;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 
 /**
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-@Test(groups = {"account"})
-public class WsRsStorageClientAccountIT extends WsRsStorageClientIT {
+@Test(dependsOnGroups = {"net.object"}, groups = {"ws.rs.account"})
+public class WsRsClientAccountIT extends WsRsClientIT {
 
     private static final Logger logger
-            = getLogger(WsRsStorageClientAccountIT.class);
+            = getLogger(WsRsClientAccountIT.class);
 
     @Test
     public void peekAccount() {
@@ -56,11 +68,11 @@ public class WsRsStorageClientAccountIT extends WsRsStorageClientIT {
                     status(r, SUCCESSFUL, NO_CONTENT);
                     headers(r);
                     assertNotNull(r.getHeaderString(
-                            WsRsStorageClient.HEADER_X_ACCOUNT_CONTAINER_COUNT));
+                            WsRsClient.HEADER_X_ACCOUNT_CONTAINER_COUNT));
                     assertNotNull(r.getHeaderString(
-                            WsRsStorageClient.HEADER_X_ACCOUNT_OBJECT_COUNT));
+                            WsRsClient.HEADER_X_ACCOUNT_OBJECT_COUNT));
                     assertNotNull(r.getHeaderString(
-                            WsRsStorageClient.HEADER_X_ACCOUNT_BYTES_USED));
+                            WsRsClient.HEADER_X_ACCOUNT_BYTES_USED));
                 }
         ));
     }

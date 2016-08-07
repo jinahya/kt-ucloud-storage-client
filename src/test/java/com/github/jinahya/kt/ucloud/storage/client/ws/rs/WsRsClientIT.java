@@ -15,6 +15,7 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
+import com.github.jinahya.kt.ucloud.storage.client.StorageClientIT;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,11 +23,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import static java.util.Objects.requireNonNull;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -36,50 +32,61 @@ import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
-import org.testng.SkipException;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
+import static java.util.Objects.requireNonNull;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static java.util.Objects.requireNonNull;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static java.util.Objects.requireNonNull;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-abstract class WsRsStorageClientIT {
+public abstract class WsRsClientIT extends StorageClientIT<WsRsClient> {
 
-    private static final Logger logger = getLogger(WsRsStorageClientIT.class);
+    private static final Logger logger = getLogger(WsRsClientIT.class);
 
-    private static WsRsStorageClient client;
-
-    @BeforeSuite
-    void doBeforeSuite() {
-        final String authUrl = System.getProperty("authUrl");
-        if (authUrl == null) {
-            logger.error("missing property; authUrl; skipping...");
-            throw new SkipException("missing property; authUrl");
-        }
-        final String authUser = System.getProperty("authUser");
-        if (authUser == null) {
-            logger.error("missing property; authUser; skipping...");
-            throw new SkipException("missing property; authUser");
-        }
-        final String authPass = System.getProperty("authPass");
-        if (authPass == null) {
-            logger.error("missing proprety; authPass; skipping...");
-            throw new SkipException("missing property; authPass");
-        }
-        client = new WsRsStorageClient(authUrl, authUser, authPass)
-                .authenticateUser(r -> {
-                    status(r, Family.SUCCESSFUL, Status.OK);
-                });
-//        client = client().authenticateUser(r -> {
-//            status(r, Family.SUCCESSFUL, Status.OK.getStatusCode());
-//        });
-    }
-
-    @AfterSuite
-    void doAfterSuite() {
-        client.invalidate();
-        client = null;
+//    private static WsRsClient client;
+//    @BeforeSuite
+//    void doBeforeSuite() {
+//        final String authUrl = System.getProperty("authUrl");
+//        if (authUrl == null) {
+//            logger.error("missing property; authUrl; skipping...");
+//            throw new SkipException("missing property; authUrl");
+//        }
+//        final String authUser = System.getProperty("authUser");
+//        if (authUser == null) {
+//            logger.error("missing property; authUser; skipping...");
+//            throw new SkipException("missing property; authUser");
+//        }
+//        final String authPass = System.getProperty("authPass");
+//        if (authPass == null) {
+//            logger.error("missing proprety; authPass; skipping...");
+//            throw new SkipException("missing property; authPass");
+//        }
+//        client = new WsRsClient(authUrl, authUser, authPass)
+//                .authenticateUser(r -> {
+//                    status(r, Family.SUCCESSFUL, Status.OK);
+//                });
+////        client = client().authenticateUser(r -> {
+////            status(r, Family.SUCCESSFUL, Status.OK.getStatusCode());
+////        });
+//    }
+//
+//    @AfterSuite
+//    void doAfterSuite() {
+//        client.invalidate();
+//        client = null;
+//    }
+    public WsRsClientIT() {
+        super(WsRsClient.class);
     }
 
 //    private static StorageClient client() {
@@ -198,29 +205,29 @@ abstract class WsRsStorageClientIT {
         }
     }
 
-    <T> T apply(final Function<WsRsStorageClient, T> function) {
-        return requireNonNull(function, "null function").apply(client);
-    }
-
-    <U, R> R apply(final BiFunction<WsRsStorageClient, U, R> function,
-                   final Supplier<U> u) {
-        return apply(
-                c -> requireNonNull(function, "null function")
-                .apply(c, requireNonNull(u, "null u").get())
-        );
-    }
-
-    void accept(final Consumer<WsRsStorageClient> consumer) {
-        apply(c -> {
-            requireNonNull(consumer, "null consumer").accept(c);
-            return null;
-        });
-    }
-
-    <U> void accept(final BiConsumer<WsRsStorageClient, U> consumer,
-                    final Supplier<U> u) {
-        accept(c -> requireNonNull(consumer, "null consumer").accept(
-                c, requireNonNull(u, "null u").get())
-        );
-    }
+//    <T> T apply(final Function<WsRsClient, T> function) {
+//        return requireNonNull(function, "null function").apply(client);
+//    }
+//
+//    <U, R> R apply(final BiFunction<WsRsClient, U, R> function,
+//                   final Supplier<U> u) {
+//        return apply(
+//                c -> requireNonNull(function, "null function")
+//                .apply(c, requireNonNull(u, "null u").get())
+//        );
+//    }
+//
+//    void accept(final Consumer<WsRsClient> consumer) {
+//        apply(c -> {
+//            requireNonNull(consumer, "null consumer").accept(c);
+//            return null;
+//        });
+//    }
+//
+//    <U> void accept(final BiConsumer<WsRsClient, U> consumer,
+//                    final Supplier<U> u) {
+//        accept(c -> requireNonNull(consumer, "null consumer").accept(
+//                c, requireNonNull(u, "null u").get())
+//        );
+//    }
 }

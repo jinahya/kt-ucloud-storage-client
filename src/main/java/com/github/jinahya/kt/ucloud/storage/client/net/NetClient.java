@@ -30,6 +30,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import static java.util.logging.Logger.getLogger;
 import static java.util.stream.Collectors.joining;
@@ -45,6 +46,8 @@ public class NetClient extends StorageClient {
     private static StringBuilder queryParameters(
             final StringBuilder builder,
             final Map<String, List<Object>> params) {
+        logger.log(Level.FINE, "queryParameters({0}, {1})",
+                   new Object[]{builder, params});
         if (params != null && !params.isEmpty()) {
             builder.append('?').append(
                     params.entrySet().stream().flatMap(
@@ -159,31 +162,37 @@ public class NetClient extends StorageClient {
     }
 
     // -------------------------------------------------------------------------
-    public <T> T authenticateUser(final Map<String, List<Object>> params,
-                                  Map<String, List<Object>> headers,
-                                  final boolean newToken,
-                                  final Function<URLConnection, T> function)
-            throws IOException {
-        final HttpURLConnection connection = (HttpURLConnection) openAccount(
-                storageUrl, params);
-        connection.setRequestMethod("GET");
-        if (headers == null) {
-            headers = new HashMap<>();
+    @Override
+    protected void authenticateUser() {
+        try {
+            authenticateUser(
+                    n -> {
+                        return null;
+                    });
+        } catch (final IOException ioe) {
+            throw new RuntimeException(ioe);
         }
+    }
+
+    public <T> T authenticateUser(final Function<URLConnection, T> function)
+            throws IOException {
+        final HttpURLConnection connection
+                = (HttpURLConnection) new URL(authUrl).openConnection();
+        connection.setRequestMethod("GET");
+        final Map<String, List<Object>> headers = new HashMap<>();
         headers.put(HEADER_X_AUTH_USER, singletonList(authUser));
         headers.put(HEADER_X_AUTH_PASS, singletonList(authPass));
-        if (newToken) {
-            headers.put(HEADER_X_AUTH_NEW_TOKEN, singletonList(Boolean.TRUE));
-        }
+        headers.put(HEADER_X_AUTH_NEW_TOKEN, singletonList(Boolean.TRUE));
         requestProperties(connection, headers);
+        System.out.println("properties set");
         connection.setDoOutput(false);
-        connection.setDoInput(false); // @@?
-        if (connectTimeout
-            != null) {
+        connection.setDoInput(true);
+        if (connectTimeout != null) {
             connection.setConnectTimeout(connectTimeout);
         }
         connection.connect();
         try {
+            System.out.println("connected");
             final int statusCode = connection.getResponseCode();
             if (statusCode != 200) {
                 throw new IOException(
@@ -201,29 +210,18 @@ public class NetClient extends StorageClient {
     }
 
     public <T> T authenticateUser(
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final boolean newToken,
             final BiFunction<URLConnection, NetClient, T> function)
             throws IOException {
         return authenticateUser(
-                params,
-                headers,
-                newToken,
                 n -> {
                     return function.apply(n, this);
-                });
+                }
+        );
     }
 
-    public NetClient authenticateUser(final Map<String, List<Object>> params,
-                                      final Map<String, List<Object>> headers,
-                                      final boolean newToken,
-                                      final Consumer<URLConnection> consumer)
+    public NetClient authenticateUser(final Consumer<URLConnection> consumer)
             throws IOException {
         return authenticateUser(
-                params,
-                headers,
-                newToken,
                 n -> {
                     consumer.accept(n);
                     return this;
@@ -232,15 +230,9 @@ public class NetClient extends StorageClient {
     }
 
     public NetClient authenticateUser(
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final boolean newToken,
             final BiConsumer<URLConnection, NetClient> consumer)
             throws IOException {
         return authenticateUser(
-                params,
-                headers,
-                newToken,
                 n -> {
                     consumer.accept(n, this);
                 }
@@ -250,9 +242,6 @@ public class NetClient extends StorageClient {
     protected void ensureValid() throws IOException {
         if (!isValid(MINUTES, 10L)) {
             authenticateUser(
-                    null,
-                    null,
-                    true,
                     n -> {
                     }
             );
@@ -418,20 +407,4 @@ public class NetClient extends StorageClient {
                 }
         );
     }
-
-    // -------------------------------------------------------------------------
-    public Integer getConnectTimeout() {
-        return connectTimeout;
-    }
-
-    public void setConnectTimeOut(final Integer connectTimeout) {
-        this.connectTimeout = connectTimeout;
-    }
-
-    public NetClient connectTimeout(final Integer connectTimeout) {
-        setConnectTimeOut(connectTimeout);
-        return this;
-    }
-
-    private Integer connectTimeout;
 }

@@ -16,8 +16,8 @@
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
 import com.github.jinahya.kt.ucloud.storage.client.net.NetClient;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsStorageClientIT.headers;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsStorageClientIT.status;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.headers;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.status;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.security.SecureRandom;
@@ -41,15 +41,27 @@ import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.fail;
 import org.testng.annotations.Test;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.status;
+import static javax.ws.rs.client.Entity.entity;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.fail;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.status;
+import static javax.ws.rs.client.Entity.entity;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.fail;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.status;
+import static javax.ws.rs.client.Entity.entity;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.fail;
 
 /**
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-@Test(dependsOnGroups = {"container"}, groups = {"object"})
-public class WsRsStorageClientObjectIT extends WsRsStorageClientIT {
+@Test(dependsOnGroups = {"ws.rs.container"}, groups = {"ws.rs.object"})
+public class WsRsClientObjectIT extends WsRsClientIT {
 
-    private static final Logger logger = getLogger(WsRsStorageClientObjectIT.class);
+    private static final Logger logger = getLogger(WsRsClientObjectIT.class);
 
     @Test
     public void all() {
@@ -93,37 +105,36 @@ public class WsRsStorageClientObjectIT extends WsRsStorageClientIT {
             for (int i = objectCount - 1; i >= 0; i--) {
                 final String objectName = Integer.toString(i);
                 logger.debug("copying an object: " + objectName);
-                headers.putSingle(WsRsStorageClient.HEADER_X_COPY_FROM,
+                headers.putSingle(WsRsClient.HEADER_X_COPY_FROM,
                                   "/" + containerName + "/" + objectName);
                 accept(c -> {
-                    c.peekObject(
-                            containerName,
-                            objectName,
-                            null,
-                            null,
-                            r -> {
-                                final String contentLength = r.getHeaderString(CONTENT_LENGTH);
-                                headers.putSingle(CONTENT_LENGTH, contentLength);
-                                final NetClient client = new NetClient(c);
-                                try {
-                                    client.updateObject(
-                                            containerName,
-                                            objectName + "_copied",
-                                            null,
-                                            headers,
-                                            n -> {
-                                                try {
-                                                    n.getOutputStream().close();
-                                                    final int statusCode = ((HttpURLConnection) n).getResponseCode();
-                                                    logger.debug("status code: " + statusCode);
-                                                } catch (final IOException ioe) {
-                                                    fail("failed to copy object", ioe);
-                                                }
-                                            });
-                                } catch (final IOException ioe) {
-                                    fail("failed to copy object", ioe);
-                                }
-                            }
+                    c.peekObject(containerName,
+                                 objectName,
+                                 null,
+                                 null,
+                                 r -> {
+                                     final String contentLength = r.getHeaderString(CONTENT_LENGTH);
+                                     headers.putSingle(CONTENT_LENGTH, contentLength);
+                                     final NetClient client = new NetClient(c);
+                                     try {
+                                         client.updateObject(
+                                                 containerName,
+                                                 objectName + "_copied",
+                                                 null,
+                                                 headers,
+                                                 n -> {
+                                                     try {
+                                                         n.getOutputStream().close();
+                                                         final int statusCode = ((HttpURLConnection) n).getResponseCode();
+                                                         logger.debug("status code: " + statusCode);
+                                                     } catch (final IOException ioe) {
+                                                         fail("failed to copy object", ioe);
+                                                     }
+                                                 });
+                                     } catch (final IOException ioe) {
+                                         fail("failed to copy object", ioe);
+                                     }
+                                 }
                     );
                 });
             }

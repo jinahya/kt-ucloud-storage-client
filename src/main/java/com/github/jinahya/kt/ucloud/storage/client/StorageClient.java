@@ -80,6 +80,8 @@ public abstract class StorageClient {
         this.authPass = requireNonNull(authPass, "null authPass");
     }
 
+    protected abstract void authenticateUser();
+
     /**
      * Invalidates this client by purging the authorization information.
      *
@@ -136,6 +138,34 @@ public abstract class StorageClient {
         return authPass;
     }
 
+    // ---------------------------------------------------------- connectTimeout
+    public Integer getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public void setConnectTimeout(final Integer connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    public StorageClient connectTimeout(final Integer connectTimeout) {
+        setConnectTimeout(connectTimeout);
+        return this;
+    }
+
+    // ------------------------------------------------------------- readTimeout
+    public Integer getReadTimeout() {
+        return readTimeout;
+    }
+
+    public void setReadTimeout(final Integer readTimeout) {
+        this.readTimeout = readTimeout;
+    }
+
+    public StorageClient readTimeout(final Integer readTimeout) {
+        setReadTimeout(readTimeout);
+        return this;
+    }
+
     // -------------------------------------------------------------- storageUrl
     /**
      * Returns the storage URL.
@@ -183,9 +213,14 @@ public abstract class StorageClient {
 
     protected final String authPass;
 
+    protected Integer connectTimeout;
+
+    protected Integer readTimeout;
+
     protected transient String storageUrl;
 
     protected transient String authToken;
 
     protected transient Date authTokenExpires;
+
 }
