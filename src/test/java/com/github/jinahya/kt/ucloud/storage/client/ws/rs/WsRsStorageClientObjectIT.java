@@ -15,14 +15,14 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.StorageClientIT.headers;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.StorageClientIT.status;
+import com.github.jinahya.kt.ucloud.storage.client.net.NetClient;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsStorageClientIT.headers;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsStorageClientIT.status;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.security.SecureRandom;
 import static java.util.Arrays.asList;
 import java.util.Random;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import static javax.ws.rs.client.Entity.entity;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
@@ -32,7 +32,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
 import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.Family.SUCCESSFUL;
@@ -40,6 +39,7 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.fail;
 import org.testng.annotations.Test;
 
 /**
@@ -47,9 +47,9 @@ import org.testng.annotations.Test;
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
 @Test(dependsOnGroups = {"container"}, groups = {"object"})
-public class StorageClientObjectIT extends StorageClientIT {
+public class WsRsStorageClientObjectIT extends WsRsStorageClientIT {
 
-    private static final Logger logger = getLogger(StorageClientObjectIT.class);
+    private static final Logger logger = getLogger(WsRsStorageClientObjectIT.class);
 
     @Test
     public void all() {
@@ -90,12 +90,11 @@ public class StorageClientObjectIT extends StorageClientIT {
             logger.debug("-------------------------------- copying objects...");
             final MultivaluedMap<String, Object> headers
                     = new MultivaluedHashMap<>();
-            for (int i = objectCount - 1; false && i >= 0; i--) {
+            for (int i = objectCount - 1; i >= 0; i--) {
                 final String objectName = Integer.toString(i);
                 logger.debug("copying an object: " + objectName);
-                headers.putSingle(
-                        StorageClient.HEADER_X_COPY_FROM,
-                        "/" + containerName + "/" + objectName);
+                headers.putSingle(WsRsStorageClient.HEADER_X_COPY_FROM,
+                                  "/" + containerName + "/" + objectName);
                 accept(c -> {
                     c.peekObject(
                             containerName,
@@ -103,30 +102,26 @@ public class StorageClientObjectIT extends StorageClientIT {
                             null,
                             null,
                             r -> {
-                                final String contentLength
-                                = r.getHeaderString(CONTENT_LENGTH);
-                                headers.putSingle(
-                                        CONTENT_LENGTH, contentLength);
-                                final Client client = ClientBuilder.newClient();
+                                final String contentLength = r.getHeaderString(CONTENT_LENGTH);
+                                headers.putSingle(CONTENT_LENGTH, contentLength);
+                                final NetClient client = new NetClient(c);
                                 try {
-                                    client.property(
-                                            "jersey.config.client.suppressHttpComplianceValidation",
-                                            "true");
-                                    final Response response = StorageClient.updateObject(
-                                            client, c.getStorageUrl(),
+                                    client.updateObject(
                                             containerName,
                                             objectName + "_copied",
                                             null,
-                                            c.getAuthToken(),
                                             headers,
-                                            null);
-                                    try {
-                                        status(response, SUCCESSFUL, CREATED);
-                                    } finally {
-                                        response.close();
-                                    }
-                                } finally {
-                                    client.close();
+                                            n -> {
+                                                try {
+                                                    n.getOutputStream().close();
+                                                    final int statusCode = ((HttpURLConnection) n).getResponseCode();
+                                                    logger.debug("status code: " + statusCode);
+                                                } catch (final IOException ioe) {
+                                                    fail("failed to copy object", ioe);
+                                                }
+                                            });
+                                } catch (final IOException ioe) {
+                                    fail("failed to copy object", ioe);
                                 }
                             }
                     );

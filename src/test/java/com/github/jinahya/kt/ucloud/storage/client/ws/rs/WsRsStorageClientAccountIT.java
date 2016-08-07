@@ -38,10 +38,10 @@ import org.testng.annotations.Test;
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
 @Test(groups = {"account"})
-public class StorageClientAccountIT extends StorageClientIT {
+public class WsRsStorageClientAccountIT extends WsRsStorageClientIT {
 
     private static final Logger logger
-            = getLogger(StorageClientAccountIT.class);
+            = getLogger(WsRsStorageClientAccountIT.class);
 
     @Test
     public void peekAccount() {
@@ -56,11 +56,11 @@ public class StorageClientAccountIT extends StorageClientIT {
                     status(r, SUCCESSFUL, NO_CONTENT);
                     headers(r);
                     assertNotNull(r.getHeaderString(
-                            StorageClient.HEADER_X_ACCOUNT_CONTAINER_COUNT));
+                            WsRsStorageClient.HEADER_X_ACCOUNT_CONTAINER_COUNT));
                     assertNotNull(r.getHeaderString(
-                            StorageClient.HEADER_X_ACCOUNT_OBJECT_COUNT));
+                            WsRsStorageClient.HEADER_X_ACCOUNT_OBJECT_COUNT));
                     assertNotNull(r.getHeaderString(
-                            StorageClient.HEADER_X_ACCOUNT_BYTES_USED));
+                            WsRsStorageClient.HEADER_X_ACCOUNT_BYTES_USED));
                 }
         ));
     }

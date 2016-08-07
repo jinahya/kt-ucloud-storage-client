@@ -15,9 +15,9 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.StorageClientIT.body;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.StorageClientIT.headers;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.StorageClientIT.status;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsStorageClientIT.body;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsStorageClientIT.headers;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsStorageClientIT.status;
 import java.io.IOException;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
@@ -43,10 +43,10 @@ import org.testng.annotations.Test;
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
 @Test(dependsOnGroups = {"account"}, groups = {"container"})
-public class StorageClientContainerIT extends StorageClientIT {
+public class WsRSStorageClientContainerIT extends WsRsStorageClientIT {
 
     private static final Logger logger
-            = getLogger(StorageClientContainerIT.class);
+            = getLogger(WsRSStorageClientContainerIT.class);
 
     @Test
     public void updateContainer() {
@@ -150,18 +150,15 @@ public class StorageClientContainerIT extends StorageClientIT {
             final MultivaluedMap<String, Object> headers
                     = new MultivaluedHashMap<>();
             headers.putSingle(ACCEPT, TEXT_PLAIN);
-            accept(c -> c.peekContainer(
-                    containerName,
-                    null,
-                    headers,
-                    r -> {
-                        status(r, SUCCESSFUL, NO_CONTENT);
-                        headers(r);
-                        assertNotNull(r.getHeaderString(
-                                StorageClient.HEADER_X_CONTAINER_OBJECT_COUNT));
-                        assertNotNull(r.getHeaderString(
-                                StorageClient.HEADER_X_CONTAINER_BYTES_USED));
-                    }
+            accept(c -> c.peekContainer(containerName,
+                                        null,
+                                        headers,
+                                        r -> {
+                                            status(r, SUCCESSFUL, NO_CONTENT);
+                                            headers(r);
+                                            assertNotNull(r.getHeaderString(WsRsStorageClient.HEADER_X_CONTAINER_OBJECT_COUNT));
+                                            assertNotNull(r.getHeaderString(WsRsStorageClient.HEADER_X_CONTAINER_BYTES_USED));
+                                        }
             ));
         }
         {

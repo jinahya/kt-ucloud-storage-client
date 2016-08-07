@@ -15,6 +15,7 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
+import com.github.jinahya.kt.ucloud.storage.client.StorageClient;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +23,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import static java.util.Collections.singletonList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
 import static java.util.Objects.requireNonNull;
@@ -49,64 +49,62 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status.Family;
-import javax.ws.rs.core.Response.StatusType;
+import static javax.ws.rs.core.Response.Status.OK;
 
 /**
  * A client for accessing kt ucloud storage using JAX-RS.
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-public class StorageClient {
+public class WsRsStorageClient extends StorageClient {
 
     private static final Logger logger
-            = getLogger(StorageClient.class.getName());
+            = getLogger(WsRsStorageClient.class.getName());
 
-    public static final String AUTH_URL_STANDARD_KOR_CENTER
-            = "https://api.ucloudbiz.olleh.com/storage/v1/auth";
-
-    public static final String AUTH_URL_STANDARD_JPN
-            = "https://api.ucloudbiz.olleh.com/storage/v1/authjp";
-
-    public static final String AUTH_URL_LITE_KOR_HA
-            = "https://api.ucloudbiz.olleh.com/storage/v1/authlite";
-
-    public static final String QUERY_PARAM_LIMIT = "limit";
-
-    public static final String QUERY_PARAM_MARKER = "marker";
-
-    public static final String QUERY_PARAM_FORMAT = "format";
-
-    public static final String HEADER_X_AUTH_USER = "X-Storage-User";
-
-    public static final String HEADER_X_AUTH_PASS = "X-Storage-Pass";
-
-    public static final String HEADER_X_AUTH_NEW_TOKEN = "X-Auth-New-Token";
-
-    public static final String HEADER_X_AUTH_TOKEN = "X-Auth-Token";
-
-    public static final String HEADER_X_AUTH_TOKEN_EXPIRES
-            = "X-Auth-Token-Expires";
-
-    public static final String HEADER_X_STORAGE_URL = "X-Storage-Url";
-
-    public static final String HEADER_X_ACCOUNT_OBJECT_COUNT
-            = "X-Account-Object-Count";
-
-    public static final String HEADER_X_ACCOUNT_BYTES_USED
-            = "X-Account-Bytes-Used";
-
-    public static final String HEADER_X_ACCOUNT_CONTAINER_COUNT
-            = "X-Account-Container-Count";
-
-    public static final String HEADER_X_CONTAINER_OBJECT_COUNT
-            = "X-Container-Object-Count";
-
-    public static final String HEADER_X_CONTAINER_BYTES_USED
-            = "X-Container-Bytes-Used";
-
-    public static final String HEADER_X_COPY_FROM = "X-Copy-From";
-
+//    public static final String AUTH_URL_STANDARD_KOR_CENTER
+//            = "https://api.ucloudbiz.olleh.com/storage/v1/auth";
+//
+//    public static final String AUTH_URL_STANDARD_JPN
+//            = "https://api.ucloudbiz.olleh.com/storage/v1/authjp";
+//
+//    public static final String AUTH_URL_LITE_KOR_HA
+//            = "https://api.ucloudbiz.olleh.com/storage/v1/authlite";
+//
+//    public static final String QUERY_PARAM_LIMIT = "limit";
+//
+//    public static final String QUERY_PARAM_MARKER = "marker";
+//
+//    public static final String QUERY_PARAM_FORMAT = "format";
+//
+//    public static final String HEADER_X_AUTH_USER = "X-Storage-User";
+//
+//    public static final String HEADER_X_AUTH_PASS = "X-Storage-Pass";
+//
+//    public static final String HEADER_X_AUTH_NEW_TOKEN = "X-Auth-New-Token";
+//
+//    public static final String HEADER_X_AUTH_TOKEN = "X-Auth-Token";
+//
+//    public static final String HEADER_X_AUTH_TOKEN_EXPIRES
+//            = "X-Auth-Token-Expires";
+//
+//    public static final String HEADER_X_STORAGE_URL = "X-Storage-Url";
+//
+//    public static final String HEADER_X_ACCOUNT_OBJECT_COUNT
+//            = "X-Account-Object-Count";
+//
+//    public static final String HEADER_X_ACCOUNT_BYTES_USED
+//            = "X-Account-Bytes-Used";
+//
+//    public static final String HEADER_X_ACCOUNT_CONTAINER_COUNT
+//            = "X-Account-Container-Count";
+//
+//    public static final String HEADER_X_CONTAINER_OBJECT_COUNT
+//            = "X-Container-Object-Count";
+//
+//    public static final String HEADER_X_CONTAINER_BYTES_USED
+//            = "X-Container-Bytes-Used";
+//
+//    public static final String HEADER_X_COPY_FROM = "X-Copy-From";
     public static Response authenticateUser(final Client client,
                                             final String authUrl,
                                             final String authUser,
@@ -541,12 +539,24 @@ public class StorageClient {
      * @param authUser the authentication username
      * @param authPass the authentication password
      */
-    public StorageClient(final String authUrl, final String authUser,
-                         final String authPass) {
-        super();
-        this.authUrl = requireNonNull(authUrl, "null authUrl");
-        this.authUser = requireNonNull(authUser, "null authUser");
-        this.authPass = requireNonNull(authPass, "null authPass");
+//    public StorageClient(final String authUrl, final String authUser,
+//                         final String authPass) {
+//        super();
+//        this.authUrl = requireNonNull(authUrl, "null authUrl");
+//        this.authUser = requireNonNull(authUser, "null authUser");
+//        this.authPass = requireNonNull(authPass, "null authPass");
+//    }
+    public WsRsStorageClient(final String authUrl, final String authUser,
+                             final String authPass) {
+        super(authUrl, authUser, authPass);
+    }
+
+    public WsRsStorageClient(final StorageClient client) {
+        this(client.getStorageUrl(), client.getAuthUser(),
+             client.getAuthPass());
+        storageUrl = client.getStorageUrl();
+        authToken = client.getAuthToken();
+        authTokenExpires = client.getAuthTokenExpires();
     }
 
     /**
@@ -565,37 +575,14 @@ public class StorageClient {
             final Response response = authenticateUser(
                     client, authUrl, authUser, authPass);
             try {
-                final StatusType statusInfo = response.getStatusInfo();
-                final Family family = statusInfo.getFamily();
-                if (family == Family.SUCCESSFUL) {
-                    storageUrl = response.getHeaderString(HEADER_X_STORAGE_URL);
-                    if (storageUrl == null) {
-                        throw new WebApplicationException(
-                                "response header not found"
-                                + HEADER_X_STORAGE_URL);
-                    }
-                    authToken = response.getHeaderString(HEADER_X_AUTH_TOKEN);
-                    if (storageUrl == null) {
-                        throw new WebApplicationException(
-                                "response header not found"
-                                + HEADER_X_AUTH_TOKEN);
-                    }
-                    final String authTokenExpires_ = response.getHeaderString(
-                            HEADER_X_AUTH_TOKEN_EXPIRES);
-                    if (storageUrl == null) {
-                        throw new WebApplicationException(
-                                "response header not found"
-                                + HEADER_X_AUTH_TOKEN_EXPIRES);
-                    }
-                    authTokenExpires = new Date(
-                            System.currentTimeMillis()
-                            + (Long.parseLong(authTokenExpires_)
-                               * TimeUnit.SECONDS.toMillis(1L)));
-                } else {
-                    invalidate();
+                if (OK.getStatusCode() != response.getStatus()) {
                     throw new WebApplicationException(
                             "failed to authenticate user", response);
                 }
+                storageUrl = response.getHeaderString(HEADER_X_STORAGE_URL);
+                authToken = response.getHeaderString(HEADER_X_AUTH_TOKEN);
+                setAuthTokenExpires(response.getHeaderString(
+                        HEADER_X_AUTH_TOKEN_EXPIRES));
                 return function == null ? null : function.apply(response);
             } finally {
                 response.close();
@@ -616,17 +603,17 @@ public class StorageClient {
      * java.lang.String, java.lang.String)
      */
     public <T> T authenticateUser(
-            final BiFunction<Response, StorageClient, T> function) {
+            final BiFunction<Response, WsRsStorageClient, T> function) {
         return authenticateUser(
                 ofNullable(function)
                 .map(f -> (Function<Response, T>) r -> f.apply(r, this))
                 .orElse(null));
     }
 
-    public StorageClient authenticateUser(final Consumer<Response> consumer) {
-        return authenticateUser(
-                ofNullable(consumer)
-                .map(c -> (Function<Response, StorageClient>) r -> {
+    public WsRsStorageClient authenticateUser(
+            final Consumer<Response> consumer) {
+        return authenticateUser(ofNullable(consumer)
+                .map(c -> (Function<Response, WsRsStorageClient>) r -> {
                     c.accept(r);
                     return this;
                 })
@@ -634,8 +621,8 @@ public class StorageClient {
         );
     }
 
-    public StorageClient authenticateUser(
-            final BiConsumer<Response, StorageClient> consumer) {
+    public WsRsStorageClient authenticateUser(
+            final BiConsumer<Response, WsRsStorageClient> consumer) {
         return authenticateUser(
                 ofNullable(consumer)
                 .map(c -> (Consumer<Response>) r -> c.accept(r, this))
@@ -647,7 +634,7 @@ public class StorageClient {
      *
      * @return this client
      */
-    public StorageClient invalidate() {
+    public WsRsStorageClient invalidate() {
         storageUrl = null;
         authToken = null;
         authTokenExpires = null;
@@ -705,7 +692,7 @@ public class StorageClient {
     }
 
     private void lines(final Response response, final Charset charset,
-                       final BiConsumer<String, StorageClient> consumer)
+                       final BiConsumer<String, WsRsStorageClient> consumer)
             throws IOException {
         lines(response, charset, l -> consumer.accept(l, this));
     }
@@ -719,7 +706,7 @@ public class StorageClient {
     }
 
     private void lines(final Response response,
-                       final BiConsumer<String, StorageClient> consumer)
+                       final BiConsumer<String, WsRsStorageClient> consumer)
             throws IOException {
         lines(response, l -> consumer.accept(l, this));
     }
@@ -775,7 +762,7 @@ public class StorageClient {
     public <T> T peekAccount(
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, StorageClient, T> function) {
+            final BiFunction<Response, WsRsStorageClient, T> function) {
         return peekAccount(
                 params,
                 headers,
@@ -795,7 +782,7 @@ public class StorageClient {
      * @see #peekAccount(javax.ws.rs.core.MultivaluedMap,
      * javax.ws.rs.core.MultivaluedMap, java.util.function.Function)
      */
-    public StorageClient peekAccount(
+    public WsRsStorageClient peekAccount(
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
             final Consumer<Response> consumer) {
@@ -820,10 +807,10 @@ public class StorageClient {
      * @see #peekAccount(javax.ws.rs.core.MultivaluedMap,
      * javax.ws.rs.core.MultivaluedMap, java.util.function.Consumer)
      */
-    public StorageClient peekAccount(
+    public WsRsStorageClient peekAccount(
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, StorageClient> consumer) {
+            final BiConsumer<Response, WsRsStorageClient> consumer) {
         return peekAccount(
                 params,
                 headers,
@@ -863,7 +850,7 @@ public class StorageClient {
     public <T> T readAccount(
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, StorageClient, T> function) {
+            final BiFunction<Response, WsRsStorageClient, T> function) {
         return readAccount(
                 params,
                 headers,
@@ -874,7 +861,7 @@ public class StorageClient {
         );
     }
 
-    public StorageClient readAccount(
+    public WsRsStorageClient readAccount(
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
             final Consumer<Response> consumer) {
@@ -888,10 +875,10 @@ public class StorageClient {
         );
     }
 
-    public StorageClient readAccount(
+    public WsRsStorageClient readAccount(
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, StorageClient> consumer) {
+            final BiConsumer<Response, WsRsStorageClient> consumer) {
         return readAccount(
                 params,
                 headers,
@@ -956,7 +943,7 @@ public class StorageClient {
      * names and this client; may be {@code null}
      * @return this client
      */
-    public StorageClient readAccountContainerNames(
+    public WsRsStorageClient readAccountContainerNames(
             MultivaluedMap<String, Object> params,
             MultivaluedMap<String, Object> headers,
             final Predicate<Response> predicate,
@@ -1005,11 +992,11 @@ public class StorageClient {
      * names and this client; may be {@code null}
      * @return this client
      */
-    public StorageClient readAccountContainerNames(
+    public WsRsStorageClient readAccountContainerNames(
             MultivaluedMap<String, Object> params,
             MultivaluedMap<String, Object> headers,
             final Predicate<Response> prediate,
-            final BiConsumer<String, StorageClient> consumer) {
+            final BiConsumer<String, WsRsStorageClient> consumer) {
         return readAccountContainerNames(
                 params,
                 headers,
@@ -1040,7 +1027,7 @@ public class StorageClient {
     public <T> T configureAccount(
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, StorageClient, T> function) {
+            final BiFunction<Response, WsRsStorageClient, T> function) {
         return configureAccount(
                 params,
                 headers,
@@ -1051,7 +1038,7 @@ public class StorageClient {
         );
     }
 
-    public StorageClient configureAccount(
+    public WsRsStorageClient configureAccount(
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
             final Consumer<Response> consumer) {
@@ -1065,10 +1052,10 @@ public class StorageClient {
         );
     }
 
-    public StorageClient configureAccount(
+    public WsRsStorageClient configureAccount(
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, StorageClient> consumer) {
+            final BiConsumer<Response, WsRsStorageClient> consumer) {
         return configureAccount(
                 params,
                 headers,
@@ -1119,7 +1106,7 @@ public class StorageClient {
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, StorageClient, T> function) {
+            final BiFunction<Response, WsRsStorageClient, T> function) {
         return peekContainer(
                 containerName,
                 params,
@@ -1131,7 +1118,7 @@ public class StorageClient {
         );
     }
 
-    public StorageClient peekContainer(
+    public WsRsStorageClient peekContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
@@ -1147,11 +1134,11 @@ public class StorageClient {
         );
     }
 
-    public StorageClient peekContainer(
+    public WsRsStorageClient peekContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, StorageClient> consumer) {
+            final BiConsumer<Response, WsRsStorageClient> consumer) {
         return peekContainer(
                 containerName,
                 params,
@@ -1198,7 +1185,7 @@ public class StorageClient {
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, StorageClient, T> function) {
+            final BiFunction<Response, WsRsStorageClient, T> function) {
         return readContainer(
                 containerName,
                 params,
@@ -1210,7 +1197,7 @@ public class StorageClient {
         );
     }
 
-    public StorageClient readContainer(
+    public WsRsStorageClient readContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
@@ -1226,11 +1213,11 @@ public class StorageClient {
         );
     }
 
-    public StorageClient readContainer(
+    public WsRsStorageClient readContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, StorageClient> consumer) {
+            final BiConsumer<Response, WsRsStorageClient> consumer) {
         return readContainer(
                 containerName,
                 params,
@@ -1241,7 +1228,7 @@ public class StorageClient {
         );
     }
 
-    public StorageClient readContainerObjectNames(
+    public WsRsStorageClient readContainerObjectNames(
             final String containerName,
             MultivaluedMap<String, Object> params,
             MultivaluedMap<String, Object> headers,
@@ -1284,12 +1271,12 @@ public class StorageClient {
         return this;
     }
 
-    public StorageClient readContainerObjectNames(
+    public WsRsStorageClient readContainerObjectNames(
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
             final Predicate<Response> predicate,
-            final BiConsumer<String, StorageClient> consumer) {
+            final BiConsumer<String, WsRsStorageClient> consumer) {
         requireNonNull(consumer, "null consumer");
         return readContainerObjectNames(
                 containerName,
@@ -1343,7 +1330,7 @@ public class StorageClient {
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, StorageClient, T> function) {
+            final BiFunction<Response, WsRsStorageClient, T> function) {
         return updateContainer(
                 containerName,
                 params,
@@ -1354,7 +1341,7 @@ public class StorageClient {
         );
     }
 
-    public StorageClient updateContainer(
+    public WsRsStorageClient updateContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
@@ -1370,11 +1357,11 @@ public class StorageClient {
         );
     }
 
-    public StorageClient updateContainer(
+    public WsRsStorageClient updateContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, StorageClient> consumer) {
+            final BiConsumer<Response, WsRsStorageClient> consumer) {
         return updateContainer(
                 containerName,
                 params,
@@ -1414,7 +1401,7 @@ public class StorageClient {
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, StorageClient, T> function) {
+            final BiFunction<Response, WsRsStorageClient, T> function) {
         return configureContainer(
                 containerName,
                 params,
@@ -1425,7 +1412,7 @@ public class StorageClient {
         );
     }
 
-    public StorageClient configureContainer(
+    public WsRsStorageClient configureContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
@@ -1441,11 +1428,11 @@ public class StorageClient {
         );
     }
 
-    public StorageClient configureContainer(
+    public WsRsStorageClient configureContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, StorageClient> consumer) {
+            final BiConsumer<Response, WsRsStorageClient> consumer) {
         return configureContainer(
                 containerName,
                 params,
@@ -1491,7 +1478,7 @@ public class StorageClient {
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, StorageClient, T> function) {
+            final BiFunction<Response, WsRsStorageClient, T> function) {
         return deleteContainer(
                 containerName,
                 params,
@@ -1502,7 +1489,7 @@ public class StorageClient {
         );
     }
 
-    public StorageClient deleteContainer(
+    public WsRsStorageClient deleteContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
@@ -1518,11 +1505,11 @@ public class StorageClient {
         );
     }
 
-    public StorageClient deleteContainer(
+    public WsRsStorageClient deleteContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, StorageClient> consumer) {
+            final BiConsumer<Response, WsRsStorageClient> consumer) {
         return deleteContainer(
                 containerName,
                 params,
@@ -1559,7 +1546,7 @@ public class StorageClient {
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, StorageClient, T> function) {
+            final BiFunction<Response, WsRsStorageClient, T> function) {
         return peekObject(
                 containerName,
                 objectName,
@@ -1571,7 +1558,7 @@ public class StorageClient {
         );
     }
 
-    public StorageClient peekObject(
+    public WsRsStorageClient peekObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
@@ -1588,11 +1575,11 @@ public class StorageClient {
         );
     }
 
-    public StorageClient peekObject(
+    public WsRsStorageClient peekObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, StorageClient> consumer) {
+            final BiConsumer<Response, WsRsStorageClient> consumer) {
         return peekObject(
                 containerName,
                 objectName,
@@ -1628,7 +1615,7 @@ public class StorageClient {
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, StorageClient, T> function) {
+            final BiFunction<Response, WsRsStorageClient, T> function) {
         return readObject(
                 containerName,
                 objectName,
@@ -1640,7 +1627,7 @@ public class StorageClient {
         );
     }
 
-    public StorageClient readObject(
+    public WsRsStorageClient readObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
@@ -1657,11 +1644,11 @@ public class StorageClient {
         );
     }
 
-    public StorageClient readObject(
+    public WsRsStorageClient readObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, StorageClient> consumer) {
+            final BiConsumer<Response, WsRsStorageClient> consumer) {
         return readObject(
                 containerName,
                 objectName,
@@ -1713,7 +1700,7 @@ public class StorageClient {
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
             final Entity<?> entity,
-            final BiFunction<Response, StorageClient, T> function) {
+            final BiFunction<Response, WsRsStorageClient, T> function) {
         return updateObject(
                 containerName,
                 objectName,
@@ -1726,7 +1713,7 @@ public class StorageClient {
         );
     }
 
-    public StorageClient updateObject(
+    public WsRsStorageClient updateObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
@@ -1744,12 +1731,12 @@ public class StorageClient {
         );
     }
 
-    public StorageClient updateObject(
+    public WsRsStorageClient updateObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
             final Entity<?> entity,
-            final BiConsumer<Response, StorageClient> consumer) {
+            final BiConsumer<Response, WsRsStorageClient> consumer) {
         return updateObject(
                 containerName,
                 objectName,
@@ -1787,7 +1774,7 @@ public class StorageClient {
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, StorageClient, T> function) {
+            final BiFunction<Response, WsRsStorageClient, T> function) {
         return configureObject(
                 containerName,
                 objectName,
@@ -1799,7 +1786,7 @@ public class StorageClient {
         );
     }
 
-    public StorageClient configureObject(
+    public WsRsStorageClient configureObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
@@ -1816,11 +1803,11 @@ public class StorageClient {
         );
     }
 
-    public StorageClient configureObject(
+    public WsRsStorageClient configureObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, StorageClient> consumer) {
+            final BiConsumer<Response, WsRsStorageClient> consumer) {
         return configureObject(
                 containerName,
                 objectName,
@@ -1870,7 +1857,7 @@ public class StorageClient {
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, StorageClient, T> function) {
+            final BiFunction<Response, WsRsStorageClient, T> function) {
         return deleteObject(
                 containerName,
                 objectName,
@@ -1882,7 +1869,7 @@ public class StorageClient {
         );
     }
 
-    public StorageClient deleteObject(
+    public WsRsStorageClient deleteObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
@@ -1899,11 +1886,11 @@ public class StorageClient {
         );
     }
 
-    public StorageClient deleteObject(
+    public WsRsStorageClient deleteObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, StorageClient> consumer) {
+            final BiConsumer<Response, WsRsStorageClient> consumer) {
         return deleteObject(
                 containerName,
                 objectName,
@@ -1915,49 +1902,63 @@ public class StorageClient {
         );
     }
 
-    // -------------------------------------------------------------- storageUrl
-    /**
-     * Returns the storage URL.
-     *
-     * @return the storage URL
-     */
-    public String getStorageUrl() {
-        return storageUrl;
-    }
-
-    // ---------------------------------------------------------------- authToken
-    /**
-     * Returns the authorization token.
-     *
-     * @return the authorization token.
-     */
-    public String getAuthToken() {
-        return authToken;
-    }
-
-    // ------------------------------------------------------------ tokenExpires
-    /**
-     * Return the date the authorization token expires.
-     *
-     * @return the date the authorization token expires.
-     */
-    public Date getAuthTokenExpires() {
-        if (authTokenExpires == null) {
-            return null;
-        }
-        return new Date(authTokenExpires.getTime());
-    }
-
+//    // ----------------------------------------------------------------- authUrl
+//    public String getAuthUrl() {
+//        return authUrl;
+//    }
+//
+//    // ---------------------------------------------------------------- authUser
+//    public String getAuthUser() {
+//        return authUser;
+//    }
+//
+//    // ---------------------------------------------------------------- authPass
+//    public String getAuthPass() {
+//        return authPass;
+//    }
+//
+//    // -------------------------------------------------------------- storageUrl
+//    /**
+//     * Returns the storage URL.
+//     *
+//     * @return the storage URL
+//     */
+//    public String getStorageUrl() {
+//        return storageUrl;
+//    }
+//
+//    // ---------------------------------------------------------------- authToken
+//    /**
+//     * Returns the authorization token.
+//     *
+//     * @return the authorization token.
+//     */
+//    public String getAuthToken() {
+//        return authToken;
+//    }
+//
+//    // ------------------------------------------------------------ tokenExpires
+//    /**
+//     * Return the date the authorization token expires.
+//     *
+//     * @return the date the authorization token expires.
+//     */
+//    public Date getAuthTokenExpires() {
+//        if (authTokenExpires == null) {
+//            return null;
+//        }
+//        return new Date(authTokenExpires.getTime());
+//    }
     // -------------------------------------------------------------------------
-    private final String authUrl;
-
-    private final String authUser;
-
-    private final String authPass;
-
-    private transient String storageUrl;
-
-    private transient String authToken;
-
-    private transient Date authTokenExpires;
+//    private final String authUrl;
+//
+//    private final String authUser;
+//
+//    private final String authPass;
+//
+//    private transient String storageUrl;
+//
+//    private transient String authToken;
+//
+//    private transient Date authTokenExpires;
 }

@@ -44,11 +44,11 @@ import org.testng.annotations.BeforeSuite;
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-abstract class StorageClientIT {
+abstract class WsRsStorageClientIT {
 
-    private static final Logger logger = getLogger(StorageClientIT.class);
+    private static final Logger logger = getLogger(WsRsStorageClientIT.class);
 
-    private static StorageClient client;
+    private static WsRsStorageClient client;
 
     @BeforeSuite
     void doBeforeSuite() {
@@ -67,7 +67,7 @@ abstract class StorageClientIT {
             logger.error("missing proprety; authPass; skipping...");
             throw new SkipException("missing property; authPass");
         }
-        client = new StorageClient(authUrl, authUser, authPass)
+        client = new WsRsStorageClient(authUrl, authUser, authPass)
                 .authenticateUser(r -> {
                     status(r, Family.SUCCESSFUL, Status.OK);
                 });
@@ -198,11 +198,11 @@ abstract class StorageClientIT {
         }
     }
 
-    <T> T apply(final Function<StorageClient, T> function) {
+    <T> T apply(final Function<WsRsStorageClient, T> function) {
         return requireNonNull(function, "null function").apply(client);
     }
 
-    <U, R> R apply(final BiFunction<StorageClient, U, R> function,
+    <U, R> R apply(final BiFunction<WsRsStorageClient, U, R> function,
                    final Supplier<U> u) {
         return apply(
                 c -> requireNonNull(function, "null function")
@@ -210,14 +210,14 @@ abstract class StorageClientIT {
         );
     }
 
-    void accept(final Consumer<StorageClient> consumer) {
+    void accept(final Consumer<WsRsStorageClient> consumer) {
         apply(c -> {
             requireNonNull(consumer, "null consumer").accept(c);
             return null;
         });
     }
 
-    <U> void accept(final BiConsumer<StorageClient, U> consumer,
+    <U> void accept(final BiConsumer<WsRsStorageClient, U> consumer,
                     final Supplier<U> u) {
         accept(c -> requireNonNull(consumer, "null consumer").accept(
                 c, requireNonNull(u, "null u").get())
