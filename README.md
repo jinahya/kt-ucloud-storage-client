@@ -59,8 +59,8 @@ final int statusCode = client.authenticateUser(
 assert statusCode == 200;
 ```
 ## account
-### peek account
-### read account
+### peek
+### read
 #### read container names
 ## container
 ### create/update
