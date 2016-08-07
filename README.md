@@ -9,9 +9,9 @@ a simple client for [kt ucloud storage](https://ucloudbiz.olleh.com/portal/ktclo
 
 ## verify
 ```
-$ mvn -P(jersey|cxf|resteasy) -DauthUrl="" -DauthUser="" -DauthPass="" clean verify
+$ mvn -P(jersey|cxf|resteasy) -DauthUrl="" -DauthUser="" -DauthPass="" verify
 ```
-## mapping
+## methods
 http  |java        |notes
 ------|------------|-----
 HEAD  |peek...     |reads resources' information
@@ -19,28 +19,6 @@ GET   |read...     |reads resources
 PUT   |update...   |creates or updates resources
 POST  |configure...|creates, updates or removes metadata
 DELETE|delete...   |deletes resources
-## methods
-There are four kinds of methods for each operations.
-```java
-// invoke and apply the function with the server response
-// and return the value the function results
-<T> T ...(..., Function<Response, T> function)
-```
-```java
-// invoke and apply the function with the server response and the client itself
-// and return the value the function results
-<T> T ...(..., BiFunction<Response, StorageClient, T> function)
-```
-```java
-// invoke and accept the consumer with the server response
-// and return the client itself.
-StorageClient ...(..., Consumer<Response> consumer)
-```
-```java
-// invoke and accept the consumer with the server response and the client itself
-// and return the client itself.
-StorageClient ...(..., BiConsumer<Response, StorageClient> consumer)
-```
 ## java.net
 ```java
 final String url; // authentication url
@@ -48,6 +26,8 @@ final String user; // access key ID
 final String pass; // secret key
 final NetStorageClient client = new NetStorageClient(url, user, pass);
 ```
+## java.net.http
+N/A yet.
 ## javax.ws.rs
 ```java
 final String url; // authentication url
