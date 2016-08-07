@@ -20,7 +20,7 @@ PUT   |update...   |creates or updates resources
 POST  |configure...|creates, updates or removes metadata
 DELETE|delete...   |deletes resources
 ## java methods
-There are, at most, four method types for each operations.
+There are four kinds of methods for each operations.
 ```java
 // invoke and apply the function with the server response
 // and return the value the function results
@@ -59,9 +59,9 @@ final int statusCode = client.authenticateUser(
 assert statusCode == 200;
 ```
 ## account
-### `peekAccount`
-### `readAccount`
-#### `readAccountContainerNames`
+### peek account
+### read account
+#### read container names
 ## container
 ### create/update
 ```java
