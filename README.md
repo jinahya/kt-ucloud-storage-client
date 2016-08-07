@@ -11,7 +11,7 @@ a simple client for [kt ucloud storage](https://ucloudbiz.olleh.com/portal/ktclo
 ```
 $ mvn -P(jersey|cxf|resteasy) -DauthUrl="" -DauthUser="" -DauthPass="" clean verify
 ```
-## methods mapping
+## mapping
 http  |java        |notes
 ------|------------|-----
 HEAD  |peek...     |reads resources' information
@@ -19,7 +19,7 @@ GET   |read...     |reads resources
 PUT   |update...   |creates or updates resources
 POST  |configure...|creates, updates or removes metadata
 DELETE|delete...   |deletes resources
-## java methods
+## methods
 There are four kinds of methods for each operations.
 ```java
 // invoke and apply the function with the server response
