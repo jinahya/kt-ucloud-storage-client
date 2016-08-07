@@ -68,11 +68,11 @@ public abstract class StorageClientIT<T extends StorageClient> {
 
     @AfterClass
     public void doAfterClass() {
-        logger.debug("=======================================================");
         client.invalidate();
         logger.debug("client invalidated");
         client = null;
         logger.debug("client nullified");
+        logger.debug("=======================================================");
     }
 
     protected <R> R apply(final Function<T, R> function) {
