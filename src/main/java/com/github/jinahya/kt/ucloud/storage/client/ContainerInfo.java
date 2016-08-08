@@ -15,12 +15,8 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client;
 
-import static java.util.Objects.requireNonNull;
-import static java.util.Optional.ofNullable;
-import javax.ws.rs.core.MultivaluedMap;
+import java.net.URLConnection;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status.Family;
-import javax.ws.rs.core.Response.StatusType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -33,31 +29,10 @@ public class ContainerInfo {
 
     protected static <T extends ContainerInfo> T newInstance(
             final T instance, final Response response) {
-        final StatusType statusInfo
-                = requireNonNull(response, "null response").getStatusInfo();
-        if (!Family.SUCCESSFUL.equals(statusInfo.getFamily())) {
-            throw new IllegalArgumentException(
-                    "response.statusInfo.family != " + Family.SUCCESSFUL);
-        }
-        final MultivaluedMap<String, Object> headers = response.getHeaders();
-        instance.setObjectCount(ofNullable(headers.getFirst(
-                StorageClient.HEADER_X_ACCOUNT_OBJECT_COUNT))
-                .map(Object::toString)
-                .map(Integer::parseInt)
-                .orElseThrow(() -> {
-                    return new IllegalArgumentException(
-                            "header not found: "
-                            + StorageClient.HEADER_X_ACCOUNT_OBJECT_COUNT);
-                }));
-        instance.setBytesUsed(ofNullable(headers.getFirst(
-                StorageClient.HEADER_X_ACCOUNT_BYTES_USED))
-                .map(Object::toString)
-                .map(Long::parseLong)
-                .orElseThrow(() -> {
-                    return new IllegalArgumentException(
-                            "header not found: "
-                            + StorageClient.HEADER_X_ACCOUNT_BYTES_USED);
-                }));
+        instance.setObjectCount(Integer.parseInt(response.getHeaderString(
+                StorageClient.HEADER_X_ACCOUNT_OBJECT_COUNT)));
+        instance.setBytesUsed(Integer.parseInt(response.getHeaderString(
+                StorageClient.HEADER_X_ACCOUNT_BYTES_USED)));
         return instance;
     }
 
@@ -65,6 +40,20 @@ public class ContainerInfo {
         return newInstance(new ContainerInfo(), response);
     }
 
+    protected static <T extends ContainerInfo> T newInstance(
+            final T instance, final URLConnection connection) {
+        instance.setObjectCount(Integer.parseInt(connection.getHeaderField(
+                StorageClient.HEADER_X_ACCOUNT_OBJECT_COUNT)));
+        instance.setBytesUsed(Integer.parseInt(connection.getHeaderField(
+                StorageClient.HEADER_X_ACCOUNT_BYTES_USED)));
+        return instance;
+    }
+
+    public static ContainerInfo newInstance(final URLConnection connection) {
+        return newInstance(new ContainerInfo(), connection);
+    }
+
+    // -------------------------------------------------------------------------
     @Override
     public String toString() {
         return super.toString() + "{"
@@ -82,6 +71,11 @@ public class ContainerInfo {
         this.objectCount = objectCount;
     }
 
+    public ContainerInfo objectCount(final int objectCount) {
+        setObjectCount(objectCount);
+        return this;
+    }
+
     // --------------------------------------------------------------- bytesUsed
     public long getBytesUsed() {
         return bytesUsed;
@@ -89,6 +83,11 @@ public class ContainerInfo {
 
     public void setBytesUsed(final long bytesUsed) {
         this.bytesUsed = bytesUsed;
+    }
+
+    public ContainerInfo bytesUsed(final long bytesUsed) {
+        setBytesUsed(bytesUsed);
+        return this;
     }
 
     // -------------------------------------------------------------------------

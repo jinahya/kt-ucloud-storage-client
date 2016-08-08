@@ -15,12 +15,17 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
 import static java.lang.Long.parseLong;
 import static java.lang.System.currentTimeMillis;
 import java.util.Date;
 import static java.util.Objects.requireNonNull;
 import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  *
@@ -73,6 +78,22 @@ public abstract class StorageClient {
 
     public static final String HEADER_X_COPY_FROM = "X-Copy-From";
 
+    protected static void lines(final Reader reader,
+                                final Consumer<String> consumer)
+            throws IOException {
+        try (BufferedReader buffered = new BufferedReader(reader)) {
+            buffered.lines().forEach(consumer::accept);
+        }
+    }
+
+    protected static <T extends StorageClient> void lines(
+            final Reader reader, final BiConsumer<String, T> consumer,
+            final T client)
+            throws IOException {
+        lines(reader, l -> consumer.accept(l, client));
+    }
+
+    // -------------------------------------------------------------------------
     public StorageClient(final String authUrl, final String authUser,
                          final String authPass) {
         this.authUrl = requireNonNull(authUrl, "null authUrl");
@@ -203,7 +224,6 @@ public abstract class StorageClient {
         this.authTokenExpires = new Date(
                 currentTimeMillis()
                 + (parseLong(authTokenExpires) * SECONDS.toMillis(1L)));
-
     }
 
     // -------------------------------------------------------------------------
@@ -222,5 +242,4 @@ public abstract class StorageClient {
     protected transient String authToken;
 
     protected transient Date authTokenExpires;
-
 }

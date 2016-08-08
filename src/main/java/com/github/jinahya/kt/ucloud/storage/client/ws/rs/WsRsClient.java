@@ -832,6 +832,7 @@ public class WsRsClient extends StorageClient {
     /**
      * Reads a storage using {@link javax.ws.rs.HttpMethod#GET}.
      *
+     * @param <T> result type parameter
      * @param params query parameters; may be {@code null}
      * @param headers request headers; may be {@code null}
      * @param function a function to be applied with the server response
@@ -948,6 +949,7 @@ public class WsRsClient extends StorageClient {
      *
      * @param params query parameters; may be {@code null}
      * @param headers request headers; may be {@code null}
+     * @param predicate a predicate for testing server response.
      * @param consumer the consumer to be accepted with each of the consumer
      * names and this client; may be {@code null}
      * @return this client
@@ -997,6 +999,8 @@ public class WsRsClient extends StorageClient {
      *
      * @param params query parameters; may be {@code null}
      * @param headers request headers; may be {@code null}
+     * @param prediate a predicate for testing the server response before
+     * accepting the {@code consumer}
      * @param consumer the consumer to be accepted with each of the consumer
      * names and this client; may be {@code null}
      * @return this client
