@@ -1,116 +1,37 @@
-# kt-ucloud-storage-client-jax-rs
-[![Maven Central](https://img.shields.io/maven-central/v/com.github.jinahya/kt-ucloud-storage-client-jax-rs.svg)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.github.jinahya%22%20AND%20a%3A%22kt-ucloud-storage-client-jax-rs%22)
-[![Javadocs](http://www.javadoc.io/badge/com.github.jinahya/kt-ucloud-storage-client-jax-rs.svg)](http://www.javadoc.io/doc/com.github.jinahya/kt-ucloud-storage-client-jax-rs)
+# kt-ucloud-storage-client
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.jinahya/kt-ucloud-storage-client-jax-rs.svg?style=flat-square)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.github.jinahya%22%20AND%20a%3A%22kt-ucloud-storage-client-jax-rs%22)
+[![Javadocs](http://www.javadoc.io/badge/com.github.jinahya/kt-ucloud-storage-client-jax-rs.svg?style=flat-square)](http://www.javadoc.io/doc/com.github.jinahya/kt-ucloud-storage-client-jax-rs)
+[![Dependency Status](https://www.versioneye.com/user/projects/57a6194d0f64000041a9375e/badge.svg?style=flat-square)](https://www.versioneye.com/user/projects/57a6194d0f64000041a9375e)
+[![Build Status](https://travis-ci.org/jinahya/kt-ucloud-storage-client-jax-rs.svg?style=flat-square&branch=develop)](https://travis-ci.org/jinahya/kt-ucloud-storage-client-jax-rs)
+[![Sputnik](https://sputnik.ci/conf/badge)](https://sputnik.ci/app#/builds/jinahya/kt-ucloud-storage-client-jax-rs)
 
 a simple client for [kt ucloud storage](https://ucloudbiz.olleh.com/portal/ktcloudportal.epc.productintro.ss.info.html).
 
 ## verify
 ```
-$ mvn -P(jersey|cxf|resteasy) -DauthUrl="" -DauthUser="" -DauthPass="" clean verify
+$ mvn -P(jersey|cxf|resteasy) -DauthUrl="" -DauthUser="" -DauthPass="" verify
 ```
-## basic usage
+## methods
+http  |java        |notes
+------|------------|-----
+HEAD  |peek...     |reads resources' information
+GET   |read...     |reads resources
+PUT   |update...   |creates or updates resources
+POST  |configure...|creates, updates or removes metadata
+DELETE|delete...   |deletes resources
+## java.net
 ```java
 final String url; // authentication url
 final String user; // access key ID
 final String pass; // secret key
-final StorageClient client = new StorageClient(url, user, pass);
+final NetStorageClient client = new NetStorageClient(url, user, pass);
 ```
-### authenticate user
+## java.net.http
+N/A yet.
+## javax.ws.rs
 ```java
-final int statusCode = client.authenticateUser((r, c) -> r.getStatus());
-assert statusCode == 200;
-```
-
-## container
-### create/update
-```java
-final Family family = client.updateContainer(
-    "containerName",
-    null, // query paramters; MultivaluedMap<String, Object>
-    null, // request heaers; MultivaluedMap<String, Object>
-    (r, c) -> r.getStatusInfo().getFamily());
-assert family == Family.SUCCESSFUL;
-```
-### read
-```java
-final Family family = client.readContainer(
-    "containerName",
-    null, // query paramters; MultivaluedMap<String, Object>
-    null, // request heaers; MultivaluedMap<String, Object>
-    (r, c) -> r.getStatusInfo().getFamily());
-assert family == Family.SUCCESSFUL;
-```
-#### consuming object names
-```java
-// clear the container
-client.withObjectNames(
-        containerName,
-        null,
-        null,
-        (objectName, c) -> {
-            c.deleteObject(
-                    containerName,
-                    objectName,
-                    null,
-                    null,
-                    (r2, c2) -> {
-                        // this is an object deletion result
-                        return null;
-                    }
-            );
-        }
-);
-```
-### delete
-```java
-client.deleteContainer(
-    "containerName",
-    null,
-    null,
-    (r, c) -> {
-        return null;
-    }
-);
-```
-## object
-### create/update
-```java
-final Entity<?> entity = getSome();
-final int status = client.updateObject(
-    "containerName",
-    "objectName",
-    null,
-    null,
-    entity,
-    (r, c) -> {
-        // mess with the Response(r) here
-        return r.getStatus();
-    }
-);
-```
-### read
-```java
-client.readObject(
-    "containerName",
-    "objectName",
-    null,
-    null,
-    (r, c) -> {
-        // mess with the Response(r) here
-        return null;
-    }
-);
-```
-### delete
-```java
-client.deleteObject(
-    "containerName",
-    "objectName",
-    null,
-    null,
-    (r, c) -> {
-        // mess with the Response(r) here
-        return null;
-    }
-);
+final String url; // authentication url
+final String user; // access key ID
+final String pass; // secret key
+final WsRsStorageClient client = new WsRsStorageClient(url, user, pass);
 ```
