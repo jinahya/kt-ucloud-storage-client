@@ -60,50 +60,6 @@ public class WsRsClient extends StorageClient {
 
     private static final Logger logger = getLogger(WsRsClient.class.getName());
 
-//    public static final String AUTH_URL_STANDARD_KOR_CENTER
-//            = "https://api.ucloudbiz.olleh.com/storage/v1/auth";
-//
-//    public static final String AUTH_URL_STANDARD_JPN
-//            = "https://api.ucloudbiz.olleh.com/storage/v1/authjp";
-//
-//    public static final String AUTH_URL_LITE_KOR_HA
-//            = "https://api.ucloudbiz.olleh.com/storage/v1/authlite";
-//
-//    public static final String QUERY_PARAM_LIMIT = "limit";
-//
-//    public static final String QUERY_PARAM_MARKER = "marker";
-//
-//    public static final String QUERY_PARAM_FORMAT = "format";
-//
-//    public static final String HEADER_X_AUTH_USER = "X-Storage-User";
-//
-//    public static final String HEADER_X_AUTH_PASS = "X-Storage-Pass";
-//
-//    public static final String HEADER_X_AUTH_NEW_TOKEN = "X-Auth-New-Token";
-//
-//    public static final String HEADER_X_AUTH_TOKEN = "X-Auth-Token";
-//
-//    public static final String HEADER_X_AUTH_TOKEN_EXPIRES
-//            = "X-Auth-Token-Expires";
-//
-//    public static final String HEADER_X_STORAGE_URL = "X-Storage-Url";
-//
-//    public static final String HEADER_X_ACCOUNT_OBJECT_COUNT
-//            = "X-Account-Object-Count";
-//
-//    public static final String HEADER_X_ACCOUNT_BYTES_USED
-//            = "X-Account-Bytes-Used";
-//
-//    public static final String HEADER_X_ACCOUNT_CONTAINER_COUNT
-//            = "X-Account-Container-Count";
-//
-//    public static final String HEADER_X_CONTAINER_OBJECT_COUNT
-//            = "X-Container-Object-Count";
-//
-//    public static final String HEADER_X_CONTAINER_BYTES_USED
-//            = "X-Container-Bytes-Used";
-//
-//    public static final String HEADER_X_COPY_FROM = "X-Copy-From";
     public static Response authenticateUser(final Client client,
                                             final String authUrl,
                                             final String authUser,

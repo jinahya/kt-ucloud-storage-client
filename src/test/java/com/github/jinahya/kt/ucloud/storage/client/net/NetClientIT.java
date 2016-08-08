@@ -16,12 +16,73 @@
 package com.github.jinahya.kt.ucloud.storage.client.net;
 
 import com.github.jinahya.kt.ucloud.storage.client.StorageClientIT;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.HttpURLConnection;
+import java.net.URLConnection;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import static java.util.Arrays.stream;
+import javax.ws.rs.core.Response;
+import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.fail;
 
 /**
  *
  * @author Jin Kwon &lt;onacit at gmail.com&gt;
  */
-public abstract class NetClientIT extends StorageClientIT {
+public abstract class NetClientIT extends StorageClientIT<NetClient> {
+
+    private static final Logger logger = getLogger(NetClientIT.class);
+
+    static void status(final HttpURLConnection connection,
+                       final Response.Status... allowedStatuses) {
+        try {
+            final int statusCode = connection.getResponseCode();
+            final String reasonPhrase = connection.getResponseMessage();
+            logger.debug("-> status: {} {}", statusCode, reasonPhrase);
+            if (allowedStatuses != null) {
+                if (stream(allowedStatuses)
+                        .map(Response.Status::getStatusCode)
+                        .filter(v -> v == statusCode).findAny()
+                        .orElse(null) == null) {
+                    fail("status code is non of allowed: " + statusCode + " "
+                         + Arrays.toString(allowedStatuses));
+                }
+            }
+        } catch (final IOException ioe) {
+            fail("failed to read status", ioe);
+        }
+    }
+
+    static void status(final URLConnection connection,
+                       final Response.Status... allowedStatuses) {
+        status((HttpURLConnection) connection, allowedStatuses);
+    }
+
+    static void headers(final URLConnection connection) {
+        connection.getHeaderFields().forEach((n, vs) -> {
+            vs.forEach(v -> {
+                logger.debug("-> header: {}: {}", n, v);
+            });
+        });
+    }
+
+    static void body(final URLConnection connection, final Charset charset) {
+        try {
+            try (InputStream stream = connection.getInputStream();
+                 Reader reader = new InputStreamReader(stream, charset);
+                 BufferedReader buffered = new BufferedReader(reader)) {
+                buffered.lines().forEach(l -> logger.debug("-> body: {}", l));
+            }
+        } catch (final IOException ioe) {
+            fail("failed to read body", ioe);
+        }
+    }
 
     public NetClientIT() {
         super(NetClient.class);

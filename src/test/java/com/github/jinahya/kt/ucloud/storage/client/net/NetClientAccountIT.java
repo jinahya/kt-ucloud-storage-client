@@ -15,12 +15,26 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.net;
 
+import com.github.jinahya.kt.ucloud.storage.client.AccountInfo;
+import com.github.jinahya.kt.ucloud.storage.client.JaxbTest;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.OK;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.fail;
 import org.testng.annotations.Test;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  *
@@ -32,13 +46,53 @@ public class NetClientAccountIT extends NetClientIT {
     private static final Logger logger = getLogger(NetClientAccountIT.class);
 
     @Test
-    public void readAccount() {
-        logger.debug("readAccount()");
-        try {
+    public void peekAccount() {
+        logger.debug("------------------------------------ peeking account...");
+        final Map<String, List<Object>> headers = new HashMap<>();
+        asList(TEXT_PLAIN, APPLICATION_XML, APPLICATION_JSON).forEach(t -> {
+            logger.debug("accepting {}", t);
+            headers.put(ACCEPT, singletonList(t));
             accept(c -> {
+                try {
+                    c.peekAccount(
+                            null,
+                            headers,
+                            n -> {
+                                status((HttpURLConnection) n, NO_CONTENT);
+                                headers((HttpURLConnection) n);
+                                final AccountInfo info
+                                = AccountInfo.newInstance(n);
+                                logger.debug("info: {}", info);
+                                JaxbTest.printXml(AccountInfo.class, info);
+                            });
+                } catch (final IOException ioe) {
+                    fail("failed to peek account", ioe);
+                }
             });
-        } catch (final Exception e) {
-            e.printStackTrace(System.err);
-        }
+        });
+    }
+
+    @Test
+    public void readAccount() {
+        logger.debug("------------------------------------ reading account...");
+        final Map<String, List<Object>> headers = new HashMap<>();
+        asList(TEXT_PLAIN, APPLICATION_XML, APPLICATION_JSON).forEach(t -> {
+            logger.debug("accepting {}", t);
+            headers.put(ACCEPT, singletonList(t));
+            accept(c -> {
+                try {
+                    c.readAccount(
+                            null,
+                            headers,
+                            n -> {
+                                status(n, OK);
+                                headers(n);
+                                body(n, StandardCharsets.UTF_8);
+                            });
+                } catch (final IOException ioe) {
+                    fail("failed to peek account", ioe);
+                }
+            });
+        });
     }
 }

@@ -248,6 +248,145 @@ public class NetClient extends StorageClient {
         }
     }
 
+    // ----------------------------------------------------------------- account
+    public <T> T peekAccount(final Map<String, List<Object>> params,
+                             Map<String, List<Object>> headers,
+                             final Function<URLConnection, T> function)
+            throws IOException {
+        ensureValid();
+        final HttpURLConnection connection = (HttpURLConnection) openAccount(
+                storageUrl, params);
+        connection.setRequestMethod("HEAD");
+        if (headers == null) {
+            headers = new HashMap<>();
+        }
+        headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+        requestProperties(connection, headers);
+        connection.setDoOutput(false);
+        connection.setDoInput(true); // @@?
+        if (connectTimeout != null) {
+            connection.setConnectTimeout(connectTimeout);
+        }
+        connection.connect();
+        try {
+            return function.apply(connection);
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    public <T> T peekAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<URLConnection, NetClient, T> function)
+            throws IOException {
+        return peekAccount(
+                params,
+                headers,
+                n -> {
+                    return function.apply(n, this);
+                }
+        );
+    }
+
+    public NetClient peekAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<URLConnection> consumer)
+            throws IOException {
+        return peekAccount(
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n);
+                    return this;
+                }
+        );
+    }
+
+    public NetClient peekAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<URLConnection, NetClient> consumer)
+            throws IOException {
+        return peekAccount(
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n, this);
+                }
+        );
+    }
+
+    public <T> T readAccount(final Map<String, List<Object>> params,
+                             Map<String, List<Object>> headers,
+                             final Function<URLConnection, T> function)
+            throws IOException {
+        ensureValid();
+        final HttpURLConnection connection = (HttpURLConnection) openAccount(
+                storageUrl, params);
+        connection.setRequestMethod("GET");
+        if (headers == null) {
+            headers = new HashMap<>();
+        }
+        headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+        requestProperties(connection, headers);
+        connection.setDoOutput(false);
+        connection.setDoInput(true); // @@?
+        if (connectTimeout != null) {
+            connection.setConnectTimeout(connectTimeout);
+        }
+        connection.connect();
+        try {
+            return function.apply(connection);
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    public <T> T readAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<URLConnection, NetClient, T> function)
+            throws IOException {
+        return readAccount(
+                params,
+                headers,
+                n -> {
+                    return function.apply(n, this);
+                }
+        );
+    }
+
+    public NetClient readAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<URLConnection> consumer)
+            throws IOException {
+        return readAccount(
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n);
+                    return this;
+                }
+        );
+    }
+
+    public NetClient readAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<URLConnection, NetClient> consumer)
+            throws IOException {
+        return readAccount(
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n, this);
+                }
+        );
+    }
+
     // ------------------------------------------------------------------ object
     public <T> T peekObject(final String containerName, final String objectName,
                             final Map<String, List<Object>> params,
@@ -322,8 +461,8 @@ public class NetClient extends StorageClient {
                 objectName,
                 params,
                 headers,
-                (n, c) -> {
-                    consumer.accept(n, c);
+                n -> {
+                    consumer.accept(n, this);
                 }
         );
     }
