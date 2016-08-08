@@ -33,6 +33,8 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.fail;
 import org.testng.annotations.Test;
 
@@ -48,31 +50,25 @@ public class NetClientAccountIT extends NetClientIT {
     @Test
     public void peekAccount() {
         logger.debug("------------------------------------ peeking account...");
-        final Map<String, List<Object>> headers = new HashMap<>();
-        asList(TEXT_PLAIN, APPLICATION_XML, APPLICATION_JSON).forEach(t -> {
-            logger.debug("accepting {}", t);
-            headers.put(ACCEPT, singletonList(t));
-            accept(c -> {
-                try {
-                    c.peekAccount(
-                            null,
-                            headers,
-                            n -> {
-                                status((HttpURLConnection) n, NO_CONTENT);
-                                headers((HttpURLConnection) n);
-                                final AccountInfo info
-                                = AccountInfo.newInstance(n);
-                                logger.debug("info: {}", info);
-                                JaxbTest.printXml(AccountInfo.class, info);
-                            });
-                } catch (final IOException ioe) {
-                    fail("failed to peek account", ioe);
-                }
-            });
+        accept(c -> {
+            try {
+                c.peekAccount(
+                        null,
+                        null,
+                        n -> {
+                            status((HttpURLConnection) n, NO_CONTENT);
+                            headers((HttpURLConnection) n);
+                            final AccountInfo info = AccountInfo.newInstance(n);
+                            logger.debug("info: {}", info);
+                            JaxbTest.printXml(AccountInfo.class, info);
+                        });
+            } catch (final IOException ioe) {
+                fail("failed to peek account", ioe);
+            }
         });
     }
 
-    @Test
+    @Test(dependsOnMethods = {"peekAccount"})
     public void readAccount() {
         logger.debug("------------------------------------ reading account...");
         final Map<String, List<Object>> headers = new HashMap<>();
@@ -93,6 +89,71 @@ public class NetClientAccountIT extends NetClientIT {
                     fail("failed to peek account", ioe);
                 }
             });
+        });
+    }
+
+    @Test(dependsOnMethods = {"readAccount"})
+    public void configureAccount() {
+        logger.debug("-------------------------------- configuring account...");
+        final Map<String, List<Object>> headers = new HashMap<>();
+        final String name = "X-Account-Meta-Test";
+        final String value = "test";
+        headers.put(name, singletonList(value));
+        accept(c -> {
+            try {
+                c.configureAccount(
+                        null,
+                        headers,
+                        n -> {
+                            status(n, NO_CONTENT);
+                            headers(n);
+                        });
+            } catch (final IOException ioe) {
+                fail("failed to peek account", ioe);
+            }
+        });
+        accept(c -> {
+            try {
+                c.peekAccount(
+                        null,
+                        headers,
+                        n -> {
+                            status(n, NO_CONTENT);
+                            headers(n);
+                            assertEquals(n.getHeaderField(name), value);
+                        });
+            } catch (final IOException ioe) {
+                fail("failed to peek account", ioe);
+            }
+        });
+        headers.remove(name);
+        headers.put("X-Remove-Account-Meta-Test", singletonList(value));
+        accept(c -> {
+            try {
+                c.configureAccount(
+                        null,
+                        headers,
+                        n -> {
+                            status(n, NO_CONTENT);
+                            headers(n);
+                        });
+            } catch (final IOException ioe) {
+                fail("failed to peek account", ioe);
+            }
+        });
+        accept(c -> {
+            try {
+                c.peekAccount(
+                        null,
+                        headers,
+                        n -> {
+                            status(n, NO_CONTENT);
+                            headers(n);
+                            assertNull(n.getHeaderField(name));
+                        });
+            } catch (final IOException ioe) {
+                fail("failed to peek account", ioe);
+            }
         });
     }
 }

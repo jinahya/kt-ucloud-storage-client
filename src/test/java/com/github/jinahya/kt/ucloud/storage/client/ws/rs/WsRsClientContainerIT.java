@@ -37,21 +37,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
 import org.testng.annotations.Test;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.body;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.status;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.body;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.status;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.body;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.status;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
 
 /**
  *

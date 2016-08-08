@@ -260,6 +260,7 @@ public class NetClient extends StorageClient {
         if (headers == null) {
             headers = new HashMap<>();
         }
+        headers.putIfAbsent("Accept", singletonList("text/plain"));
         headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
         requestProperties(connection, headers);
         connection.setDoOutput(false);
@@ -379,6 +380,75 @@ public class NetClient extends StorageClient {
             final BiConsumer<URLConnection, NetClient> consumer)
             throws IOException {
         return readAccount(
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n, this);
+                }
+        );
+    }
+
+    public <T> T configureAccount(final Map<String, List<Object>> params,
+                                  Map<String, List<Object>> headers,
+                                  final Function<URLConnection, T> function)
+            throws IOException {
+        ensureValid();
+        final HttpURLConnection connection = (HttpURLConnection) openAccount(
+                storageUrl, params);
+        connection.setRequestMethod("POST");
+        if (headers == null) {
+            headers = new HashMap<>();
+        }
+        headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+        requestProperties(connection, headers);
+        connection.setDoOutput(false);
+        connection.setDoInput(true); // @@?
+        if (connectTimeout != null) {
+            connection.setConnectTimeout(connectTimeout);
+        }
+        connection.connect();
+        try {
+            return function.apply(connection);
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    public <T> T configureAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<URLConnection, NetClient, T> function)
+            throws IOException {
+        return configureAccount(
+                params,
+                headers,
+                n -> {
+                    return function.apply(n, this);
+                }
+        );
+    }
+
+    public NetClient configureAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<URLConnection> consumer)
+            throws IOException {
+        return configureAccount(
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n);
+                    return this;
+                }
+        );
+    }
+
+    public NetClient configureAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<URLConnection, NetClient> consumer)
+            throws IOException {
+        return configureAccount(
                 params,
                 headers,
                 n -> {

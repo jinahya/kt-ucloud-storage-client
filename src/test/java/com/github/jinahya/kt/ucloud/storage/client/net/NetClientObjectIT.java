@@ -18,9 +18,6 @@ package com.github.jinahya.kt.ucloud.storage.client.net;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 import org.testng.annotations.Test;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  *
@@ -32,9 +29,6 @@ public class NetClientObjectIT extends NetClientIT {
     private static final Logger logger = getLogger(NetClientObjectIT.class);
 
     @Test
-    public void readAccount() {
-        logger.debug("readAccount()");
-        accept(c -> {
-        });
+    public void test() {
     }
 }

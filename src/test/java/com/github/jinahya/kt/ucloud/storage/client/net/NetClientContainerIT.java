@@ -29,9 +29,6 @@ public class NetClientContainerIT extends NetClientIT {
     private static final Logger logger = getLogger(NetClientContainerIT.class);
 
     @Test
-    public void readAccount() {
-        logger.debug("readAccount()");
-        accept(c -> {
-        });
+    public void test() {
     }
 }
