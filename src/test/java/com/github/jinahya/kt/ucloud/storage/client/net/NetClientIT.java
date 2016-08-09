@@ -26,10 +26,13 @@ import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import static java.util.Arrays.stream;
+import java.util.function.BiFunction;
 import javax.ws.rs.core.Response;
+import static javax.ws.rs.core.Response.Status.OK;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.fail;
+import static java.util.Arrays.stream;
 
 /**
  *
@@ -39,19 +42,39 @@ public abstract class NetClientIT extends StorageClientIT<NetClient> {
 
     private static final Logger logger = getLogger(NetClientIT.class);
 
+    static <R> R status(final HttpURLConnection connection,
+                        final BiFunction<Integer, String, R> function) {
+        try {
+            final int statusCode = connection.getResponseCode();
+            final String reasonPhrase = connection.getResponseMessage();
+            return function.apply(statusCode, reasonPhrase);
+        } catch (final IOException ioe) {
+            fail("failed to read status", ioe);
+            throw new RuntimeException("failed to read status", ioe);
+        }
+    }
+
+    static int statusCode(final HttpURLConnection connection) {
+        return status(connection, (c, p) -> c);
+    }
+
+    static String reasonPhrase(final HttpURLConnection connection) {
+        return status(connection, (c, p) -> p);
+    }
+
     static void status(final HttpURLConnection connection,
-                       final Response.Status... allowedStatuses) {
+                       final Response.Status... expectedStatuses) {
         try {
             final int statusCode = connection.getResponseCode();
             final String reasonPhrase = connection.getResponseMessage();
             logger.debug("-> status: {} {}", statusCode, reasonPhrase);
-            if (allowedStatuses != null) {
-                if (stream(allowedStatuses)
+            if (expectedStatuses != null) {
+                if (stream(expectedStatuses)
                         .map(Response.Status::getStatusCode)
                         .filter(v -> v == statusCode).findAny()
                         .orElse(null) == null) {
-                    fail("status code is non of allowed: " + statusCode + " "
-                         + Arrays.toString(allowedStatuses));
+                    fail("status is non of expec†ed: " + statusCode
+                         + " \u2288 " + Arrays.toString(expectedStatuses));
                 }
             }
         } catch (final IOException ioe) {
@@ -74,6 +97,12 @@ public abstract class NetClientIT extends StorageClientIT<NetClient> {
 
     static void body(final URLConnection connection, final Charset charset) {
         try {
+            final int statusCode
+                    = ((HttpURLConnection) connection).getResponseCode();
+            if (statusCode != OK.getStatusCode()) {
+                logger.debug("status is not ok. skipping...");
+                return;
+            }
             try (InputStream stream = connection.getInputStream();
                  Reader reader = new InputStreamReader(stream, charset);
                  BufferedReader buffered = new BufferedReader(reader)) {

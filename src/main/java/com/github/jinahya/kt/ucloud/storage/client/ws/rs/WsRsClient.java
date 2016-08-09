@@ -50,6 +50,12 @@ import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import static javax.ws.rs.core.Response.Status.OK;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
 
 /**
  * A client for accessing kt ucloud storage using JAX-RS.

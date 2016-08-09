@@ -20,12 +20,15 @@ import java.io.IOException;
 import java.io.Reader;
 import static java.lang.Long.parseLong;
 import static java.lang.System.currentTimeMillis;
+import static java.util.Arrays.stream;
 import java.util.Date;
 import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
 import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import static java.util.stream.Collectors.joining;
 
 /**
  *
@@ -78,6 +81,33 @@ public abstract class StorageClient {
 
     public static final String HEADER_X_COPY_FROM = "X-Copy-From";
 
+    public static String capitalize(final String token) {
+        return token.substring(0, 1).toUpperCase()
+               + token.substring(1).toLowerCase();
+    }
+
+    public static String capitalize(final String... tokens) {
+        return stream(tokens).map(v -> capitalize(v)).collect(joining("-"));
+    }
+
+    public static String accountMeta(final boolean remove,
+                                     final String... tokens) {
+        return "X" + (remove ? "-Remove" : "") + "-Account" + "-Meta" + "-"
+               + capitalize(tokens);
+    }
+
+    public static String containerMeta(final boolean remove,
+                                       final String... tokens) {
+        return "X" + (remove ? "-Remove" : "") + "-Conatainer" + "-Meta" + "-"
+               + capitalize(tokens);
+    }
+
+    public static String objectMeta(final boolean remove,
+                                    final String... tokens) {
+        return "X" + (remove ? "-Remove" : "") + "-Object" + "-Meta" + "-"
+               + capitalize(tokens);
+    }
+
     protected static void lines(final Reader reader,
                                 final Consumer<String> consumer)
             throws IOException {
@@ -86,11 +116,12 @@ public abstract class StorageClient {
         }
     }
 
-    protected static <T extends StorageClient> void lines(
+    protected static <T extends StorageClient> T lines(
             final Reader reader, final BiConsumer<String, T> consumer,
             final T client)
             throws IOException {
         lines(reader, l -> consumer.accept(l, client));
+        return client;
     }
 
     // -------------------------------------------------------------------------
@@ -159,34 +190,33 @@ public abstract class StorageClient {
         return authPass;
     }
 
-    // ---------------------------------------------------------- connectTimeout
-    public Integer getConnectTimeout() {
-        return connectTimeout;
-    }
-
-    public void setConnectTimeout(final Integer connectTimeout) {
-        this.connectTimeout = connectTimeout;
-    }
-
-    public StorageClient connectTimeout(final Integer connectTimeout) {
-        setConnectTimeout(connectTimeout);
-        return this;
-    }
-
-    // ------------------------------------------------------------- readTimeout
-    public Integer getReadTimeout() {
-        return readTimeout;
-    }
-
-    public void setReadTimeout(final Integer readTimeout) {
-        this.readTimeout = readTimeout;
-    }
-
-    public StorageClient readTimeout(final Integer readTimeout) {
-        setReadTimeout(readTimeout);
-        return this;
-    }
-
+//    // ---------------------------------------------------------- connectTimeout
+//    public Integer getConnectTimeout() {
+//        return connectTimeout;
+//    }
+//
+//    public void setConnectTimeout(final Integer connectTimeout) {
+//        this.connectTimeout = connectTimeout;
+//    }
+//
+//    public StorageClient connectTimeout(final Integer connectTimeout) {
+//        setConnectTimeout(connectTimeout);
+//        return this;
+//    }
+//
+//    // ------------------------------------------------------------- readTimeout
+//    public Integer getReadTimeout() {
+//        return readTimeout;
+//    }
+//
+//    public void setReadTimeout(final Integer readTimeout) {
+//        this.readTimeout = readTimeout;
+//    }
+//
+//    public StorageClient readTimeout(final Integer readTimeout) {
+//        setReadTimeout(readTimeout);
+//        return this;
+//    }
     // -------------------------------------------------------------- storageUrl
     /**
      * Returns the storage URL.
@@ -220,10 +250,18 @@ public abstract class StorageClient {
         return new Date(authTokenExpires.getTime());
     }
 
+    protected void setAuthTokenExpires(final Date authTokenExpires) {
+        this.authTokenExpires
+                = ofNullable(authTokenExpires)
+                .map(Date::getTime)
+                .map(Date::new)
+                .orElse(null);
+    }
+
     protected void setAuthTokenExpires(final String authTokenExpires) {
-        this.authTokenExpires = new Date(
+        setAuthTokenExpires(new Date(
                 currentTimeMillis()
-                + (parseLong(authTokenExpires) * SECONDS.toMillis(1L)));
+                + SECONDS.toMillis(parseLong(authTokenExpires))));
     }
 
     // -------------------------------------------------------------------------
@@ -232,10 +270,6 @@ public abstract class StorageClient {
     protected final String authUser;
 
     protected final String authPass;
-
-    protected Integer connectTimeout;
-
-    protected Integer readTimeout;
 
     protected transient String storageUrl;
 

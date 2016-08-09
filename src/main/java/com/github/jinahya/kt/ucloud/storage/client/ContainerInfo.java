@@ -15,10 +15,12 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client;
 
+import static java.lang.Integer.parseInt;
 import java.net.URLConnection;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import static java.lang.Integer.parseInt;
 
 /**
  *
@@ -29,9 +31,9 @@ public class ContainerInfo {
 
     protected static <T extends ContainerInfo> T newInstance(
             final T instance, final Response response) {
-        instance.setObjectCount(Integer.parseInt(response.getHeaderString(
+        instance.setObjectCount(parseInt(response.getHeaderString(
                 StorageClient.HEADER_X_ACCOUNT_OBJECT_COUNT)));
-        instance.setBytesUsed(Integer.parseInt(response.getHeaderString(
+        instance.setBytesUsed(parseInt(response.getHeaderString(
                 StorageClient.HEADER_X_ACCOUNT_BYTES_USED)));
         return instance;
     }
@@ -42,9 +44,9 @@ public class ContainerInfo {
 
     protected static <T extends ContainerInfo> T newInstance(
             final T instance, final URLConnection connection) {
-        instance.setObjectCount(Integer.parseInt(connection.getHeaderField(
+        instance.setObjectCount(parseInt(connection.getHeaderField(
                 StorageClient.HEADER_X_ACCOUNT_OBJECT_COUNT)));
-        instance.setBytesUsed(Integer.parseInt(connection.getHeaderField(
+        instance.setBytesUsed(parseInt(connection.getHeaderField(
                 StorageClient.HEADER_X_ACCOUNT_BYTES_USED)));
         return instance;
     }

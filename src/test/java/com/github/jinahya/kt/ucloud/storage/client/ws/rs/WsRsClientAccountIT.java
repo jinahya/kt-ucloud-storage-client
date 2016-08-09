@@ -15,6 +15,7 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.accountMeta;
 import java.io.IOException;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
@@ -31,6 +32,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
+import static org.testng.Assert.fail;
 import org.testng.annotations.Test;
 
 /**
@@ -100,71 +102,89 @@ public class WsRsClientAccountIT extends WsRsClientIT {
         );
     }
 
-    @Test
-    public void updateAccount() {
-        logger.debug("----------------------------------- updating account...");
+    @Test(invocationCount = 10)
+    public void configureAccount() {
+        logger.debug("-------------------------------- configuring account...");
+        final long sleep = 2000L;
+        final String[] tokens = new String[]{getClass().getSimpleName()};
         {
-            final String headerName = "X-Account-Meta-Test";
-            final String headerValue = "test";
-            {
+            final String key = accountMeta(false, tokens);
+            final String value = "test";
+            accept(c -> {
                 final MultivaluedMap<String, Object> headers
                         = new MultivaluedHashMap<>();
-                headers.putSingle(headerName, headerValue);
-                accept(c -> c.configureAccount(
+                headers.putSingle(key, value);
+                logger.debug("adding meta; key: {}", key);
+                c.configureAccount(
                         null,
                         headers,
                         r -> {
                             status(r, SUCCESSFUL, NO_CONTENT);
                             headers(r);
                         }
-                ));
+                );
+            });
+            logger.debug("sleeping for {} millis...", sleep);
+            try {
+                Thread.sleep(sleep);
+            } catch (final InterruptedException ie) {
+                fail("failed to sleep", ie);
             }
-            {
+            accept(c -> {
                 final MultivaluedMap<String, Object> headers
                         = new MultivaluedHashMap<>();
                 headers.putSingle(ACCEPT, TEXT_PLAIN);
-                accept(c -> c.peekAccount(
+                logger.debug("checking meta...");
+                c.peekAccount(
                         null,
                         headers,
                         r -> {
                             status(r, SUCCESSFUL, NO_CONTENT);
                             headers(r);
-                            assertEquals(r.getHeaderString(headerName),
-                                         headerValue);
+                            assertEquals(r.getHeaderString(key), value);
                         }
-                ));
-            }
+                );
+            });
         }
         {
-            final String headerName = "X-Remove-Account-Meta-Test";
-            final String headerValue = "any";
-            {
+            accept(c -> {
+                final String key = accountMeta(true, tokens);
+                final String value = "any";
                 final MultivaluedMap<String, Object> headers
                         = new MultivaluedHashMap<>();
-                headers.putSingle(headerName, headerValue);
-                accept(c -> c.configureAccount(
+                headers.putSingle(key, value);
+                logger.debug("removing meta; key : {}", key);
+                c.configureAccount(
                         null,
                         headers,
                         r -> {
                             status(r, SUCCESSFUL, NO_CONTENT);
                             headers(r);
                         }
-                ));
+                );
+            });
+            logger.debug("sleeping for {} millis...", sleep);
+            try {
+                Thread.sleep(sleep);
+            } catch (final InterruptedException ie) {
+                fail("failed to sleep", ie);
             }
-            {
+            accept(c -> {
                 final MultivaluedMap<String, Object> headers
                         = new MultivaluedHashMap<>();
                 headers.putSingle(ACCEPT, TEXT_PLAIN);
-                accept(c -> c.peekAccount(
+                logger.debug("checking meta...");
+                c.peekAccount(
                         null,
                         headers,
                         r -> {
                             status(r, SUCCESSFUL, NO_CONTENT);
                             headers(r);
-                            assertNull(r.getHeaderString(headerName));
+                            assertNull(r.getHeaderString(
+                                    accountMeta(false, tokens)));
                         }
-                ));
-            }
+                );
+            });
         }
     }
 }

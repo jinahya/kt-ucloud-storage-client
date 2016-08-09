@@ -17,18 +17,19 @@ package com.github.jinahya.kt.ucloud.storage.client.net;
 
 import com.github.jinahya.kt.ucloud.storage.client.AccountInfo;
 import com.github.jinahya.kt.ucloud.storage.client.JaxbTest;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.accountMeta;
+import static com.github.jinahya.kt.ucloud.storage.client.net.NetClientIT.headers;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.MediaType.WILDCARD;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import org.slf4j.Logger;
@@ -42,7 +43,7 @@ import org.testng.annotations.Test;
  *
  * @author Jin Kwon &lt;onacit at gmail.com&gt;
  */
-@Test(groups = {"net.account"})
+@Test(dependsOnGroups = {"net.user"}, groups = {"net.account"})
 public class NetClientAccountIT extends NetClientIT {
 
     private static final Logger logger = getLogger(NetClientAccountIT.class);
@@ -50,11 +51,15 @@ public class NetClientAccountIT extends NetClientIT {
     @Test
     public void peekAccount() {
         logger.debug("------------------------------------ peeking account...");
+        final MultivaluedMap<String, Object> headers
+                = new MultivaluedHashMap<>();
+//        headers.putSingle(ACCEPT, TEXT_PLAIN);
+        headers.putSingle(ACCEPT, WILDCARD);
         accept(c -> {
             try {
                 c.peekAccount(
                         null,
-                        null,
+                        headers,
                         n -> {
                             status((HttpURLConnection) n, NO_CONTENT);
                             headers((HttpURLConnection) n);
@@ -71,10 +76,11 @@ public class NetClientAccountIT extends NetClientIT {
     @Test(dependsOnMethods = {"peekAccount"})
     public void readAccount() {
         logger.debug("------------------------------------ reading account...");
-        final Map<String, List<Object>> headers = new HashMap<>();
+        final MultivaluedMap<String, Object> headers
+                = new MultivaluedHashMap<>();
         asList(TEXT_PLAIN, APPLICATION_XML, APPLICATION_JSON).forEach(t -> {
             logger.debug("accepting {}", t);
-            headers.put(ACCEPT, singletonList(t));
+            headers.putSingle(ACCEPT, t);
             accept(c -> {
                 try {
                     c.readAccount(
@@ -92,68 +98,105 @@ public class NetClientAccountIT extends NetClientIT {
         });
     }
 
-    @Test(dependsOnMethods = {"readAccount"})
+    @Test(dependsOnMethods = {"readAccount"}, invocationCount = 10)
     public void configureAccount() {
         logger.debug("-------------------------------- configuring account...");
-        final Map<String, List<Object>> headers = new HashMap<>();
-        final String name = "X-Account-Meta-Test";
-        final String value = "test";
-        headers.put(name, singletonList(value));
-        accept(c -> {
+        final long sleep = 2000L;
+        final String[] tokens = new String[]{getClass().getSimpleName()};
+        {
+            final String key = accountMeta(false, tokens);
+            final String value = "test";
+            accept(c -> {
+                final MultivaluedMap<String, Object> headers
+                        = new MultivaluedHashMap<>();
+                headers.putSingle(key, value);
+                logger.debug("adding meta...");
+                logger.debug("request headers: {}", headers);
+                try {
+                    c.configureAccount(
+                            null,
+                            headers,
+                            n -> {
+                                status(n, NO_CONTENT);
+                                headers(n);
+                            });
+                } catch (final IOException ioe) {
+                    fail("failed to configure account", ioe);
+                }
+            });
+            logger.debug("sleeping for {} millis...", sleep);
             try {
-                c.configureAccount(
-                        null,
-                        headers,
-                        n -> {
-                            status(n, NO_CONTENT);
-                            headers(n);
-                        });
-            } catch (final IOException ioe) {
-                fail("failed to peek account", ioe);
+                Thread.sleep(sleep);
+            } catch (final InterruptedException ie) {
+                fail("failed to sleep", ie);
             }
-        });
-        accept(c -> {
+            accept(c -> {
+                try {
+                    final MultivaluedMap<String, Object> headers
+                            = new MultivaluedHashMap<>();
+//                    headers.putSingle(ACCEPT, TEXT_PLAIN);
+                    headers.putSingle(ACCEPT, WILDCARD);
+                    logger.debug("checking meta...");
+                    c.peekAccount(
+                            null,
+                            headers,
+                            n -> {
+                                status(n, NO_CONTENT);
+                                headers(n);
+                                assertEquals(n.getHeaderField(key), value);
+                            });
+                } catch (final IOException ioe) {
+                    fail("failed to peek account", ioe);
+                }
+            });
+        }
+        {
+            accept(c -> {
+                final String key = accountMeta(true, tokens);
+                final String value = "any";
+                final MultivaluedMap<String, Object> headers
+                        = new MultivaluedHashMap<>();
+                headers.putSingle(key, value);
+                logger.debug("removing meta...");
+                logger.debug("request headers: {}", headers);
+                try {
+                    c.configureAccount(
+                            null,
+                            headers,
+                            n -> {
+                                status(n, NO_CONTENT);
+                                headers(n);
+                            });
+                } catch (final IOException ioe) {
+                    fail("failed to configure account", ioe);
+                }
+            });
+            logger.debug("sleeping for {} millis...", sleep);
             try {
-                c.peekAccount(
-                        null,
-                        headers,
-                        n -> {
-                            status(n, NO_CONTENT);
-                            headers(n);
-                            assertEquals(n.getHeaderField(name), value);
-                        });
-            } catch (final IOException ioe) {
-                fail("failed to peek account", ioe);
+                Thread.sleep(sleep);
+            } catch (final InterruptedException ie) {
+                fail("failed to sleep", ie);
             }
-        });
-        headers.remove(name);
-        headers.put("X-Remove-Account-Meta-Test", singletonList(value));
-        accept(c -> {
-            try {
-                c.configureAccount(
-                        null,
-                        headers,
-                        n -> {
-                            status(n, NO_CONTENT);
-                            headers(n);
-                        });
-            } catch (final IOException ioe) {
-                fail("failed to peek account", ioe);
-            }
-        });
-        accept(c -> {
-            try {
-                c.peekAccount(
-                        null,
-                        headers,
-                        n -> {
-                            status(n, NO_CONTENT);
-                            headers(n);
-                            assertNull(n.getHeaderField(name));
-                        });
-            } catch (final IOException ioe) {
-                fail("failed to peek account", ioe);
-            }
-        });
+            accept(c -> {
+                try {
+                    final MultivaluedMap<String, Object> headers
+                            = new MultivaluedHashMap<>();
+//                    headers.putSingle(ACCEPT, TEXT_PLAIN);
+                    headers.putSingle(ACCEPT, WILDCARD);
+                    logger.debug("checking meta...");
+                    c.peekAccount(
+                            null,
+                            headers,
+                            n -> {
+                                status(n, NO_CONTENT);
+                                headers(n);
+                                final String key = accountMeta(false, tokens);
+                                assertNull(n.getHeaderField(key));
+                            });
+                } catch (final IOException ioe) {
+                    fail("failed to peek account", ioe);
+                }
+            });
+        }
     }
 }
