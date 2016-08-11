@@ -50,12 +50,6 @@ import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import static javax.ws.rs.core.Response.Status.OK;
-import static java.util.Objects.requireNonNull;
-import static java.util.logging.Logger.getLogger;
-import static java.util.Objects.requireNonNull;
-import static java.util.logging.Logger.getLogger;
-import static java.util.Objects.requireNonNull;
-import static java.util.logging.Logger.getLogger;
 
 /**
  * A client for accessing kt ucloud storage using JAX-RS.
@@ -66,10 +60,19 @@ public class WsRsClient extends StorageClient {
 
     private static final Logger logger = getLogger(WsRsClient.class.getName());
 
+    private static <R> R apply(final Function<Client, R> function) {
+        final Client client = ClientBuilder.newClient();
+        try {
+            return function.apply(client);
+        } finally {
+            client.close();
+        }
+    }
+
     public static Response authenticateUser(final Client client,
                                             final String authUrl,
                                             final String authUser,
-                                            final String authPass,
+                                            final String authKey,
                                             final boolean newToken) {
         Invocation.Builder builder = client
                 .target(requireNonNull(authUrl, "null authUrl"))
@@ -77,7 +80,7 @@ public class WsRsClient extends StorageClient {
                 .header(HEADER_X_AUTH_USER,
                         requireNonNull(authUser, "null authUser"))
                 .header(HEADER_X_AUTH_PASS,
-                        requireNonNull(authPass, "null authPass"));
+                        requireNonNull(authKey, "null authKey"));
         if (newToken) {
             builder = builder.header(HEADER_X_AUTH_NEW_TOKEN, Boolean.TRUE);
         }
@@ -92,16 +95,17 @@ public class WsRsClient extends StorageClient {
      * @param client the client
      * @param authUrl authentication URL
      * @param authUser authentication username
-     * @param authPass authentication password
+     * @param authKey authentication password
      * @return a response
      * @see #authenticateUser(javax.ws.rs.client.Client, java.lang.String,
      * java.lang.String, java.lang.String, boolean)
      */
+    @Deprecated
     public static Response authenticateUser(final Client client,
                                             final String authUrl,
                                             final String authUser,
-                                            final String authPass) {
-        return authenticateUser(client, authUrl, authUser, authPass, true);
+                                            final String authKey) {
+        return authenticateUser(client, authUrl, authUser, authKey, true);
 //        return client
 //                .target(authUrl)
 //                .request(MediaType.APPLICATION_JSON_TYPE)
@@ -217,7 +221,7 @@ public class WsRsClient extends StorageClient {
             final Client client, final String storageUrl,
             final MultivaluedMap<String, Object> params,
             final String authToken,
-            final MultivaluedMap<String, Object> headers) {
+            MultivaluedMap<String, Object> headers) {
         Invocation.Builder builder = buildAccount(
                 client, storageUrl, params, authToken);
         if (headers != null) {
@@ -492,13 +496,118 @@ public class WsRsClient extends StorageClient {
         return builder.delete();
     }
 
+    // ---------------------------------------------------------------- reseller
+    public static Response authenticateReseller(final Client client,
+                                                final String authUrl,
+                                                final String authAccount,
+                                                final String authUser,
+                                                final String authKey) {
+        Invocation.Builder builder = client
+                .target(requireNonNull(authUrl, "null authUrl"))
+                .request()
+                .header(HEADER_X_AUTH_USER,
+                        requireNonNull(authAccount, "null authAccount")
+                        + ":"
+                        + requireNonNull(authUser, "null authUser"))
+                .header(HEADER_X_AUTH_PASS,
+                        requireNonNull(authKey, "null authKey"));
+        return builder.buildGet().invoke();
+    }
+
+    public static MultivaluedMap<String, Object> headers(
+            MultivaluedMap<String, Object> headers, final String authAccount,
+            final String authUser, final String authKey) {
+        if (headers == null) {
+            headers = new MultivaluedHashMap<>();
+        }
+        headers.putSingle(HEADER_X_AUTH_ADMIN_USER,
+                          requireNonNull(authAccount, "null authAccount")
+                          + ":"
+                          + requireNonNull(authUser, "null authUser"));
+        headers.putSingle(HEADER_X_AUTH_ADMIN_KEY,
+                          requireNonNull(authKey, "null authKey"));
+        return headers;
+    }
+
+    // -------------------------------------------------------- reseller/account
+    public static WebTarget targetResellerAccount(
+            final Client client, final String storageUrl,
+            final MultivaluedMap<String, Object> params) {
+        if (ThreadLocalRandom.current().nextBoolean()) {
+            return targetAccount(client, storageUrl, params);
+        }
+        WebTarget target
+                = requireNonNull(client, "null client")
+                .target(requireNonNull(storageUrl, "null storageUrl"));
+        if (params != null) {
+            for (final Entry<String, List<Object>> entry : params.entrySet()) {
+                final String name = entry.getKey();
+                final Object[] values = entry.getValue().toArray();
+                target = target.queryParam(name, values);
+            }
+        }
+        return target;
+    }
+
+    public static Invocation.Builder buildResellerAccount(
+            final Client client, final String storageUrl,
+            final MultivaluedMap<String, Object> params,
+            final MultivaluedMap<String, Object> headers,
+            final String authAccount,
+            final String authUser,
+            final String authKey) {
+        return targetResellerAccount(client, storageUrl, params)
+                .request()
+                .headers(headers(headers, authAccount, authUser, authKey));
+    }
+
+    // --------------------------------------------------- reseller/account/user
+    /**
+     * Targets an object.
+     *
+     * @param client a client
+     * @param storageUrl the storage URL
+     * @param userName container name
+     * @param params query parameters
+     * @return a target
+     */
+    public static WebTarget targetResellerUser(
+            final Client client, final String storageUrl, final String userName,
+            final MultivaluedMap<String, Object> params) {
+        if (ThreadLocalRandom.current().nextBoolean()) {
+            return targetContainer(client, storageUrl, userName, params);
+        }
+        WebTarget target
+                = requireNonNull(client, "null client")
+                .target(requireNonNull(storageUrl, "null storageUrl"))
+                .path(requireNonNull(userName, "containerName"));
+        if (params != null) {
+            for (final Entry<String, List<Object>> entry : params.entrySet()) {
+                final String name = entry.getKey();
+                final Object[] values = entry.getValue().toArray();
+                target = target.queryParam(name, values);
+            }
+        }
+        return target;
+    }
+
+    public static Invocation.Builder buildResellerUser(
+            final Client client, final String storageUrl, final String userName,
+            final MultivaluedMap<String, Object> params,
+            final String authAccount, final String authUser,
+            final String authKey) {
+        return targetResellerUser(client, storageUrl, userName, params)
+                .request()
+                .headers(headers(null, authAccount, authUser, authKey));
+    }
+
     // -------------------------------------------------------------------------
     /**
      * Creates a new instance.
      *
      * @param authUrl the authentication URL
      * @param authUser the authentication username
-     * @param authPass the authentication password
+     * @param authKey the authentication password
      */
 //    public StorageClient(final String authUrl, final String authUser,
 //                         final String authPass) {
@@ -508,13 +617,13 @@ public class WsRsClient extends StorageClient {
 //        this.authPass = requireNonNull(authPass, "null authPass");
 //    }
     public WsRsClient(final String authUrl, final String authUser,
-                      final String authPass) {
-        super(authUrl, authUser, authPass);
+                      final String authKey) {
+        super(authUrl, authUser, authKey);
     }
 
     public WsRsClient(final StorageClient client) {
         this(client.getStorageUrl(), client.getAuthUser(),
-             client.getAuthPass());
+             client.getAuthKey());
         storageUrl = client.getStorageUrl();
         authToken = client.getAuthToken();
         authTokenExpires = client.getAuthTokenExpires();
@@ -522,12 +631,45 @@ public class WsRsClient extends StorageClient {
 
     // -------------------------------------------------------------------------
     @Override
+    @Deprecated
     protected void authenticateUser() {
         authenticateUser(
                 r -> {
                     return null;
                 }
         );
+    }
+
+    @Override
+    protected int authenticateUser(final boolean newToken) {
+        return authenticateUser(
+                newToken,
+                Response::getStatus
+        );
+    }
+
+    public <T> T authenticateUser(final boolean newToken,
+                                  final Function<Response, T> function) {
+        final Client client = ClientBuilder.newClient();
+        try {
+            final Response response = authenticateUser(
+                    client, authUrl, authUser, authKey, newToken);
+            try {
+                if (OK.getStatusCode() != response.getStatus()) {
+                    throw new WebApplicationException(
+                            "failed to authenticate user", response);
+                }
+                storageUrl = response.getHeaderString(HEADER_X_STORAGE_URL);
+                authToken = response.getHeaderString(HEADER_X_AUTH_TOKEN);
+                setAuthTokenExpires(response.getHeaderString(
+                        HEADER_X_AUTH_TOKEN_EXPIRES));
+                return function == null ? null : function.apply(response);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
     }
 
     /**
@@ -540,11 +682,12 @@ public class WsRsClient extends StorageClient {
      * @see #authenticateUser(javax.ws.rs.client.Client, java.lang.String,
      * java.lang.String, java.lang.String)
      */
+    @Deprecated
     public <T> T authenticateUser(final Function<Response, T> function) {
         final Client client = ClientBuilder.newClient();
         try {
             final Response response = authenticateUser(
-                    client, authUrl, authUser, authPass);
+                    client, authUrl, authUser, authKey);
             try {
                 if (OK.getStatusCode() != response.getStatus()) {
                     throw new WebApplicationException(
@@ -629,18 +772,18 @@ public class WsRsClient extends StorageClient {
         return authTokenExpires.getTime() >= until;
     }
 
-    /**
-     * Checks if the authentication token is valid in specified time unit and
-     * duration.
-     *
-     * @param unit time unit
-     * @param duration time unit duration.
-     * @return {@code true} if the token is valid; {@code false} otherwise.
-     */
-    public boolean isValid(final TimeUnit unit, final long duration) {
-        return isValid(System.currentTimeMillis() + unit.toMillis(duration));
-    }
-
+//    /**
+//     * Checks if the authentication token is valid in specified time unit and
+//     * duration.
+//     *
+//     * @param unit time unit
+//     * @param duration time unit duration.
+//     * @return {@code true} if the token is valid; {@code false} otherwise.
+//     */
+//    public boolean isValid(final TimeUnit unit, final long duration) {
+//        return isValid(System.currentTimeMillis() + unit.toMillis(duration));
+//    }
+//
     private void ensureValid(final TimeUnit unit, final long duration) {
         if (!isValid(unit, duration)) {
             authenticateUser(r -> {
@@ -1936,4 +2079,150 @@ public class WsRsClient extends StorageClient {
 //    private transient String authToken;
 //
 //    private transient Date authTokenExpires;
+    public <R> R authenticateReseller(final Function<Response, R> function) {
+        final Client client = ClientBuilder.newClient();
+        try {
+            final Response response = authenticateReseller(
+                    client, authUrl, authAccount, authUser, authKey);
+            try {
+                return function.apply(response);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
+    }
+
+    public <R> R authenticateReseller(
+            final BiFunction<Response, WsRsClient, R> function) {
+        return authenticateReseller(
+                r -> {
+                    return function.apply(r, this);
+                }
+        );
+    }
+
+    public WsRsClient authenticateReseller(final Consumer<Response> consumer) {
+        return authenticateReseller(
+                r -> {
+                    consumer.accept(r);
+                    return this;
+                }
+        );
+    }
+
+    public WsRsClient authenticateReseller(
+            final BiConsumer<Response, WsRsClient> consumer) {
+        return authenticateReseller(
+                r -> {
+                    consumer.accept(r, this);
+                }
+        );
+    }
+
+    // -------------------------------------------------------- reseller.account
+    public <R> R readResellerAccount(
+            final MultivaluedMap<String, Object> params,
+            MultivaluedMap<String, Object> headers,
+            final Function<Response, R> function) {
+        final Client client = ClientBuilder.newClient();
+        try {
+            final Invocation.Builder builder = buildResellerAccount(
+                    client, storageUrl, params, headers, authAccount, authUser,
+                    authKey);
+            if (headers != null) {
+                headers = headers(headers, authAccount, authUser, authKey);
+                builder.headers(headers);
+            }
+            final Response response = builder.get();
+            try {
+                return function.apply(response);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
+    }
+
+    // --------------------------------------------------- reseller/account/user
+    public <R> R readResellerUser(final String userName,
+                                  final MultivaluedMap<String, Object> params,
+                                  MultivaluedMap<String, Object> headers,
+                                  final Function<Response, R> function) {
+        final Client client = ClientBuilder.newClient();
+        try {
+            final Invocation.Builder builder = buildResellerUser(
+                    client, storageUrl, userName, params, authAccount, authUser,
+                    authKey);
+            if (headers != null) {
+                headers = headers(headers, authAccount, authUser, authKey);
+                builder.headers(headers);
+            }
+            final Response response = builder.get();
+            try {
+                return function.apply(response);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
+    }
+
+    public <R> R updateResellerUser(final String userName, final String userKey,
+                                    final MultivaluedMap<String, Object> params,
+                                    MultivaluedMap<String, Object> headers,
+                                    final Function<Response, R> function) {
+        final Client client = ClientBuilder.newClient();
+        try {
+            final Invocation.Builder builder = buildResellerUser(
+                    client, storageUrl, userName, params, authAccount, authUser,
+                    authKey);
+            if (headers != null) {
+                headers = headers(headers, authAccount, authUser, authKey);
+                headers.putSingle(HEADER_X_AUTH_USER_KEY, userKey);
+                builder.headers(headers);
+            }
+            final Response response = builder.get();
+            try {
+                return function.apply(response);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
+    }
+
+    public <R> R deleteResellerUser(final String userName,
+                                    final MultivaluedMap<String, Object> params,
+                                    MultivaluedMap<String, Object> headers,
+                                    final Function<Response, R> function) {
+        final Client client = ClientBuilder.newClient();
+        try {
+            final Invocation.Builder builder = buildResellerUser(
+                    client, storageUrl, userName, params, authAccount, authUser,
+                    authKey);
+            if (headers != null) {
+                headers = headers(headers, authAccount, authUser, authKey);
+                builder.headers(headers);
+            }
+            final Response response = builder.get();
+            try {
+                return function.apply(response);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();;
+        }
+    }
+
+    // ------------------------------------------------------------- authAccount
+    @Override
+    public WsRsClient authAccount(final String authAccount) {
+        return (WsRsClient) super.authAccount(authAccount);
+    }
 }

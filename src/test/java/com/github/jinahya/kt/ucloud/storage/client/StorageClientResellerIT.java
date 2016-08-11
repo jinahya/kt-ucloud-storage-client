@@ -31,11 +31,12 @@ import org.testng.annotations.BeforeClass;
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  * @param <T>
  */
-public abstract class StorageClientIT<T extends StorageClient> {
+public abstract class StorageClientResellerIT<T extends StorageClient> {
 
-    private static final Logger logger = getLogger(StorageClientIT.class);
+    private static final Logger logger
+            = getLogger(StorageClientResellerIT.class);
 
-    public StorageClientIT(final Class<T> clientClass) {
+    public StorageClientResellerIT(final Class<T> clientClass) {
         super();
         this.clientClass = clientClass;
     }
@@ -49,9 +50,9 @@ public abstract class StorageClientIT<T extends StorageClient> {
             throw new SkipException("missing property; authUrl");
         }
         final String authAccount = System.getProperty("authAccount");
-        if (authAccount != null) {
-            logger.error("existing property; authAccount; skipping...");
-            throw new SkipException("existing property; authAccount");
+        if (authAccount == null) {
+            logger.error("missing property; authAccount; skipping...");
+            throw new SkipException("missing property; authAccount");
         }
         final String authUser = System.getProperty("authUser");
         if (authUser == null) {
@@ -66,6 +67,7 @@ public abstract class StorageClientIT<T extends StorageClient> {
         client = clientClass
                 .getConstructor(String.class, String.class, String.class)
                 .newInstance(authUrl, authUser, authKey);
+        client.authAccount(authAccount);
         logger.debug("client constructed: {}", client);
         client.authenticateUser(true);
         logger.debug("client authenticted");

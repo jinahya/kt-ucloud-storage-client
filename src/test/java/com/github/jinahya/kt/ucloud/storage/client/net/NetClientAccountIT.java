@@ -17,7 +17,7 @@ package com.github.jinahya.kt.ucloud.storage.client.net;
 
 import com.github.jinahya.kt.ucloud.storage.client.AccountInfo;
 import com.github.jinahya.kt.ucloud.storage.client.JaxbTest;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.accountMeta;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.accountMetaHeader;
 import static com.github.jinahya.kt.ucloud.storage.client.net.NetClientIT.headers;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -98,13 +98,13 @@ public class NetClientAccountIT extends NetClientIT {
         });
     }
 
-    @Test(dependsOnMethods = {"readAccount"}, invocationCount = 10)
+    @Test(dependsOnMethods = {"readAccount"}, invocationCount = 1)
     public void configureAccount() {
         logger.debug("-------------------------------- configuring account...");
         final long sleep = 2000L;
-        final String[] tokens = new String[]{getClass().getSimpleName()};
+        final String[] tokens = getClass().getName().split("\\.");
         {
-            final String key = accountMeta(false, tokens);
+            final String key = accountMetaHeader(false, tokens);
             final String value = "test";
             accept(c -> {
                 final MultivaluedMap<String, Object> headers
@@ -152,7 +152,7 @@ public class NetClientAccountIT extends NetClientIT {
         }
         {
             accept(c -> {
-                final String key = accountMeta(true, tokens);
+                final String key = accountMetaHeader(true, tokens);
                 final String value = "any";
                 final MultivaluedMap<String, Object> headers
                         = new MultivaluedHashMap<>();
@@ -190,7 +190,8 @@ public class NetClientAccountIT extends NetClientIT {
                             n -> {
                                 status(n, NO_CONTENT);
                                 headers(n);
-                                final String key = accountMeta(false, tokens);
+                                final String key
+                                = accountMetaHeader(false, tokens);
                                 assertNull(n.getHeaderField(key));
                             });
                 } catch (final IOException ioe) {

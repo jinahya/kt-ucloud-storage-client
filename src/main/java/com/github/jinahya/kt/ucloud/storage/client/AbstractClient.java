@@ -18,6 +18,7 @@ package com.github.jinahya.kt.ucloud.storage.client;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+import static java.lang.Long.parseLong;
 import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.stream;
 import java.util.Date;
@@ -33,7 +34,7 @@ import static java.util.stream.Collectors.joining;
  *
  * @author Jin Kwon &lt;onacit at gmail.com&gt;
  */
-public abstract class StorageClient {
+public abstract class AbstractClient {
 
     public static final String AUTH_URL_STANDARD_KOR_CENTER
             = "https://api.ucloudbiz.olleh.com/storage/v1/auth";
@@ -82,12 +83,6 @@ public abstract class StorageClient {
 
     public static final String HEADER_X_COPY_FROM = "X-Copy-From";
 
-    public static final String HEADER_X_AUTH_ADMIN_USER = "X-Auth-Admin-User";
-
-    public static final String HEADER_X_AUTH_ADMIN_KEY = "X-Auth-Admin-Key";
-
-    public static final String HEADER_X_AUTH_USER_KEY = "X-Auth-User-Key";
-
     public static String capitalize(final String token) {
         return token.substring(0, 1).toUpperCase()
                + token.substring(1).toLowerCase();
@@ -126,7 +121,7 @@ public abstract class StorageClient {
         }
     }
 
-    protected static <T extends StorageClient> T lines(
+    protected static <T extends AbstractClient> T lines(
             final Reader reader, final BiConsumer<String, T> consumer,
             final T client)
             throws IOException {
@@ -135,8 +130,8 @@ public abstract class StorageClient {
     }
 
     // -------------------------------------------------------------------------
-    public StorageClient(final String authUrl, final String authUser,
-                         final String authKey) {
+    public AbstractClient(final String authUrl, final String authUser,
+                          final String authKey) {
         this.authUrl = requireNonNull(authUrl, "null authUrl");
         this.authUser = requireNonNull(authUser, "null authUser");
         this.authKey = requireNonNull(authKey, "null authKey");
@@ -152,7 +147,7 @@ public abstract class StorageClient {
      *
      * @return this client
      */
-    public StorageClient invalidate() {
+    public AbstractClient invalidate() {
         storageUrl = null;
         authToken = null;
         authTokenExpires = null;
@@ -193,28 +188,9 @@ public abstract class StorageClient {
         return authUrl;
     }
 
-    // ------------------------------------------------------------- authAccount
-    public String getAuthAccount() {
-        return authAccount;
-    }
-
-    public void setAuthAccount(final String authAccount) {
-        this.authAccount = authAccount;
-    }
-
-    public StorageClient authAccount(final String authAccount) {
-        setAuthAccount(authAccount);
-        return this;
-    }
-
     // ---------------------------------------------------------------- authUser
     public String getAuthUser() {
         return authUser;
-    }
-
-    // ---------------------------------------------------- authAccount/authUser
-    protected String getAuthUserHeaderValue() {
-        return (authAccount == null ? "" : authAccount + ":") + authUser;
     }
 
     // ----------------------------------------------------------------- authKey
@@ -291,19 +267,13 @@ public abstract class StorageClient {
     }
 
     protected void setAuthTokenExpires(final String authTokenExpires) {
-        setAuthTokenExpires(
-                ofNullable(authTokenExpires)
-                .map(Integer::parseInt)
-                .map(SECONDS::toMillis)
-                .map(v -> new Date(currentTimeMillis() + v))
-                .orElse(null)
-        );
+        setAuthTokenExpires(new Date(
+                currentTimeMillis()
+                + SECONDS.toMillis(parseLong(authTokenExpires))));
     }
 
     // -------------------------------------------------------------------------
     protected final String authUrl;
-
-    protected String authAccount;
 
     protected final String authUser;
 

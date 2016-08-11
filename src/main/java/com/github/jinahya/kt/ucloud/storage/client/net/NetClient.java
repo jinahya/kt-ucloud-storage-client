@@ -147,13 +147,13 @@ public class NetClient extends StorageClient {
 
     // -------------------------------------------------------------------------
     public NetClient(final String storageUrl, final String authUser,
-                     final String authPass) {
-        super(storageUrl, authUser, authPass);
+                     final String authKey) {
+        super(storageUrl, authUser, authKey);
     }
 
     public NetClient(final StorageClient client) {
         this(client.getStorageUrl(), client.getAuthUser(),
-             client.getAuthPass());
+             client.getAuthKey());
         storageUrl = client.getStorageUrl();
         authToken = client.getAuthToken();
         authTokenExpires = client.getAuthTokenExpires();
@@ -161,6 +161,7 @@ public class NetClient extends StorageClient {
 
     // -------------------------------------------------------------------------
     @Override
+    @Deprecated
     protected void authenticateUser() {
         try {
             authenticateUser(
@@ -172,15 +173,35 @@ public class NetClient extends StorageClient {
         }
     }
 
-    public <R> R authenticateUser(final Function<URLConnection, R> function)
+    @Override
+    protected int authenticateUser(final boolean newToken) {
+        try {
+            return this.<Integer>authenticateUser(
+                    newToken,
+                    n -> {
+                        try {
+                            return ((HttpURLConnection) n).getResponseCode();
+                        } catch (final IOException ioe) {
+                            throw new RuntimeException(ioe);
+                        }
+                    });
+        } catch (final IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
+    }
+
+    public <R> R authenticateUser(final boolean newToken,
+                                  final Function<URLConnection, R> function)
             throws IOException {
         final HttpURLConnection connection
                 = (HttpURLConnection) new URL(authUrl).openConnection();
         connection.setRequestMethod("GET");
         final Map<String, List<Object>> headers = new HashMap<>();
         headers.put(HEADER_X_AUTH_USER, singletonList(authUser));
-        headers.put(HEADER_X_AUTH_PASS, singletonList(authPass));
-        headers.put(HEADER_X_AUTH_NEW_TOKEN, singletonList(Boolean.TRUE));
+        headers.put(HEADER_X_AUTH_PASS, singletonList(authKey));
+        if (newToken) {
+            headers.put(HEADER_X_AUTH_NEW_TOKEN, singletonList(Boolean.TRUE));
+        }
         requestProperties(connection, headers);
         connection.setDoOutput(false);
         connection.setDoInput(true);
@@ -204,6 +225,76 @@ public class NetClient extends StorageClient {
     }
 
     public <R> R authenticateUser(
+            final boolean newToken,
+            final BiFunction<URLConnection, NetClient, R> function)
+            throws IOException {
+        return authenticateUser(
+                newToken,
+                n -> {
+                    return function.apply(n, this);
+                }
+        );
+    }
+
+    public NetClient authenticateUser(
+            final boolean newToken,
+            final Consumer<URLConnection> consumer)
+            throws IOException {
+        return authenticateUser(
+                newToken,
+                n -> {
+                    consumer.accept(n);
+                    return this;
+                }
+        );
+    }
+
+    public NetClient authenticateUser(
+            final boolean newToken,
+            final BiConsumer<URLConnection, NetClient> consumer)
+            throws IOException {
+        return authenticateUser(
+                newToken,
+                n -> {
+                    consumer.accept(n, this);
+                }
+        );
+    }
+
+    @Deprecated
+    public <R> R authenticateUser(final Function<URLConnection, R> function)
+            throws IOException {
+        final HttpURLConnection connection
+                = (HttpURLConnection) new URL(authUrl).openConnection();
+        connection.setRequestMethod("GET");
+        final Map<String, List<Object>> headers = new HashMap<>();
+        headers.put(HEADER_X_AUTH_USER, singletonList(authUser));
+        headers.put(HEADER_X_AUTH_PASS, singletonList(authKey));
+        headers.put(HEADER_X_AUTH_NEW_TOKEN, singletonList(Boolean.TRUE));
+        requestProperties(connection, headers);
+        connection.setDoOutput(false);
+        connection.setDoInput(true);
+        connection.connect();
+        try {
+            final int statusCode = connection.getResponseCode();
+            if (statusCode != 200) {
+                final String reasonPhrase = connection.getResponseMessage();
+                throw new IOException(
+                        "failed to authenticate user; " + statusCode + " "
+                        + reasonPhrase);
+            }
+            storageUrl = connection.getHeaderField(HEADER_X_STORAGE_URL);
+            authToken = connection.getHeaderField(HEADER_X_AUTH_TOKEN);
+            setAuthTokenExpires(
+                    connection.getHeaderField(HEADER_X_AUTH_TOKEN_EXPIRES));
+            return function.apply(connection);
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    @Deprecated
+    public <R> R authenticateUser(
             final BiFunction<URLConnection, NetClient, R> function)
             throws IOException {
         return authenticateUser(
@@ -213,6 +304,7 @@ public class NetClient extends StorageClient {
         );
     }
 
+    @Deprecated
     public NetClient authenticateUser(final Consumer<URLConnection> consumer)
             throws IOException {
         return authenticateUser(
@@ -223,6 +315,7 @@ public class NetClient extends StorageClient {
         );
     }
 
+    @Deprecated
     public NetClient authenticateUser(
             final BiConsumer<URLConnection, NetClient> consumer)
             throws IOException {
@@ -753,5 +846,11 @@ public class NetClient extends StorageClient {
                     consumer.accept(n, this);
                 }
         );
+    }
+
+    // ------------------------------------------------------------- authAccount
+    @Override
+    public NetClient authAccount(final String authAccount) {
+        return (NetClient) super.authAccount(authAccount);
     }
 }

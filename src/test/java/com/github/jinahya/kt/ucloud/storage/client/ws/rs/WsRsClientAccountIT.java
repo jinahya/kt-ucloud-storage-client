@@ -15,7 +15,7 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.accountMeta;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.accountMetaHeader;
 import java.io.IOException;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
@@ -102,13 +102,13 @@ public class WsRsClientAccountIT extends WsRsClientIT {
         );
     }
 
-    @Test(invocationCount = 10)
+    @Test(invocationCount = 1)
     public void configureAccount() {
         logger.debug("-------------------------------- configuring account...");
         final long sleep = 2000L;
-        final String[] tokens = new String[]{getClass().getSimpleName()};
+        final String[] tokens = getClass().getName().split("\\.");
         {
-            final String key = accountMeta(false, tokens);
+            final String key = accountMetaHeader(false, tokens);
             final String value = "test";
             accept(c -> {
                 final MultivaluedMap<String, Object> headers
@@ -148,7 +148,7 @@ public class WsRsClientAccountIT extends WsRsClientIT {
         }
         {
             accept(c -> {
-                final String key = accountMeta(true, tokens);
+                final String key = accountMetaHeader(true, tokens);
                 final String value = "any";
                 final MultivaluedMap<String, Object> headers
                         = new MultivaluedHashMap<>();
@@ -174,15 +174,14 @@ public class WsRsClientAccountIT extends WsRsClientIT {
                         = new MultivaluedHashMap<>();
                 headers.putSingle(ACCEPT, TEXT_PLAIN);
                 logger.debug("checking meta...");
-                c.peekAccount(
-                        null,
-                        headers,
-                        r -> {
-                            status(r, SUCCESSFUL, NO_CONTENT);
-                            headers(r);
-                            assertNull(r.getHeaderString(
-                                    accountMeta(false, tokens)));
-                        }
+                c.peekAccount(null,
+                              headers,
+                              r -> {
+                                  status(r, SUCCESSFUL, NO_CONTENT);
+                                  headers(r);
+                                  assertNull(r.getHeaderString(
+                                          accountMetaHeader(false, tokens)));
+                              }
                 );
             });
         }
