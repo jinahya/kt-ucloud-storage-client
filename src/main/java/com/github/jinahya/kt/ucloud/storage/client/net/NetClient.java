@@ -69,6 +69,13 @@ public class NetClient extends StorageClient {
         return connection;
     }
 
+    public static void status(final HttpURLConnection connection,
+                              final BiConsumer<Integer, String> consumer)
+            throws IOException {
+        consumer.accept(connection.getResponseCode(),
+                        connection.getResponseMessage());
+    }
+
     // ----------------------------------------------------------------- account
     public static StringBuilder buildAccount(
             final String storageUrl,
@@ -160,19 +167,18 @@ public class NetClient extends StorageClient {
     }
 
     // -------------------------------------------------------------------------
-    @Override
-    @Deprecated
-    protected void authenticateUser() {
-        try {
-            authenticateUser(
-                    n -> {
-                        return null;
-                    });
-        } catch (final IOException ioe) {
-            throw new RuntimeException(ioe);
-        }
-    }
-
+//    @Override
+//    @Deprecated
+//    protected void authenticateUser() {
+//        try {
+//            authenticateUser(
+//                    n -> {
+//                        return null;
+//                    });
+//        } catch (final IOException ioe) {
+//            throw new RuntimeException(ioe);
+//        }
+//    }
     @Override
     protected int authenticateUser(final boolean newToken) {
         try {

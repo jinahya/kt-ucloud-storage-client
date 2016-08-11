@@ -17,8 +17,11 @@ package com.github.jinahya.kt.ucloud.storage.client;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import static java.lang.System.currentTimeMillis;
+import java.nio.charset.Charset;
 import static java.util.Arrays.stream;
 import java.util.Date;
 import static java.util.Objects.requireNonNull;
@@ -80,6 +83,10 @@ public abstract class StorageClient {
     public static final String HEADER_X_CONTAINER_BYTES_USED
             = "X-Container-Bytes-Used";
 
+    public static final String HEADER_X_CONTAINER_READ = "X-Container-Read";
+
+    public static final String HEADER_X_CONTAINER_WRITE = "X-Container-Write";
+
     public static final String HEADER_X_COPY_FROM = "X-Copy-From";
 
     public static final String HEADER_X_AUTH_ADMIN_USER = "X-Auth-Admin-User";
@@ -97,9 +104,9 @@ public abstract class StorageClient {
         return stream(tokens).map(v -> capitalize(v)).collect(joining("-"));
     }
 
-    public static String metaHeader(final boolean remove, final String name,
+    public static String metaHeader(final boolean remove, final String scope,
                                     final String... tokens) {
-        return "X" + (remove ? "-Remove" : "") + "-" + name + "-Meta" + "-"
+        return "X" + (remove ? "-Remove" : "") + "-" + scope + "-Meta" + "-"
                + capitalizeAndJoin(tokens);
     }
 
@@ -118,20 +125,57 @@ public abstract class StorageClient {
         return metaHeader(remove, "Object", tokens);
     }
 
-    protected static void lines(final Reader reader,
-                                final Consumer<String> consumer)
+    /**
+     * Accepts each lines of given {@code reader} to specified {@code consumer}.
+     *
+     * @param reader the reader
+     * @param consumer the consumer
+     * @throws IOException if an I/O error occurs.
+     */
+    public static void lines(final Reader reader,
+                             final Consumer<String> consumer)
             throws IOException {
         try (BufferedReader buffered = new BufferedReader(reader)) {
             buffered.lines().forEach(consumer::accept);
         }
     }
 
-    protected static <T extends StorageClient> T lines(
+    /**
+     * Accepts each lines of given {@code reader} and given {@code client} to
+     * specified {@code consumer}.
+     *
+     * @param <T> client type parameter
+     * @param reader the reader
+     * @param consumer the consumer
+     * @param client the client
+     * @return given {@code client}
+     * @throws IOException if an I/O error occurs.
+     */
+    public static <T extends StorageClient> T lines(
             final Reader reader, final BiConsumer<String, T> consumer,
             final T client)
             throws IOException {
         lines(reader, l -> consumer.accept(l, client));
         return client;
+    }
+
+    public static void lines(final InputStream stream, final Charset charset,
+                             final Consumer<String> consumer)
+            throws IOException {
+        try (InputStreamReader reader
+                = new InputStreamReader(stream, charset)) {
+            lines(reader, consumer);
+        }
+    }
+
+    public static <T extends StorageClient> T lines(
+            final InputStream stream, final Charset charset,
+            final BiConsumer<String, T> consumer, final T client)
+            throws IOException {
+        try (InputStreamReader reader
+                = new InputStreamReader(stream, charset)) {
+            return lines(reader, consumer, client);
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -142,13 +186,10 @@ public abstract class StorageClient {
         this.authKey = requireNonNull(authKey, "null authKey");
     }
 
-    @Deprecated
-    protected abstract void authenticateUser();
-
     protected abstract int authenticateUser(boolean newToken);
 
     /**
-     * Invalidates this client by purging the authorization information.
+     * Purges authorization information.
      *
      * @return this client
      */
@@ -185,7 +226,7 @@ public abstract class StorageClient {
      * @return {@code true} if the token is valid; {@code false} otherwise.
      */
     public boolean isValid(final TimeUnit unit, final long duration) {
-        return isValid(System.currentTimeMillis() + unit.toMillis(duration));
+        return isValid(currentTimeMillis() + unit.toMillis(duration));
     }
 
     // ----------------------------------------------------------------- authUrl
@@ -213,8 +254,8 @@ public abstract class StorageClient {
     }
 
     // ---------------------------------------------------- authAccount/authUser
-    protected String getAuthUserHeaderValue() {
-        return (authAccount == null ? "" : authAccount + ":") + authUser;
+    protected String getXAuthUserHeaderValue() {
+        return (authAccount != null ? authAccount + ":" : "") + authUser;
     }
 
     // ----------------------------------------------------------------- authKey
@@ -222,33 +263,6 @@ public abstract class StorageClient {
         return authKey;
     }
 
-//    // ---------------------------------------------------------- connectTimeout
-//    public Integer getConnectTimeout() {
-//        return connectTimeout;
-//    }
-//
-//    public void setConnectTimeout(final Integer connectTimeout) {
-//        this.connectTimeout = connectTimeout;
-//    }
-//
-//    public StorageClient connectTimeout(final Integer connectTimeout) {
-//        setConnectTimeout(connectTimeout);
-//        return this;
-//    }
-//
-//    // ------------------------------------------------------------- readTimeout
-//    public Integer getReadTimeout() {
-//        return readTimeout;
-//    }
-//
-//    public void setReadTimeout(final Integer readTimeout) {
-//        this.readTimeout = readTimeout;
-//    }
-//
-//    public StorageClient readTimeout(final Integer readTimeout) {
-//        setReadTimeout(readTimeout);
-//        return this;
-//    }
     // -------------------------------------------------------------- storageUrl
     /**
      * Returns the storage URL.

@@ -29,13 +29,13 @@ import org.testng.annotations.BeforeClass;
 /**
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
- * @param <T>
+ * @param <C> client type parameter
  */
-public abstract class StorageClientIT<T extends StorageClient> {
+public abstract class StorageClientIT<C extends StorageClient> {
 
     private static final Logger logger = getLogger(StorageClientIT.class);
 
-    public StorageClientIT(final Class<T> clientClass) {
+    public StorageClientIT(final Class<C> clientClass) {
         super();
         this.clientClass = clientClass;
     }
@@ -50,7 +50,7 @@ public abstract class StorageClientIT<T extends StorageClient> {
         }
         final String authAccount = System.getProperty("authAccount");
         if (authAccount != null) {
-            logger.error("existing property; authAccount; skipping...");
+            logger.info("existing property; authAccount; skipping...");
             throw new SkipException("existing property; authAccount");
         }
         final String authUser = System.getProperty("authUser");
@@ -67,7 +67,7 @@ public abstract class StorageClientIT<T extends StorageClient> {
                 .getConstructor(String.class, String.class, String.class)
                 .newInstance(authUrl, authUser, authKey);
         logger.debug("client constructed: {}", client);
-        client.authenticateUser(true);
+        client.authenticateUser(false);
         logger.debug("client authenticted");
     }
 
@@ -80,28 +80,28 @@ public abstract class StorageClientIT<T extends StorageClient> {
         logger.debug("=======================================================");
     }
 
-    protected <R> R apply(final Function<T, R> function) {
+    protected <R> R apply(final Function<C, R> function) {
         return function.apply(client);
     }
 
-    protected <U, R> R apply(final BiFunction<T, U, R> function,
+    protected <U, R> R apply(final BiFunction<C, U, R> function,
                              final Supplier<U> u) {
         return apply(c -> function.apply(c, u.get()));
     }
 
-    protected void accept(final Consumer<T> consumer) {
+    protected void accept(final Consumer<C> consumer) {
         apply(c -> {
             consumer.accept(c);
             return null;
         });
     }
 
-    protected <U> void accept(final BiConsumer<T, U> consumer,
+    protected <U> void accept(final BiConsumer<C, U> consumer,
                               final Supplier<U> u) {
         accept(c -> consumer.accept(c, u.get()));
     }
 
-    protected final Class<T> clientClass;
+    protected final Class<C> clientClass;
 
-    private T client;
+    private transient C client;
 }

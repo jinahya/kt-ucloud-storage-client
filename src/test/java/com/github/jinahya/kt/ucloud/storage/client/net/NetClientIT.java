@@ -32,7 +32,6 @@ import static javax.ws.rs.core.Response.Status.OK;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.fail;
-import static java.util.Arrays.stream;
 
 /**
  *
