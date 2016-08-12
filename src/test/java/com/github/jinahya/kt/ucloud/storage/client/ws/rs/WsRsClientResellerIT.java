@@ -332,4 +332,75 @@ public class WsRsClientResellerIT
             );
         });
     }
+
+    @Test(invocationCount = 1)
+    public void multipleUsers() throws IOException {
+        logger.debug("----------------------------- testing multiple usres...");
+        final String containerName = UUID.randomUUID().toString();
+        final String objectName = UUID.randomUUID().toString();
+        final String userName1 = UUID.randomUUID().toString();
+        final String userKey1 = UUID.randomUUID().toString();
+        final String userName2 = UUID.randomUUID().toString();
+        final String userKey2 = UUID.randomUUID().toString();
+        final String authUrl[] = new String[1];
+        accept(c -> authUrl[0] = c.getAuthUrl());
+        final String authAccount[] = new String[1];
+        accept(c -> authAccount[0] = c.getAuthAccount());
+        final String storageUrl[] = new String[1];
+        accept(c -> storageUrl[0] = c.getStorageUrl());
+        final String resellerAuthUser1 = authAccount[0] + ":" + userName1;
+        final String resellerAuthUser2 = authAccount[0] + ":" + userName2;
+        accept(c -> {
+            logger.debug("--------------------------------- updating user1...");
+            c.updateResellerUser(
+                    userName1,
+                    userKey1,
+                    null,
+                    null,
+                    r -> {
+                        status(r, SUCCESSFUL);
+                    }
+            );
+        });
+        accept(c -> {
+            logger.debug("--------------------------------- updating user2...");
+            c.updateResellerUser(
+                    userName2,
+                    userKey2,
+                    null,
+                    null,
+                    r -> {
+                        status(r, SUCCESSFUL);
+                    }
+            );
+        });
+        final URL objectUrl = new URL(
+                storageUrl[0] + "/" + containerName + "/" + objectName);
+        final String[] authToken1 = new String[1];
+        {
+            logger.debug("---------------------- authenticating with user1...");
+            final WsRsClient client = new WsRsClient(
+                    authUrl[0], resellerAuthUser1, userKey1);
+            client.authenticateUser(
+                    false,
+                    r -> {
+                        authToken1[0] = r.getHeaderString(HEADER_X_AUTH_TOKEN);
+                        logger.debug("authToken1: {}", authToken1[0]);
+                    }
+            );
+        }
+        final String[] authToken2 = new String[1];
+        {
+            logger.debug("---------------------- authenticating with user2...");
+            final WsRsClient client = new WsRsClient(
+                    authUrl[0], resellerAuthUser2, userKey2);
+            client.authenticateUser(
+                    false,
+                    r -> {
+                        authToken2[0] = r.getHeaderString(HEADER_X_AUTH_TOKEN);
+                        logger.debug("authToken2: {}", authToken2[0]);
+                    }
+            );
+        }
+    }
 }
