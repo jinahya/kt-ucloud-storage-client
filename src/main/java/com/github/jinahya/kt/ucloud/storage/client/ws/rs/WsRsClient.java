@@ -53,6 +53,36 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import static javax.ws.rs.core.Response.Status.OK;
 import javax.ws.rs.core.UriBuilder;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
 
 /**
  * A client for accessing kt ucloud storage using JAX-RS.
@@ -1625,8 +1655,8 @@ public class WsRsClient extends StorageClient {
         final Client client = registerFilters(ClientBuilder.newClient());
         try {
             registerFilters(client);
-            final Invocation.Builder builder = buildResellerAccount(
-                    client, storageUrl, authAccount, params, headers,
+//            WebTarget target = targetResellerAccount(client, storageUrl, authAdmin, params).path(".groups");
+            final Invocation.Builder builder = buildResellerAccount(client, storageUrl, authAccount, params, headers,
                     authUser, authKey);
             if (headers != null) {
                 headers = headers(headers, authAccount, authUser, authKey);
@@ -1690,9 +1720,8 @@ public class WsRsClient extends StorageClient {
                                   final Function<Response, R> function) {
         final Client client = registerFilters(ClientBuilder.newClient());
         try {
-            final Invocation.Builder builder = buildResellerUser(
-                    client, storageUrl, authAccount, userName, params, authUser,
-                    authKey);
+            final Invocation.Builder builder = buildResellerUser(client, storageUrl, authAccount, userName, params, authUser,
+                                                                 authKey);
             if (headers != null) {
                 headers = headers(headers, authAccount, authUser, authKey);
                 builder.headers(headers);
@@ -1760,9 +1789,8 @@ public class WsRsClient extends StorageClient {
                                     final Function<Response, R> function) {
         final Client client = registerFilters(ClientBuilder.newClient());
         try {
-            Invocation.Builder builder = buildResellerUser(
-                    client, storageUrl, authAccount, userName, params, authUser,
-                    authKey);
+            Invocation.Builder builder = buildResellerUser(client, storageUrl, authAccount, userName, params, authUser,
+                                                           authKey);
             headers = headers(headers, authAccount, authUser, authKey);
             headers.putSingle(HEADER_X_AUTH_USER_KEY, userKey);
             headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
@@ -1833,9 +1861,8 @@ public class WsRsClient extends StorageClient {
                                     final Function<Response, R> function) {
         final Client client = registerFilters(ClientBuilder.newClient());
         try {
-            final Invocation.Builder builder = buildResellerUser(
-                    client, storageUrl, authAccount, userName, params, authUser,
-                    authKey);
+            final Invocation.Builder builder = buildResellerUser(client, storageUrl, authAccount, userName, params, authUser,
+                                                                 authKey);
             if (headers != null) {
                 headers = headers(headers, authAccount, authUser, authKey);
                 builder.headers(headers);

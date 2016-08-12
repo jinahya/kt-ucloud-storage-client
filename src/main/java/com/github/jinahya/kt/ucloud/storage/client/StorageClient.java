@@ -22,14 +22,14 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import static java.lang.System.currentTimeMillis;
 import java.nio.charset.Charset;
-import static java.util.Arrays.stream;
 import java.util.Date;
-import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import static java.util.Arrays.stream;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 
 /**

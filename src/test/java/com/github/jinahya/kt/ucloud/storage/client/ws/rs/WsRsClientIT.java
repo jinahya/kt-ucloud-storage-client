@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
+import org.testng.annotations.BeforeClass;
 
 /**
  *
@@ -40,6 +41,35 @@ import static org.testng.Assert.assertTrue;
 public abstract class WsRsClientIT extends StorageClientIT<WsRsClient> {
 
     private static final Logger logger = getLogger(WsRsClientIT.class);
+
+    @BeforeClass
+    @Override
+    public void doBeforeClass() throws ReflectiveOperationException {
+        super.doBeforeClass();
+        accept(c -> {
+            c.setClientRequestFilter(requestContext -> {
+                logger.debug("requstContext.method: {}",
+                             requestContext.getMethod());
+                logger.debug("requstContext.uri: {}", requestContext.getUri());
+                requestContext.getHeaders().forEach((k, vs) -> {
+                    vs.forEach(v -> {
+                        logger.debug("requestContext.header: {}: {}", k, v);
+                    });
+                });
+            });
+            c.setClientResponseFilter((requestContext, responseContext) -> {
+                final StatusType statusInfo = responseContext.getStatusInfo();
+                logger.debug("responseContext.status: {} {}",
+                             statusInfo.getStatusCode(),
+                             statusInfo.getReasonPhrase());
+                responseContext.getHeaders().forEach((k, vs) -> {
+                    vs.forEach(v -> {
+                        logger.debug("responseContext.header: {}: {}", k, v);
+                    });
+                });
+            });
+        });
+    }
 
 //    private static WsRsClient client;
 //    @BeforeSuite

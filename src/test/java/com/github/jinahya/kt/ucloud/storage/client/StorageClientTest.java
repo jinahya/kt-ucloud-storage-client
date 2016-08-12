@@ -19,8 +19,6 @@ import static java.lang.System.currentTimeMillis;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.fail;
 import org.testng.annotations.Test;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.fail;
 
 /**
  *
