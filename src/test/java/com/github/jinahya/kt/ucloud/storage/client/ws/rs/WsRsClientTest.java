@@ -15,10 +15,15 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
+import com.github.jinahya.kt.ucloud.storage.client.StorageClientTest;
+
 /**
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-public class WsRsClientTest {
+public class WsRsClientTest extends StorageClientTest<WsRsClient> {
 
+    public WsRsClientTest() {
+        super(WsRsClient.class);
+    }
 }

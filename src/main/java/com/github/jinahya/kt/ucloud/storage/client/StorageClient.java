@@ -21,6 +21,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import static java.lang.System.currentTimeMillis;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import static java.util.Arrays.stream;
 import static java.util.Collections.singletonList;
@@ -135,57 +137,56 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
         return metaHeader(remove, "Object", tokens);
     }
 
+    public static String resellerUrl(final String storageUrl,
+                                     final String resellerAccount) {
+        try {
+            final URL url = new URL(storageUrl);
+            final String protocol = url.getProtocol();
+            final String authority = url.getAuthority();
+            return protocol + "://" + authority + "/auth/v2/" + resellerAccount;
+        } catch (final MalformedURLException murle) {
+            throw new StorageClientException(murle);
+        }
+    }
+
     /**
      * Accepts each lines of given {@code reader} to specified {@code consumer}.
      *
      * @param reader the reader
      * @param consumer the consumer
-     * @throws IOException if an I/O error occurs.
      */
     public static void lines(final Reader reader,
-                             final Consumer<String> consumer)
-            throws IOException {
-        try (BufferedReader buffered = new BufferedReader(reader)) {
-            buffered.lines().forEach(consumer::accept);
-        }
+                             final Consumer<String> consumer) {
+        new BufferedReader(reader).lines().forEach(consumer::accept);
+    }
+
+    public static void lines(final InputStream stream, final Charset charset,
+                             final Consumer<String> consumer) {
+        lines(new InputStreamReader(stream, charset), consumer);
     }
 
     /**
      * Accepts each lines of given {@code reader} and given {@code client} to
      * specified {@code consumer}.
      *
-     * @param <T> client type parameter
+     * @param <ClientType> client type parameter
      * @param reader the reader
      * @param consumer the consumer
      * @param client the client
      * @return given {@code client}
-     * @throws IOException if an I/O error occurs.
      */
-    public static <T extends StorageClient> T lines(
-            final Reader reader, final BiConsumer<String, T> consumer,
-            final T client)
-            throws IOException {
+    public static <ClientType extends StorageClient> ClientType lines(
+            final Reader reader, final BiConsumer<String, ClientType> consumer,
+            final ClientType client) {
         lines(reader, l -> consumer.accept(l, client));
         return client;
     }
 
-    public static void lines(final InputStream stream, final Charset charset,
-                             final Consumer<String> consumer)
-            throws IOException {
-        try (InputStreamReader reader
-                = new InputStreamReader(stream, charset)) {
-            lines(reader, consumer);
-        }
-    }
-
-    public static <T extends StorageClient> T lines(
+    public static <ClientType extends StorageClient> ClientType lines(
             final InputStream stream, final Charset charset,
-            final BiConsumer<String, T> consumer, final T client)
-            throws IOException {
-        try (InputStreamReader reader
-                = new InputStreamReader(stream, charset)) {
-            return lines(reader, consumer, client);
-        }
+            final BiConsumer<String, ClientType> consumer,
+            final ClientType client) {
+        return lines(new InputStreamReader(stream, charset), consumer, client);
     }
 
     // -------------------------------------------------------------------------
@@ -573,11 +574,11 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
                                           Map<String, List<Object>> headers,
                                           Function<ResponseType, R> function);
 
-    public <T> T updateContainer(
+    public <R> R updateContainer(
             final String containerName,
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
-            final BiFunction<ResponseType, ClientType, T> function) {
+            final BiFunction<ResponseType, ClientType, R> function) {
         return updateContainer(
                 containerName,
                 params,
@@ -625,11 +626,11 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
             final Map<String, List<Object>> headers,
             final Function<ResponseType, R> function);
 
-    public <T> T configureContainer(
+    public <R> R configureContainer(
             final String containerName,
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
-            final BiFunction<ResponseType, ClientType, T> function) {
+            final BiFunction<ResponseType, ClientType, R> function) {
         return configureContainer(
                 containerName,
                 params,
@@ -892,17 +893,17 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
         );
     }
 
-    public abstract <T> T configureObject(String containerName,
+    public abstract <R> R configureObject(String containerName,
                                           String objectName,
                                           Map<String, List<Object>> params,
                                           Map<String, List<Object>> headers,
-                                          Function<ResponseType, T> function);
+                                          Function<ResponseType, R> function);
 
-    public <T> T configureObject(
+    public <R> R configureObject(
             final String containerName, final String objectName,
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
-            final BiFunction<ResponseType, ClientType, T> function) {
+            final BiFunction<ResponseType, ClientType, R> function) {
         return configureObject(
                 containerName,
                 objectName,
@@ -953,11 +954,11 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
                                        Map<String, List<Object>> headers,
                                        Function<ResponseType, R> function);
 
-    public <T> T deleteObject(
+    public <R> R deleteObject(
             final String containerName, final String objectName,
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
-            final BiFunction<ResponseType, ClientType, T> function) {
+            final BiFunction<ResponseType, ClientType, R> function) {
         return deleteObject(
                 containerName,
                 objectName,

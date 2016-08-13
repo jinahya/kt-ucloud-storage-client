@@ -271,8 +271,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
             final MultivaluedMap<String, Object> params) {
         final URI uri;
         try {
-            final URL url
-                    = new URL(requireNonNull(storageUrl, "null storgeUrl"));
+            final URL url = new URL(storageUrl);
             final String protocol = url.getProtocol();
             final String authority = url.getAuthority();
             uri = UriBuilder.fromUri(protocol + "://" + authority)
@@ -313,8 +312,8 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
             final Client client, final String storageUrl,
             final String authAccount, final String userName,
             final MultivaluedMap<String, Object> params) {
-        WebTarget target = targetResellerAccount(client, storageUrl,
-                                                 authAccount, params)
+        WebTarget target = targetResellerAccount(
+                client, storageUrl, authAccount, params)
                 .path(requireNonNull(userName, "null userName"));
         if (params != null) {
             for (final Entry<String, List<Object>> entry : params.entrySet()) {
@@ -380,6 +379,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
 
     // -------------------------------------------------------------------------
     @Override
+    @Deprecated
     protected int authenticateUser(final boolean newToken) {
         return authenticateUser(
                 newToken,
@@ -387,6 +387,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
         );
     }
 
+    @Override
     public <R> R authenticateUser(final boolean newToken,
                                   final Function<Response, R> function) {
         return apply(c -> {
@@ -501,9 +502,9 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
     }
 
     // ---------------------------------------------------------------- /account
-    public <T> T peekAccount(final MultivaluedMap<String, Object> params,
+    public <R> R peekAccount(final MultivaluedMap<String, Object> params,
                              final MultivaluedMap<String, Object> headers,
-                             final Function<Response, T> function) {
+                             final Function<Response, R> function) {
         final Client client = registerFilters(ClientBuilder.newClient());
         try {
             Invocation.Builder builder = buildAccount(
@@ -572,15 +573,15 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
     /**
      * Reads a storage using {@link javax.ws.rs.HttpMethod#GET}.
      *
-     * @param <T> result type parameter
+     * @param <R> result type parameter
      * @param params query parameters; may be {@code null}
      * @param headers request headers; may be {@code null}
      * @param function a function to be applied with the server response
      * @return the value {@code function} results
      */
-    public <T> T readAccount(final MultivaluedMap<String, Object> params,
+    public <R> R readAccount(final MultivaluedMap<String, Object> params,
                              final MultivaluedMap<String, Object> headers,
-                             final Function<Response, T> function) {
+                             final Function<Response, R> function) {
         final Client client = registerFilters(ClientBuilder.newClient());
         try {
             Invocation.Builder builder = buildAccount(
@@ -721,9 +722,9 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
         );
     }
 
-    public <T> T configureAccount(final MultivaluedMap<String, Object> params,
+    public <R> R configureAccount(final MultivaluedMap<String, Object> params,
                                   final MultivaluedMap<String, Object> headers,
-                                  final Function<Response, T> function) {
+                                  final Function<Response, R> function) {
         final Client client = registerFilters(ClientBuilder.newClient());
         try {
             Invocation.Builder builder = buildAccount(
@@ -793,10 +794,10 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
 //        );
 //    }
     // ------------------------------------------------------ /account/container
-    public <T> T peekContainer(final String containerName,
+    public <R> R peekContainer(final String containerName,
                                final MultivaluedMap<String, Object> params,
                                final MultivaluedMap<String, Object> headers,
-                               final Function<Response, T> function) {
+                               final Function<Response, R> function) {
         final Client client = registerFilters(ClientBuilder.newClient());
         try {
             Invocation.Builder builder = buildContainer(
@@ -887,10 +888,10 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
 //                }
 //        );
 //    }
-    public <T> T readContainer(final String containerName,
+    public <R> R readContainer(final String containerName,
                                final MultivaluedMap<String, Object> params,
                                final MultivaluedMap<String, Object> headers,
-                               final Function<Response, T> function) {
+                               final Function<Response, R> function) {
         final Client client = registerFilters(ClientBuilder.newClient());
         try {
             Invocation.Builder builder = buildContainer(
@@ -1026,7 +1027,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
     /**
      * Creates or updates a container.
      *
-     * @param <T> result type parameter
+     * @param <R> result type parameter
      * @param containerName container name
      * @param params query parameters; may be {@code null}
      * @param headers request headers; may be {@code null}
@@ -1035,10 +1036,10 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
      * @return the value the function results; {@code null} if the
      * {@code function} is {@code null}
      */
-    public <T> T updateContainer(final String containerName,
+    public <R> R updateContainer(final String containerName,
                                  final MultivaluedMap<String, Object> params,
                                  final MultivaluedMap<String, Object> headers,
-                                 final Function<Response, T> function) {
+                                 final Function<Response, R> function) {
         final Client client = registerFilters(ClientBuilder.newClient());
         try {
             final Invocation.Builder builder = buildContainer(
@@ -1108,11 +1109,11 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
 //                }
 //        );
 //    }
-    public <T> T configureContainer(
+    public <R> R configureContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final Function<Response, T> function) {
+            final Function<Response, R> function) {
         final Client client = registerFilters(ClientBuilder.newClient());
         try {
             final Invocation.Builder builder = buildContainer(
@@ -1185,7 +1186,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
     /**
      * Deletes a container identified by given name and returns the result .
      *
-     * @param <T> return value type parameter
+     * @param <R> return value type parameter
      * @param containerName the container name
      * @param params query parameters
      * @param headers additional request headers
@@ -1193,10 +1194,10 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
      * @return the value function results or {@code null} if the
      * {@code function} is {@code null}.
      */
-    public <T> T deleteContainer(final String containerName,
+    public <R> R deleteContainer(final String containerName,
                                  final MultivaluedMap<String, Object> params,
                                  final MultivaluedMap<String, Object> headers,
-                                 final Function<Response, T> function) {
+                                 final Function<Response, R> function) {
         final Client client = registerFilters(ClientBuilder.newClient());
         try {
             final Invocation.Builder builder = buildContainer(
@@ -1357,10 +1358,10 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
     //                }
     //        );
     //    }
-    public <T> T readObject(final String containerName, final String objectName,
+    public <R> R readObject(final String containerName, final String objectName,
                             final MultivaluedMap<String, Object> params,
                             final MultivaluedMap<String, Object> headers,
-                            final Function<Response, T> function) {
+                            final Function<Response, R> function) {
         final Client client = registerFilters(ClientBuilder.newClient());
         try {
             Invocation.Builder builder = buildObject(
@@ -1438,12 +1439,12 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
 //                }
 //        );
 //    }
-    public <T> T updateObject(final String containerName,
+    public <R> R updateObject(final String containerName,
                               final String objectName,
                               final MultivaluedMap<String, Object> params,
                               final MultivaluedMap<String, Object> headers,
                               final Supplier<Entity<?>> entity,
-                              final Function<Response, T> function) {
+                              final Function<Response, R> function) {
         final Client client = registerFilters(ClientBuilder.newClient());
         try {
             Invocation.Builder builder = buildObject(
@@ -1528,11 +1529,11 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
 //                }
 //        );
 //    }
-    public <T> T configureObject(final String containerName,
+    public <R> R configureObject(final String containerName,
                                  final String objectName,
                                  final MultivaluedMap<String, Object> params,
                                  final MultivaluedMap<String, Object> headers,
-                                 final Function<Response, T> function) {
+                                 final Function<Response, R> function) {
         final Client client = registerFilters(ClientBuilder.newClient());
         try {
             Invocation.Builder builder = buildObject(
@@ -1554,11 +1555,11 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
     }
 
     @Override
-    public <T> T configureObject(final String containerName,
+    public <R> R configureObject(final String containerName,
                                  final String objectName,
                                  final Map<String, List<Object>> params,
                                  final Map<String, List<Object>> headers,
-                                 final Function<Response, T> function) {
+                                 final Function<Response, R> function) {
         return configureObject(containerName, objectName, multivalued(params),
                                multivalued(headers), function);
     }
@@ -1614,7 +1615,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
     /**
      * Deletes an object using {@link javax.ws.rs.HttpMethod#DELETE}.
      *
-     * @param <T> return value type parameter
+     * @param <R> return value type parameter
      * @param containerName the container name
      * @param objectName the object name
      * @param params query parameters; may be {@code null}
@@ -1624,11 +1625,11 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
      * @return a value the {@code function} results or {@code null} if the
      * {@code function} is {@code null}
      */
-    public <T> T deleteObject(final String containerName,
+    public <R> R deleteObject(final String containerName,
                               final String objectName,
                               final MultivaluedMap<String, Object> params,
                               final MultivaluedMap<String, Object> headers,
-                              final Function<Response, T> function) {
+                              final Function<Response, R> function) {
 //        ensureValid();
         final Client client = registerFilters(ClientBuilder.newClient());
         try {
@@ -1703,8 +1704,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
 //                }
 //        );
 //    }
-    // ---------------------------------------------------------------- reseller
-    // -------------------------------------------------------- reseller/account
+    // ------------------------------------------------------- /reseller/account
     public <R> R readResellerAccount(
             final MultivaluedMap<String, Object> params,
             MultivaluedMap<String, Object> headers,
@@ -1713,8 +1713,9 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
         try {
             registerFilters(client);
 //            WebTarget target = targetResellerAccount(client, storageUrl, authAdmin, params).path(".groups");
-            final Invocation.Builder builder = buildResellerAccount(client, storageUrl, authAccount, params, headers,
-                                                                    authUser, authKey);
+            final Invocation.Builder builder = buildResellerAccount(
+                    client, storageUrl, authAccount, params, headers,
+                    authUser, authKey);
             if (headers != null) {
                 headers = headers(headers, authAccount, authUser, authKey);
                 builder.headers(headers);
@@ -1770,15 +1771,16 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
         );
     }
 
-    // --------------------------------------------------- reseller/account/user
+    // --------------------------------------------------- /reseller/account/user
     public <R> R readResellerUser(final String userName,
                                   final MultivaluedMap<String, Object> params,
                                   MultivaluedMap<String, Object> headers,
                                   final Function<Response, R> function) {
         final Client client = registerFilters(ClientBuilder.newClient());
         try {
-            final Invocation.Builder builder = buildResellerUser(client, storageUrl, authAccount, userName, params, authUser,
-                                                                 authKey);
+            final Invocation.Builder builder = buildResellerUser(
+                    client, storageUrl, authAccount, userName, params, authUser,
+                    authKey);
             if (headers != null) {
                 headers = headers(headers, authAccount, authUser, authKey);
                 builder.headers(headers);

@@ -23,17 +23,17 @@ import org.testng.annotations.Test;
 /**
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
- * @param <T>
+ * @param <ClientType>
  */
-public abstract class StorageClientTest<T extends StorageClient> {
+public abstract class StorageClientTest<ClientType extends StorageClient> {
 
-    public StorageClientTest(final Class<T> clientClass) {
+    public StorageClientTest(final Class<ClientType> clientClass) {
         super();
 
         this.clientClass = clientClass;
     }
 
-    protected T create() {
+    protected ClientType create() {
         try {
             return clientClass.getConstructor(
                     String.class,
@@ -51,5 +51,5 @@ public abstract class StorageClientTest<T extends StorageClient> {
         assertFalse(create().isValid(currentTimeMillis()));
     }
 
-    protected final Class<T> clientClass;
+    protected final Class<ClientType> clientClass;
 }
