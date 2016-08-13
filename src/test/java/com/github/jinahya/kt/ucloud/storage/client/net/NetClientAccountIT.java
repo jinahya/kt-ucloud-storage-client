@@ -19,7 +19,6 @@ import com.github.jinahya.kt.ucloud.storage.client.AccountInfo;
 import com.github.jinahya.kt.ucloud.storage.client.JaxbTest;
 import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.accountMetaHeader;
 import static com.github.jinahya.kt.ucloud.storage.client.net.NetClientIT.headers;
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import static java.util.Arrays.asList;
@@ -56,20 +55,16 @@ public class NetClientAccountIT extends NetClientIT {
 //        headers.putSingle(ACCEPT, TEXT_PLAIN);
         headers.putSingle(ACCEPT, WILDCARD);
         accept(c -> {
-            try {
-                c.peekAccount(
-                        null,
-                        headers,
-                        n -> {
-                            status((HttpURLConnection) n, NO_CONTENT);
-                            headers((HttpURLConnection) n);
-                            final AccountInfo info = AccountInfo.newInstance(n);
-                            logger.debug("info: {}", info);
-                            JaxbTest.printXml(AccountInfo.class, info);
-                        });
-            } catch (final IOException ioe) {
-                fail("failed to peek account", ioe);
-            }
+            c.peekAccount(
+                    null,
+                    headers,
+                    n -> {
+                        status((HttpURLConnection) n, NO_CONTENT);
+                        headers((HttpURLConnection) n);
+                        final AccountInfo info = AccountInfo.newInstance(n);
+                        logger.debug("info: {}", info);
+                        JaxbTest.printXml(AccountInfo.class, info);
+                    });
         });
     }
 
@@ -82,18 +77,15 @@ public class NetClientAccountIT extends NetClientIT {
             logger.debug("accepting {}", t);
             headers.putSingle(ACCEPT, t);
             accept(c -> {
-                try {
-                    c.readAccount(
-                            null,
-                            headers,
-                            n -> {
-                                status(n, OK);
-                                headers(n);
-                                body(n, StandardCharsets.UTF_8);
-                            });
-                } catch (final IOException ioe) {
-                    fail("failed to peek account", ioe);
-                }
+                c.readAccount(
+                        null,
+                        headers,
+                        n -> {
+                            status(n, OK);
+                            headers(n);
+                            body(n, StandardCharsets.UTF_8);
+                        }
+                );
             });
         });
     }
@@ -112,17 +104,14 @@ public class NetClientAccountIT extends NetClientIT {
                 headers.putSingle(key, value);
                 logger.debug("adding meta...");
                 logger.debug("request headers: {}", headers);
-                try {
-                    c.configureAccount(
-                            null,
-                            headers,
-                            n -> {
-                                status(n, NO_CONTENT);
-                                headers(n);
-                            });
-                } catch (final IOException ioe) {
-                    fail("failed to configure account", ioe);
-                }
+                c.configureAccount(
+                        null,
+                        headers,
+                        n -> {
+                            status(n, NO_CONTENT);
+                            headers(n);
+                        }
+                );
             });
             logger.debug("sleeping for {} millis...", sleep);
             try {
@@ -131,23 +120,19 @@ public class NetClientAccountIT extends NetClientIT {
                 fail("failed to sleep", ie);
             }
             accept(c -> {
-                try {
-                    final MultivaluedMap<String, Object> headers
-                            = new MultivaluedHashMap<>();
+                final MultivaluedMap<String, Object> headers
+                        = new MultivaluedHashMap<>();
 //                    headers.putSingle(ACCEPT, TEXT_PLAIN);
-                    headers.putSingle(ACCEPT, WILDCARD);
-                    logger.debug("checking meta...");
-                    c.peekAccount(
-                            null,
-                            headers,
-                            n -> {
-                                status(n, NO_CONTENT);
-                                headers(n);
-                                assertEquals(n.getHeaderField(key), value);
-                            });
-                } catch (final IOException ioe) {
-                    fail("failed to peek account", ioe);
-                }
+                headers.putSingle(ACCEPT, WILDCARD);
+                logger.debug("checking meta...");
+                c.peekAccount(
+                        null,
+                        headers,
+                        n -> {
+                            status(n, NO_CONTENT);
+                            headers(n);
+                            assertEquals(n.getHeaderField(key), value);
+                        });
             });
         }
         {
@@ -159,17 +144,14 @@ public class NetClientAccountIT extends NetClientIT {
                 headers.putSingle(key, value);
                 logger.debug("removing meta...");
                 logger.debug("request headers: {}", headers);
-                try {
-                    c.configureAccount(
-                            null,
-                            headers,
-                            n -> {
-                                status(n, NO_CONTENT);
-                                headers(n);
-                            });
-                } catch (final IOException ioe) {
-                    fail("failed to configure account", ioe);
-                }
+                c.configureAccount(
+                        null,
+                        headers,
+                        n -> {
+                            status(n, NO_CONTENT);
+                            headers(n);
+                        }
+                );
             });
             logger.debug("sleeping for {} millis...", sleep);
             try {
@@ -178,25 +160,21 @@ public class NetClientAccountIT extends NetClientIT {
                 fail("failed to sleep", ie);
             }
             accept(c -> {
-                try {
-                    final MultivaluedMap<String, Object> headers
-                            = new MultivaluedHashMap<>();
+                final MultivaluedMap<String, Object> headers
+                        = new MultivaluedHashMap<>();
 //                    headers.putSingle(ACCEPT, TEXT_PLAIN);
-                    headers.putSingle(ACCEPT, WILDCARD);
-                    logger.debug("checking meta...");
-                    c.peekAccount(
-                            null,
-                            headers,
-                            n -> {
-                                status(n, NO_CONTENT);
-                                headers(n);
-                                final String key
-                                = accountMetaHeader(false, tokens);
-                                assertNull(n.getHeaderField(key));
-                            });
-                } catch (final IOException ioe) {
-                    fail("failed to peek account", ioe);
-                }
+                headers.putSingle(ACCEPT, WILDCARD);
+                logger.debug("checking meta...");
+                c.peekAccount(
+                        null,
+                        headers,
+                        n -> {
+                            status(n, NO_CONTENT);
+                            headers(n);
+                            final String key
+                            = accountMetaHeader(false, tokens);
+                            assertNull(n.getHeaderField(key));
+                        });
             });
         }
     }

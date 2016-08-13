@@ -40,6 +40,8 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientITs.body;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientITs.status;
 
 /**
  *

@@ -18,7 +18,9 @@ package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 import com.github.jinahya.kt.ucloud.storage.client.net.NetClient;
 import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.headers;
 import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClientIT.status;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.security.SecureRandom;
 import static java.util.Arrays.asList;
@@ -36,7 +38,6 @@ import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.Family.SUCCESSFUL;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-import static javax.ws.rs.core.Response.Status.OK;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.fail;
@@ -79,7 +80,7 @@ public class WsRsClientObjectIT extends WsRsClientIT {
                         objectName,
                         null, // params
                         null, // headers
-                        entity(entity, APPLICATION_OCTET_STREAM),
+                        () -> entity(entity, APPLICATION_OCTET_STREAM),
                         r -> {
                             status(r, SUCCESSFUL);
                         }
@@ -104,24 +105,20 @@ public class WsRsClientObjectIT extends WsRsClientIT {
                                      final String contentLength = r.getHeaderString(CONTENT_LENGTH);
                                      headers.putSingle(CONTENT_LENGTH, contentLength);
                                      final NetClient client = new NetClient(c);
-                                     try {
-                                         client.updateObject(
-                                                 containerName,
-                                                 objectName + "_copied",
-                                                 null,
-                                                 headers,
-                                                 n -> {
-                                                     try {
-                                                         n.getOutputStream().close();
-                                                         final int statusCode = ((HttpURLConnection) n).getResponseCode();
-                                                         logger.debug("status code: " + statusCode);
-                                                     } catch (final IOException ioe) {
-                                                         fail("failed to copy object", ioe);
-                                                     }
-                                                 });
-                                     } catch (final IOException ioe) {
-                                         fail("failed to copy object", ioe);
-                                     }
+                                     client.updateObject(
+                                             containerName,
+                                             objectName + "_copied",
+                                             null,
+                                             headers,
+                                             () -> new ByteArrayInputStream(new byte[0]),
+                                             n -> {
+                                                 try {
+                                                     final int statusCode = ((HttpURLConnection) n).getResponseCode();
+                                                     logger.debug("status code: " + statusCode);
+                                                 } catch (final IOException ioe) {
+                                                     fail("failed to copy object", ioe);
+                                                 }
+                                             });
                                  }
                     );
                 });
@@ -170,7 +167,7 @@ public class WsRsClientObjectIT extends WsRsClientIT {
                     containerName,
                     null,
                     null,
-                    r -> r.getStatus() == OK.getStatusCode(),
+                    r -> r.readEntity(Reader.class),
                     l -> {
                         logger.debug("deleting an object: " + l);
                         c.deleteObject(

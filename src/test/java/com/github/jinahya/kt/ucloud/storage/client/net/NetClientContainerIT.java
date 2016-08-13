@@ -15,7 +15,6 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.net;
 
-import java.io.IOException;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
@@ -26,7 +25,6 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
-import static org.testng.Assert.fail;
 import org.testng.annotations.Test;
 
 /**
@@ -45,17 +43,14 @@ public class NetClientContainerIT extends NetClientIT {
                 = new MultivaluedHashMap<>();
         accept(c -> {
             haders.putSingle(ACCEPT, TEXT_PLAIN);
-            try {
-                c.peekContainer(
-                        containerName,
-                        null,
-                        null,
-                        n -> {
-                            status(n, NOT_FOUND, NO_CONTENT);
-                        });
-            } catch (final IOException ioe) {
-                fail("failed to peek container", ioe);
-            }
+            c.peekContainer(
+                    containerName,
+                    null,
+                    null,
+                    n -> {
+                        status(n, NOT_FOUND, NO_CONTENT);
+                    }
+            );
         });
     }
 
@@ -66,19 +61,16 @@ public class NetClientContainerIT extends NetClientIT {
                 = new MultivaluedHashMap<>();
         accept(c -> {
             haders.putSingle(ACCEPT, TEXT_PLAIN);
-            try {
-                c.readContainer(
-                        containerName,
-                        null,
-                        null,
-                        n -> {
-                            status(n, NOT_FOUND, OK);
-                            headers(n);
-                            body(n, UTF_8);
-                        });
-            } catch (final IOException ioe) {
-                fail("failed to peek container", ioe);
-            }
+            c.readContainer(
+                    containerName,
+                    null,
+                    null,
+                    n -> {
+                        status(n, NOT_FOUND, OK);
+                        headers(n);
+                        body(n, UTF_8);
+                    }
+            );
         });
     }
 

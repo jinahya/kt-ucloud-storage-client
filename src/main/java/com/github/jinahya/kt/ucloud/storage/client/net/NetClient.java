@@ -16,7 +16,11 @@
 package com.github.jinahya.kt.ucloud.storage.client.net;
 
 import com.github.jinahya.kt.ucloud.storage.client.StorageClient;
+import com.github.jinahya.kt.ucloud.storage.client.StorageClientException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import static java.lang.Boolean.TRUE;
 import static java.lang.System.currentTimeMillis;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -32,517 +36,8 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
 import static java.util.logging.Logger.getLogger;
 import static java.util.stream.Collectors.joining;
 
@@ -550,7 +45,8 @@ import static java.util.stream.Collectors.joining;
  *
  * @author Jin Kwon &lt;onacit at gmail.com&gt;
  */
-public class NetClient extends StorageClient {
+public class NetClient
+        extends StorageClient<NetClient, InputStream, URLConnection> {
 
     private static final Logger logger = getLogger(NetClient.class.getName());
 
@@ -691,92 +187,164 @@ public class NetClient extends StorageClient {
 //    }
     @Override
     protected int authenticateUser(final boolean newToken) {
-        try {
-            return this.<Integer>authenticateUser(
-                    newToken,
-                    n -> {
-                        try {
-                            return ((HttpURLConnection) n).getResponseCode();
-                        } catch (final IOException ioe) {
-                            throw new RuntimeException(ioe);
-                        }
-                    });
-        } catch (final IOException ioe) {
-            throw new RuntimeException(ioe);
-        }
+//        try {
+        return this.<Integer>authenticateUser(
+                newToken,
+                n -> {
+                    try {
+                        return ((HttpURLConnection) n).getResponseCode();
+                    } catch (final IOException ioe) {
+                        throw new RuntimeException(ioe);
+                    }
+                });
+//        } catch (final IOException ioe) {
+//            throw new RuntimeException(ioe);
+//        }
     }
 
+//    public <R> R authenticateUser(final boolean newToken,
+//                                  final Function<URLConnection, R> function)
+//            throws IOException {
+//        final HttpURLConnection connection
+//                = (HttpURLConnection) new URL(authUrl).openConnection();
+//        connection.setRequestMethod("GET");
+//        final Map<String, List<Object>> headers = new HashMap<>();
+//        headers.put(HEADER_X_AUTH_USER, singletonList(authUser));
+//        headers.put(HEADER_X_AUTH_PASS, singletonList(authKey));
+//        if (newToken) {
+//            headers.put(HEADER_X_AUTH_NEW_TOKEN, singletonList(Boolean.TRUE));
+//        }
+//        requestProperties(connection, headers);
+//        connection.setDoOutput(false);
+//        connection.setDoInput(true);
+//        connection.connect();
+//        try {
+//            final int statusCode = connection.getResponseCode();
+//            if (statusCode != 200) {
+//                final String reasonPhrase = connection.getResponseMessage();
+//                throw new IOException(
+//                        "failed to authenticate user; " + statusCode + " "
+//                        + reasonPhrase);
+//            }
+//            storageUrl = connection.getHeaderField(HEADER_X_STORAGE_URL);
+//            authToken = connection.getHeaderField(HEADER_X_AUTH_TOKEN);
+//            setAuthTokenExpires(
+//                    connection.getHeaderField(HEADER_X_AUTH_TOKEN_EXPIRES));
+//            return function.apply(connection);
+//        } finally {
+//            connection.disconnect();
+//        }
+//    }
+//
+//    public <R> R authenticateUser(
+//            final boolean newToken,
+//            final BiFunction<URLConnection, NetClient, R> function)
+//            throws IOException {
+//        return authenticateUser(
+//                newToken,
+//                n -> {
+//                    return function.apply(n, this);
+//                }
+//        );
+//    }
+//
+//    public NetClient authenticateUser(
+//            final boolean newToken,
+//            final Consumer<URLConnection> consumer)
+//            throws IOException {
+//        return authenticateUser(
+//                newToken,
+//                n -> {
+//                    consumer.accept(n);
+//                    return this;
+//                }
+//        );
+//    }
+//
+//    public NetClient authenticateUser(
+//            final boolean newToken,
+//            final BiConsumer<URLConnection, NetClient> consumer)
+//            throws IOException {
+//        return authenticateUser(
+//                newToken,
+//                n -> {
+//                    consumer.accept(n, this);
+//                }
+//        );
+//    }
     public <R> R authenticateUser(final boolean newToken,
-                                  final Function<URLConnection, R> function)
-            throws IOException {
-        final HttpURLConnection connection
-                = (HttpURLConnection) new URL(authUrl).openConnection();
-        connection.setRequestMethod("GET");
-        final Map<String, List<Object>> headers = new HashMap<>();
-        headers.put(HEADER_X_AUTH_USER, singletonList(authUser));
-        headers.put(HEADER_X_AUTH_PASS, singletonList(authKey));
-        if (newToken) {
-            headers.put(HEADER_X_AUTH_NEW_TOKEN, singletonList(Boolean.TRUE));
-        }
-        requestProperties(connection, headers);
-        connection.setDoOutput(false);
-        connection.setDoInput(true);
-        connection.connect();
+                                  final Function<URLConnection, R> function) {
         try {
-            final int statusCode = connection.getResponseCode();
-            if (statusCode != 200) {
-                final String reasonPhrase = connection.getResponseMessage();
-                throw new IOException(
-                        "failed to authenticate user; " + statusCode + " "
-                        + reasonPhrase);
+            final HttpURLConnection connection
+                    = (HttpURLConnection) new URL(authUrl).openConnection();
+            connection.setRequestMethod("GET");
+            final Map<String, List<Object>> headers = new HashMap<>();
+            headers.put(HEADER_X_AUTH_USER, singletonList(authUser));
+            headers.put(HEADER_X_AUTH_PASS, singletonList(authKey));
+            if (newToken) {
+                headers.put(HEADER_X_AUTH_NEW_TOKEN, singletonList(TRUE));
             }
-            storageUrl = connection.getHeaderField(HEADER_X_STORAGE_URL);
-            authToken = connection.getHeaderField(HEADER_X_AUTH_TOKEN);
-            setAuthTokenExpires(
-                    connection.getHeaderField(HEADER_X_AUTH_TOKEN_EXPIRES));
-            return function.apply(connection);
-        } finally {
-            connection.disconnect();
+            requestProperties(connection, headers);
+            connection.setDoOutput(false);
+            connection.setDoInput(true);
+            connection.connect();
+            try {
+                final int statusCode = connection.getResponseCode();
+                if (statusCode != 200) {
+                    final String reasonPhrase = connection.getResponseMessage();
+                    throw new IOException(
+                            "failed to authenticate user; " + statusCode + " "
+                            + reasonPhrase);
+                }
+                storageUrl = connection.getHeaderField(HEADER_X_STORAGE_URL);
+                authToken = connection.getHeaderField(HEADER_X_AUTH_TOKEN);
+                setAuthTokenExpires(
+                        connection.getHeaderField(HEADER_X_AUTH_TOKEN_EXPIRES));
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
         }
     }
 
-    public <R> R authenticateUser(
-            final boolean newToken,
-            final BiFunction<URLConnection, NetClient, R> function)
-            throws IOException {
-        return authenticateUser(
-                newToken,
-                n -> {
-                    return function.apply(n, this);
-                }
-        );
-    }
-
-    public NetClient authenticateUser(
-            final boolean newToken,
-            final Consumer<URLConnection> consumer)
-            throws IOException {
-        return authenticateUser(
-                newToken,
-                n -> {
-                    consumer.accept(n);
-                    return this;
-                }
-        );
-    }
-
-    public NetClient authenticateUser(
-            final boolean newToken,
-            final BiConsumer<URLConnection, NetClient> consumer)
-            throws IOException {
-        return authenticateUser(
-                newToken,
-                n -> {
-                    consumer.accept(n, this);
-                }
-        );
-    }
-
+//    public <R> R authenticateUser(
+//            final boolean newToken,
+//            final BiFunction<URLConnection, NetClient, R> function)
+//            throws IOException {
+//        return authenticateUser(
+//                newToken,
+//                n -> {
+//                    return function.apply(n, this);
+//                }
+//        );
+//    }
+//
+//    public NetClient authenticateUser(
+//            final boolean newToken,
+//            final Consumer<URLConnection> consumer)
+//            throws IOException {
+//        return authenticateUser(
+//                newToken,
+//                n -> {
+//                    consumer.accept(n);
+//                    return this;
+//                }
+//        );
+//    }
+//
+//    public NetClient authenticateUser(
+//            final boolean newToken,
+//            final BiConsumer<URLConnection, NetClient> consumer)
+//            throws IOException {
+//        return authenticateUser(
+//                newToken,
+//                n -> {
+//                    consumer.accept(n, this);
+//                }
+//        );
+//    }
     @Deprecated
     public <R> R authenticateUser(final Function<URLConnection, R> function)
             throws IOException {
@@ -857,511 +425,583 @@ public class NetClient extends StorageClient {
     }
 
     // ----------------------------------------------------------------- account
+    @Override
     public <R> R peekAccount(final Map<String, List<Object>> params,
                              Map<String, List<Object>> headers,
-                             final Function<URLConnection, R> function)
-            throws IOException {
-        ensureValid();
-        final HttpURLConnection connection = (HttpURLConnection) openAccount(
-                storageUrl, params);
-        connection.setRequestMethod("HEAD");
-        if (headers == null) {
-            headers = new HashMap<>();
-        }
-//        headers.putIfAbsent(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-        headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-        requestProperties(connection, headers);
-        connection.setDoOutput(false);
-        connection.setDoInput(true);
-        connection.connect();
+                             final Function<URLConnection, R> function) {
         try {
-            return function.apply(connection);
-        } finally {
-            connection.disconnect();
+            final HttpURLConnection connection
+                    = (HttpURLConnection) openAccount(
+                            storageUrl, params);
+            connection.setRequestMethod("HEAD");
+            if (headers == null) {
+                headers = new HashMap<>();
+            }
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+            requestProperties(connection, headers);
+            connection.setDoOutput(false);
+            connection.setDoInput(true);
+            connection.connect();
+            try {
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
         }
     }
 
-    public <R> R peekAccount(
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final BiFunction<URLConnection, NetClient, R> function)
-            throws IOException {
-        return peekAccount(
-                params,
-                headers,
-                n -> {
-                    return function.apply(n, this);
-                }
-        );
-    }
-
-    public NetClient peekAccount(
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final Consumer<URLConnection> consumer)
-            throws IOException {
-        return peekAccount(
-                params,
-                headers,
-                n -> {
-                    consumer.accept(n);
-                    return this;
-                }
-        );
-    }
-
-    public NetClient peekAccount(
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final BiConsumer<URLConnection, NetClient> consumer)
-            throws IOException {
-        return peekAccount(
-                params,
-                headers,
-                n -> {
-                    consumer.accept(n, this);
-                }
-        );
-    }
-
+//    public <R> R peekAccount(
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final BiFunction<URLConnection, NetClient, R> function)
+//            throws IOException {
+//        return peekAccount(
+//                params,
+//                headers,
+//                n -> {
+//                    return function.apply(n, this);
+//                }
+//        );
+//    }
+//
+//    public NetClient peekAccount(
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final Consumer<URLConnection> consumer)
+//            throws IOException {
+//        return peekAccount(
+//                params,
+//                headers,
+//                n -> {
+//                    consumer.accept(n);
+//                    return this;
+//                }
+//        );
+//    }
+//
+//    public NetClient peekAccount(
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final BiConsumer<URLConnection, NetClient> consumer)
+//            throws IOException {
+//        return peekAccount(
+//                params,
+//                headers,
+//                n -> {
+//                    consumer.accept(n, this);
+//                }
+//        );
+//    }
+    @Override
     public <R> R readAccount(final Map<String, List<Object>> params,
                              Map<String, List<Object>> headers,
-                             final Function<URLConnection, R> function)
-            throws IOException {
-        ensureValid();
-        final HttpURLConnection connection = (HttpURLConnection) openAccount(
-                storageUrl, params);
-        connection.setRequestMethod("GET");
-        if (headers == null) {
-            headers = new HashMap<>();
-        }
-        //headers.putIfAbsent(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-        headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-        requestProperties(connection, headers);
-        connection.setDoOutput(false);
-        connection.setDoInput(true); // @@?
-        connection.connect();
+                             final Function<URLConnection, R> function) {
         try {
-            return function.apply(connection);
-        } finally {
-            connection.disconnect();
+            final HttpURLConnection connection = (HttpURLConnection) openAccount(
+                    storageUrl, params);
+            connection.setRequestMethod("GET");
+            if (headers == null) {
+                headers = new HashMap<>();
+            }
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+            requestProperties(connection, headers);
+            connection.setDoOutput(false);
+            connection.setDoInput(true);
+            connection.connect();
+            try {
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
         }
     }
 
-    public <R> R readAccount(
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final BiFunction<URLConnection, NetClient, R> function)
-            throws IOException {
-        return readAccount(
-                params,
-                headers,
-                n -> {
-                    return function.apply(n, this);
-                }
-        );
-    }
-
-    public NetClient readAccount(
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final Consumer<URLConnection> consumer)
-            throws IOException {
-        return readAccount(
-                params,
-                headers,
-                n -> {
-                    consumer.accept(n);
-                    return this;
-                }
-        );
-    }
-
-    public NetClient readAccount(
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final BiConsumer<URLConnection, NetClient> consumer)
-            throws IOException {
-        return readAccount(
-                params,
-                headers,
-                n -> {
-                    consumer.accept(n, this);
-                }
-        );
-    }
-
+//    public <R> R readAccount(
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final BiFunction<URLConnection, NetClient, R> function)
+//            throws IOException {
+//        return readAccount(
+//                params,
+//                headers,
+//                n -> {
+//                    return function.apply(n, this);
+//                }
+//        );
+//    }
+//
+//    public NetClient readAccount(
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final Consumer<URLConnection> consumer)
+//            throws IOException {
+//        return readAccount(
+//                params,
+//                headers,
+//                n -> {
+//                    consumer.accept(n);
+//                    return this;
+//                }
+//        );
+//    }
+//
+//    public NetClient readAccount(
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final BiConsumer<URLConnection, NetClient> consumer)
+//            throws IOException {
+//        return readAccount(
+//                params,
+//                headers,
+//                n -> {
+//                    consumer.accept(n, this);
+//                }
+//        );
+//    }
+    @Override
     public <R> R configureAccount(final Map<String, List<Object>> params,
                                   Map<String, List<Object>> headers,
-                                  final Function<URLConnection, R> function)
-            throws IOException {
-        ensureValid();
-        final HttpURLConnection connection = (HttpURLConnection) openAccount(
-                storageUrl, params);
-        connection.setRequestMethod("POST");
-        if (headers == null) {
-            headers = new HashMap<>();
-        }
-        //headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-        // for testing...
-        headers.putIfAbsent(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-        requestProperties(connection, headers);
-        connection.setDoOutput(false);
-        connection.setDoInput(true); // @@?
-        connection.connect();
+                                  final Function<URLConnection, R> function) {
         try {
-            return function.apply(connection);
-        } finally {
-            connection.disconnect();
+            final HttpURLConnection connection
+                    = (HttpURLConnection) openAccount(
+                            storageUrl, params);
+            connection.setRequestMethod("POST");
+            if (headers == null) {
+                headers = new HashMap<>();
+            }
+            headers.putIfAbsent(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+            requestProperties(connection, headers);
+            connection.setDoOutput(false);
+            connection.setDoInput(true);
+            connection.connect();
+            try {
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
         }
     }
 
-    public <R> R configureAccount(
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final BiFunction<URLConnection, NetClient, R> function)
-            throws IOException {
-        return configureAccount(
-                params,
-                headers,
-                n -> {
-                    return function.apply(n, this);
-                }
-        );
-    }
-
-    public NetClient configureAccount(
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final Consumer<URLConnection> consumer)
-            throws IOException {
-        return configureAccount(
-                params,
-                headers,
-                n -> {
-                    consumer.accept(n);
-                    return this;
-                }
-        );
-    }
-
-    public NetClient configureAccount(
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final BiConsumer<URLConnection, NetClient> consumer)
-            throws IOException {
-        return configureAccount(
-                params,
-                headers,
-                n -> {
-                    consumer.accept(n, this);
-                }
-        );
-    }
-
-    // --------------------------------------------------------------- container
+//    public <R> R configureAccount(
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final BiFunction<URLConnection, NetClient, R> function)
+//            throws IOException {
+//        return configureAccount(
+//                params,
+//                headers,
+//                n -> {
+//                    return function.apply(n, this);
+//                }
+//        );
+//    }
+//
+//    public NetClient configureAccount(
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final Consumer<URLConnection> consumer)
+//            throws IOException {
+//        return configureAccount(
+//                params,
+//                headers,
+//                n -> {
+//                    consumer.accept(n);
+//                    return this;
+//                }
+//        );
+//    }
+//
+//    public NetClient configureAccount(
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final BiConsumer<URLConnection, NetClient> consumer)
+//            throws IOException {
+//        return configureAccount(
+//                params,
+//                headers,
+//                n -> {
+//                    consumer.accept(n, this);
+//                }
+//        );
+//    }
+    // ------------------------------------------------------ /account/container
     public <R> R peekContainer(final String containerName,
                                final Map<String, List<Object>> params,
                                Map<String, List<Object>> headers,
-                               final Function<URLConnection, R> function)
-            throws IOException {
-        ensureValid();
-        final HttpURLConnection connection = (HttpURLConnection) openContainer(
-                storageUrl, containerName, params);
-        connection.setRequestMethod("HEAD");
-        if (headers == null) {
-            headers = new HashMap<>();
-        }
-//        headers.putIfAbsent(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-        headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-        requestProperties(connection, headers);
-        connection.setDoOutput(false);
-        connection.setDoInput(true);
-        connection.connect();
+                               final Function<URLConnection, R> function) {
         try {
-            return function.apply(connection);
-        } finally {
-            connection.disconnect();
+            final HttpURLConnection connection
+                    = (HttpURLConnection) openContainer(
+                            storageUrl, containerName, params);
+            connection.setRequestMethod("HEAD");
+            if (headers == null) {
+                headers = new HashMap<>();
+            }
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+            requestProperties(connection, headers);
+            connection.setDoOutput(false);
+            connection.setDoInput(true);
+            connection.connect();
+            try {
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
         }
     }
 
-    public <R> R peekContainer(
-            final String containerName,
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final BiFunction<URLConnection, NetClient, R> function)
-            throws IOException {
-        return peekContainer(
-                containerName,
-                params,
-                headers,
-                n -> {
-                    return function.apply(n, this);
-                }
-        );
-    }
-
-    public NetClient peekContainer(
-            final String containerName,
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final Consumer<URLConnection> consumer)
-            throws IOException {
-        return peekContainer(
-                containerName,
-                params,
-                headers,
-                n -> {
-                    consumer.accept(n);
-                    return this;
-                }
-        );
-    }
-
-    public NetClient peekContainer(
-            final String containerName,
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final BiConsumer<URLConnection, NetClient> consumer)
-            throws IOException {
-        return peekContainer(
-                containerName,
-                params,
-                headers,
-                n -> {
-                    consumer.accept(n, this);
-                }
-        );
-    }
-
+//    public <R> R peekContainer(
+//            final String containerName,
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final BiFunction<URLConnection, NetClient, R> function)
+//            throws IOException {
+//        return peekContainer(
+//                containerName,
+//                params,
+//                headers,
+//                n -> {
+//                    return function.apply(n, this);
+//                }
+//        );
+//    }
+//
+//    public NetClient peekContainer(
+//            final String containerName,
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final Consumer<URLConnection> consumer)
+//            throws IOException {
+//        return peekContainer(
+//                containerName,
+//                params,
+//                headers,
+//                n -> {
+//                    consumer.accept(n);
+//                    return this;
+//                }
+//        );
+//    }
+//
+//    public NetClient peekContainer(
+//            final String containerName,
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final BiConsumer<URLConnection, NetClient> consumer)
+//            throws IOException {
+//        return peekContainer(
+//                containerName,
+//                params,
+//                headers,
+//                n -> {
+//                    consumer.accept(n, this);
+//                }
+//        );
+//    }
+    @Override
     public <R> R readContainer(final String containerName,
                                final Map<String, List<Object>> params,
                                Map<String, List<Object>> headers,
-                               final Function<URLConnection, R> function)
-            throws IOException {
-        ensureValid();
-        final HttpURLConnection connection = (HttpURLConnection) openContainer(
-                storageUrl, containerName, params);
-        connection.setRequestMethod("GET");
-        if (headers == null) {
-            headers = new HashMap<>();
-        }
-//        headers.putIfAbsent(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-        headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-        requestProperties(connection, headers);
-        connection.setDoOutput(false);
-        connection.setDoInput(true);
-        connection.connect();
+                               final Function<URLConnection, R> function) {
         try {
-            return function.apply(connection);
-        } finally {
-            connection.disconnect();
+            final HttpURLConnection connection
+                    = (HttpURLConnection) openContainer(
+                            storageUrl, containerName, params);
+            connection.setRequestMethod("GET");
+            if (headers == null) {
+                headers = new HashMap<>();
+            }
+//        headers.putIfAbsent(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+            requestProperties(connection, headers);
+            connection.setDoOutput(false);
+            connection.setDoInput(true);
+            connection.connect();
+            try {
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
         }
     }
 
-    public <R> R readContainer(
-            final String containerName,
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final BiFunction<URLConnection, NetClient, R> function)
-            throws IOException {
-        return readContainer(
-                containerName,
-                params,
-                headers,
-                n -> {
-                    return function.apply(n, this);
-                }
-        );
+//    public <R> R readContainer(
+//            final String containerName,
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final BiFunction<URLConnection, NetClient, R> function)
+//            throws IOException {
+//        return readContainer(
+//                containerName,
+//                params,
+//                headers,
+//                n -> {
+//                    return function.apply(n, this);
+//                }
+//        );
+//    }
+//
+//    public NetClient readContainer(
+//            final String containerName,
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final Consumer<URLConnection> consumer)
+//            throws IOException {
+//        return readContainer(
+//                containerName,
+//                params,
+//                headers,
+//                n -> {
+//                    consumer.accept(n);
+//                    return this;
+//                }
+//        );
+//    }
+//
+//    public NetClient readContainer(
+//            final String containerName,
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final BiConsumer<URLConnection, NetClient> consumer)
+//            throws IOException {
+//        return readContainer(
+//                containerName,
+//                params,
+//                headers,
+//                n -> {
+//                    consumer.accept(n, this);
+//                }
+//        );
+//    }
+    @Override
+    public <R> R updateContainer(String containerName, Map<String, List<Object>> params, Map<String, List<Object>> headers, Function<URLConnection, R> function) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public NetClient readContainer(
-            final String containerName,
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final Consumer<URLConnection> consumer)
-            throws IOException {
-        return readContainer(
-                containerName,
-                params,
-                headers,
-                n -> {
-                    consumer.accept(n);
-                    return this;
-                }
-        );
+    @Override
+    public <R> R configureContainer(String containerName, Map<String, List<Object>> params, Map<String, List<Object>> headers, Function<URLConnection, R> function) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public NetClient readContainer(
-            final String containerName,
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final BiConsumer<URLConnection, NetClient> consumer)
-            throws IOException {
-        return readContainer(
-                containerName,
-                params,
-                headers,
-                n -> {
-                    consumer.accept(n, this);
-                }
-        );
+    @Override
+    public <R> R deleteContainer(String containerName, Map<String, List<Object>> params, Map<String, List<Object>> headers, Function<URLConnection, R> function) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    // ------------------------------------------------------------------ object
+    // ----------------------------------------------- /account/container/object
     public <R> R peekObject(final String containerName, final String objectName,
                             final Map<String, List<Object>> params,
                             Map<String, List<Object>> headers,
-                            final Function<URLConnection, R> function)
-            throws IOException {
-        ensureValid();
-        final HttpURLConnection connection = (HttpURLConnection) openObject(
-                storageUrl, containerName, objectName, params);
-        connection.setRequestMethod("HEAD");
-        if (headers == null) {
-            headers = new HashMap<>();
-        }
-//        headers.putIfAbsent(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-        headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-        requestProperties(connection, headers);
-        connection.setDoOutput(false);
-        connection.setDoInput(false); // @@?
-        connection.connect();
+                            final Function<URLConnection, R> function) {
         try {
-            return function.apply(connection);
-        } finally {
-            connection.disconnect();
+            final HttpURLConnection connection = (HttpURLConnection) openObject(
+                    storageUrl, containerName, objectName, params);
+            connection.setRequestMethod("HEAD");
+            if (headers == null) {
+                headers = new HashMap<>();
+            }
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+            requestProperties(connection, headers);
+            connection.setDoOutput(false);
+            connection.setDoInput(false); // @@?
+            connection.connect();
+            try {
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
+        }
+    }
+//
+//    public <R> R peekObject(
+//            final String containerName, final String objectName,
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final BiFunction<URLConnection, NetClient, R> function)
+//            throws IOException {
+//        return peekObject(
+//                containerName,
+//                objectName,
+//                params,
+//                headers,
+//                n -> {
+//                    return function.apply(n, this);
+//                }
+//        );
+//    }
+//
+//    public NetClient peekObject(
+//            final String containerName, final String objectName,
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final Consumer<URLConnection> consumer)
+//            throws IOException {
+//        return peekObject(
+//                containerName,
+//                objectName,
+//                params,
+//                headers,
+//                n -> {
+//                    consumer.accept(n);
+//                    return this;
+//                }
+//        );
+//    }
+//
+//    public NetClient peekObject(
+//            final String containerName, final String objectName,
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final BiConsumer<URLConnection, NetClient> consumer)
+//            throws IOException {
+//        return peekObject(
+//                containerName,
+//                objectName,
+//                params,
+//                headers,
+//                n -> {
+//                    consumer.accept(n, this);
+//                }
+//        );
+//    }
+
+    @Override
+    public <R> R readObject(final String containerName, final String objectName,
+                            final Map<String, List<Object>> params,
+                            Map<String, List<Object>> headers,
+                            final Function<URLConnection, R> function) {
+        try {
+            final HttpURLConnection connection = (HttpURLConnection) openObject(
+                    storageUrl, containerName, objectName, params);
+            connection.setRequestMethod("GET");
+            if (headers == null) {
+                headers = new HashMap<>();
+            }
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+            requestProperties(connection, headers);
+            connection.setDoOutput(true);
+            connection.setDoInput(true);
+            connection.connect();
+            try {
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
         }
     }
 
-    public <R> R peekObject(
-            final String containerName, final String objectName,
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final BiFunction<URLConnection, NetClient, R> function)
-            throws IOException {
-        return peekObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                n -> {
-                    return function.apply(n, this);
-                }
-        );
-    }
-
-    public NetClient peekObject(
-            final String containerName, final String objectName,
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final Consumer<URLConnection> consumer)
-            throws IOException {
-        return peekObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                n -> {
-                    consumer.accept(n);
-                    return this;
-                }
-        );
-    }
-
-    public NetClient peekObject(
-            final String containerName, final String objectName,
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final BiConsumer<URLConnection, NetClient> consumer)
-            throws IOException {
-        return peekObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                n -> {
-                    consumer.accept(n, this);
-                }
-        );
-    }
-
+    @Override
     public <R> R updateObject(final String containerName,
                               final String objectName,
                               final Map<String, List<Object>> params,
                               Map<String, List<Object>> headers,
-                              final Function<URLConnection, R> function)
-            throws IOException {
-        ensureValid();
-        final HttpURLConnection connection = (HttpURLConnection) openObject(
-                storageUrl, containerName, objectName, params);
-        connection.setRequestMethod("PUT");
-        if (headers == null) {
-            headers = new HashMap<>();
-        }
-//        headers.putIfAbsent(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-        headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-        requestProperties(connection, headers);
-        connection.setDoOutput(true);
-        connection.setDoInput(true);
-        connection.connect();
+                              final Supplier<InputStream> entity,
+                              final Function<URLConnection, R> function) {
         try {
-            return function.apply(connection);
-        } finally {
-            connection.disconnect();
+            final HttpURLConnection connection = (HttpURLConnection) openObject(
+                    storageUrl, containerName, objectName, params);
+            connection.setRequestMethod("PUT");
+            if (headers == null) {
+                headers = new HashMap<>();
+            }
+//        headers.putIfAbsent(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
+            requestProperties(connection, headers);
+            connection.setDoOutput(true);
+            connection.setDoInput(true);
+            connection.connect();
+            try {
+                try (InputStream input = entity.get();
+                     OutputStream output = connection.getOutputStream()) {
+                    final byte[] buffer = new byte[8192];
+                    for (int read; (read = input.read(buffer)) != -1;) {
+                        output.write(buffer, 0, read);
+                    }
+                    output.flush();
+                }
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
         }
     }
 
-    public <R> R updateObject(
-            final String containerName, final String objectName,
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final BiFunction<URLConnection, NetClient, R> function)
-            throws IOException {
-        return updateObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                n -> {
-                    return function.apply(n, this);
-                }
-        );
+//    public <R> R updateObject(
+//            final String containerName, final String objectName,
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final BiFunction<URLConnection, NetClient, R> function)
+//            throws IOException {
+//        return updateObject(
+//                containerName,
+//                objectName,
+//                params,
+//                headers,
+//                n -> {
+//                    return function.apply(n, this);
+//                }
+//        );
+//    }
+//
+//    public NetClient updateObject(
+//            final String containerName, final String objectName,
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final Consumer<URLConnection> consumer)
+//            throws IOException {
+//        return updateObject(
+//                containerName,
+//                objectName,
+//                params,
+//                headers,
+//                n -> {
+//                    consumer.accept(n);
+//                    return this;
+//                }
+//        );
+//    }
+//
+//    public NetClient updateObject(
+//            final String containerName, final String objectName,
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final BiConsumer<URLConnection, NetClient> consumer)
+//            throws IOException {
+//        return updateObject(
+//                containerName,
+//                objectName,
+//                params,
+//                headers,
+//                n -> {
+//                    consumer.accept(n, this);
+//                }
+//        );
+//    }
+    @Override
+    public <T> T configureObject(String containerName, String objectName, Map<String, List<Object>> params, Map<String, List<Object>> headers, Function<URLConnection, T> function) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public NetClient updateObject(
-            final String containerName, final String objectName,
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final Consumer<URLConnection> consumer)
-            throws IOException {
-        return updateObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                n -> {
-                    consumer.accept(n);
-                    return this;
-                }
-        );
-    }
-
-    public NetClient updateObject(
-            final String containerName, final String objectName,
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final BiConsumer<URLConnection, NetClient> consumer)
-            throws IOException {
-        return updateObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                n -> {
-                    consumer.accept(n, this);
-                }
-        );
+    @Override
+    public <R> R deleteObject(String containerName, String objectName, Map<String, List<Object>> params, Map<String, List<Object>> headers, Function<URLConnection, R> function) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     // ------------------------------------------------------------- authAccount

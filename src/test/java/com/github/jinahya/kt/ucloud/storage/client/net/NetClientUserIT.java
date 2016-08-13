@@ -59,18 +59,14 @@ public class NetClientUserIT extends NetClientIT {
         headers.putSingle(ACCEPT, WILDCARD);
         headers.putSingle(StorageClient.HEADER_X_AUTH_TOKEN, oldToken);
         accept(c -> {
-            try {
-                c.peekAccount(
-                        null,
-                        headers,
-                        n -> {
-                            // @todo check this out
+            c.peekAccount(
+                    null,
+                    headers,
+                    n -> {
+                        // @todo check this out
 //                            status(n, NO_CONTENT);
-                        }
-                );
-            } catch (final IOException ioe) {
-                fail("failed to peek account", ioe);
-            }
+                    }
+            );
         });
     }
 }

@@ -33,6 +33,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import org.testng.annotations.BeforeClass;
+import static java.util.Objects.requireNonNull;
 
 /**
  *

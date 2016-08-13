@@ -22,21 +22,31 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import static java.lang.System.currentTimeMillis;
 import java.nio.charset.Charset;
+import static java.util.Arrays.stream;
+import static java.util.Collections.singletonList;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import static java.util.Arrays.stream;
-import static java.util.Objects.requireNonNull;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import static java.util.stream.Collectors.joining;
+import javax.ws.rs.core.MultivaluedHashMap;
 
 /**
  *
  * @author Jin Kwon &lt;onacit at gmail.com&gt;
+ * @param <ClientType> storage client implementation type parameter
+ * @param <RequestType> client request type parameter
+ * @param <ResponseType> server response type parameter
  */
-public abstract class StorageClient {
+public abstract class StorageClient<ClientType extends StorageClient, EntityType, ResponseType> {
 
     public static final String AUTH_URL_STANDARD_KOR_CENTER
             = "https://api.ucloudbiz.olleh.com/storage/v1/auth";
@@ -186,7 +196,45 @@ public abstract class StorageClient {
         this.authKey = requireNonNull(authKey, "null authKey");
     }
 
+    @Deprecated
     protected abstract int authenticateUser(boolean newToken);
+
+    public abstract <R> R authenticateUser(boolean newToken,
+                                           Function<ResponseType, R> function);
+
+    public <R> R authenticateUser(
+            final boolean newToken,
+            final BiFunction<ResponseType, ClientType, R> function) {
+        return authenticateUser(
+                newToken,
+                response -> {
+                    return function.apply(response, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType authenticateUser(
+            final boolean newToken,
+            final Consumer<ResponseType> consumer) {
+        return authenticateUser(
+                newToken,
+                response -> {
+                    consumer.accept(response);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType authenticateUser(
+            final boolean newToken,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return authenticateUser(
+                newToken,
+                response -> {
+                    consumer.accept(response, (ClientType) this);
+                }
+        );
+    }
 
     /**
      * Purges authorization information.
@@ -227,6 +275,731 @@ public abstract class StorageClient {
      */
     public boolean isValid(final TimeUnit unit, final long duration) {
         return isValid(currentTimeMillis() + unit.toMillis(duration));
+    }
+
+    // ---------------------------------------------------------------- /account
+    public abstract <R> R peekAccount(Map<String, List<Object>> params,
+                                      Map<String, List<Object>> headers,
+                                      Function<ResponseType, R> function);
+
+    public <R> R peekAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<ResponseType, ClientType, R> function) {
+        return peekAccount(
+                params,
+                headers,
+                n -> {
+                    return function.apply(n, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType peekAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<ResponseType> consumer) {
+        return peekAccount(
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType peekAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return peekAccount(
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n, (ClientType) this);
+                }
+        );
+    }
+
+    public abstract <R> R readAccount(final Map<String, List<Object>> params,
+                                      final Map<String, List<Object>> headers,
+                                      final Function<ResponseType, R> function);
+
+    public <R> R readAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<ResponseType, ClientType, R> function) {
+        return readAccount(
+                params,
+                headers,
+                n -> {
+                    return function.apply(n, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType readAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<ResponseType> consumer) {
+        return readAccount(
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType readAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return readAccount(
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n, (ClientType) this);
+                }
+        );
+    }
+
+    public abstract <R> R configureAccount(Map<String, List<Object>> params,
+                                           Map<String, List<Object>> headers,
+                                           Function<ResponseType, R> function);
+
+    public <R> R configureAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<ResponseType, ClientType, R> function) {
+        return configureAccount(
+                params,
+                headers,
+                response -> {
+                    return function.apply(response, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType configureAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<ResponseType> consumer) {
+        return configureAccount(
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType configureAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return configureAccount(
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n, (ClientType) this);
+                }
+        );
+    }
+
+    // ------------------------------------------------------ /account/container
+    public abstract <R> R peekContainer(String containerName,
+                                        Map<String, List<Object>> params,
+                                        Map<String, List<Object>> headers,
+                                        Function<ResponseType, R> function);
+
+    public <R> R peekContainer(
+            final String containerName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<ResponseType, ClientType, R> function) {
+        return peekContainer(
+                containerName,
+                params,
+                headers,
+                n -> {
+                    return function.apply(n, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType peekContainer(
+            final String containerName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<ResponseType> consumer) {
+        return peekContainer(
+                containerName,
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType peekContainer(
+            final String containerName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return peekContainer(
+                containerName,
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n, (ClientType) this);
+                }
+        );
+    }
+
+    public abstract <R> R readContainer(String containerName,
+                                        Map<String, List<Object>> params,
+                                        Map<String, List<Object>> headers,
+                                        Function<ResponseType, R> function);
+
+    public <R> R readContainer(
+            final String containerName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<ResponseType, ClientType, R> function) {
+        return readContainer(
+                containerName,
+                params,
+                headers,
+                n -> {
+                    return function.apply(n, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType readContainer(
+            final String containerName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<ResponseType> consumer) {
+        return readContainer(
+                containerName,
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType readContainer(
+            final String containerName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return readContainer(
+                containerName,
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType readContainerObjectNames(
+            final String containerName,
+            Map<String, List<Object>> params,
+            Map<String, List<Object>> headers,
+            final Function<ResponseType, Reader> function,
+            final Consumer<String> consumer) {
+        if (params == null) {
+            params = new MultivaluedHashMap<>();
+        }
+        params.putIfAbsent(QUERY_PARAM_LIMIT, singletonList(512));
+        if (headers == null) {
+            headers = new MultivaluedHashMap<>();
+        }
+        headers.put("Accept", singletonList("text/plain"));
+        for (final String[] marker = new String[1];;) {
+            if (marker[0] != null) {
+                params.put(QUERY_PARAM_MARKER, singletonList(marker[0]));
+            }
+            marker[0] = null;
+            readContainer(
+                    containerName,
+                    params,
+                    headers,
+                    r -> {
+                        try {
+                            try (Reader reader = function.apply(r)) {
+                                lines(reader, consumer);
+                            }
+                        } catch (final IOException ioe) {
+                            throw new StorageClientException(ioe);
+                        }
+                    }
+            );
+            if (marker[0] == null) {
+                break;
+            }
+        }
+        return (ClientType) this;
+    }
+
+    public ClientType readContainerObjectNames(
+            final String containerName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Function<ResponseType, Reader> function,
+            final BiConsumer<String, ClientType> consumer) {
+        return readContainerObjectNames(
+                containerName,
+                params,
+                headers,
+                function,
+                l -> consumer.accept(l, (ClientType) this)
+        );
+    }
+
+    public abstract <R> R updateContainer(String containerName,
+                                          Map<String, List<Object>> params,
+                                          Map<String, List<Object>> headers,
+                                          Function<ResponseType, R> function);
+
+    public <T> T updateContainer(
+            final String containerName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<ResponseType, ClientType, T> function) {
+        return updateContainer(
+                containerName,
+                params,
+                headers,
+                r -> {
+                    return function.apply(r, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType updateContainer(
+            final String containerName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<ResponseType> consumer) {
+        return updateContainer(
+                containerName,
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType updateContainer(
+            final String containerName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return updateContainer(
+                containerName,
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r, (ClientType) this);
+                }
+        );
+    }
+
+    public abstract <R> R configureContainer(
+            final String containerName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Function<ResponseType, R> function);
+
+    public <T> T configureContainer(
+            final String containerName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<ResponseType, ClientType, T> function) {
+        return configureContainer(
+                containerName,
+                params,
+                headers,
+                r -> {
+                    return function.apply(r, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType configureContainer(
+            final String containerName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<ResponseType> consumer) {
+        return configureContainer(
+                containerName,
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType configureContainer(
+            final String containerName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return configureContainer(
+                containerName,
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r, (ClientType) this);
+                }
+        );
+    }
+
+    public abstract <R> R deleteContainer(String containerName,
+                                          Map<String, List<Object>> params,
+                                          Map<String, List<Object>> headers,
+                                          Function<ResponseType, R> function);
+
+    public <R> R deleteContainer(
+            final String containerName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<ResponseType, ClientType, R> function) {
+        return deleteContainer(
+                containerName,
+                params,
+                headers,
+                r -> {
+                    return function.apply(r, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType deleteContainer(
+            final String containerName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<ResponseType> consumer) {
+        return deleteContainer(
+                containerName,
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType deleteContainer(
+            final String containerName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return deleteContainer(
+                containerName,
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r, (ClientType) this);
+                }
+        );
+    }
+
+    // ----------------------------------------------- /account/container/object
+    public abstract <R> R peekObject(String containerName, String objectName,
+                                     Map<String, List<Object>> params,
+                                     Map<String, List<Object>> headers,
+                                     Function<ResponseType, R> function);
+
+    public <R> R peekObject(
+            final String containerName, final String objectName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<ResponseType, ClientType, R> function) {
+        return peekObject(
+                containerName,
+                objectName,
+                params,
+                headers,
+                n -> {
+                    return function.apply(n, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType peekObject(
+            final String containerName, final String objectName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<ResponseType> consumer) {
+        return peekObject(
+                containerName,
+                objectName,
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType peekObject(
+            final String containerName, final String objectName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return peekObject(
+                containerName,
+                objectName,
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n, (ClientType) this);
+                }
+        );
+    }
+
+    public abstract <R> R readObject(String containerName, String objectName,
+                                     Map<String, List<Object>> params,
+                                     Map<String, List<Object>> headers,
+                                     Function<ResponseType, R> function);
+
+    public <R> R readObject(
+            final String containerName, final String objectName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<ResponseType, ClientType, R> function) {
+        return readObject(
+                containerName,
+                objectName,
+                params,
+                headers,
+                n -> {
+                    return function.apply(n, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType readObject(
+            final String containerName, final String objectName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<ResponseType> consumer) {
+        return readObject(
+                containerName,
+                objectName,
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType readObject(
+            final String containerName, final String objectName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return readObject(
+                containerName,
+                objectName,
+                params,
+                headers,
+                n -> {
+                    consumer.accept(n, (ClientType) this);
+                }
+        );
+    }
+
+    public abstract <R> R updateObject(String containerName, String objectName,
+                                       Map<String, List<Object>> params,
+                                       Map<String, List<Object>> headers,
+                                       Supplier<EntityType> supplier,
+                                       Function<ResponseType, R> function);
+
+    public <R> R updateObject(
+            final String containerName, final String objectName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Supplier<EntityType> entity,
+            final BiFunction<ResponseType, ClientType, R> function) {
+        return updateObject(
+                containerName,
+                objectName,
+                params,
+                headers,
+                entity,
+                n -> {
+                    return function.apply(n, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType updateObject(
+            final String containerName, final String objectName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Supplier<EntityType> supplier,
+            final Consumer<ResponseType> consumer) {
+        return updateObject(
+                containerName,
+                objectName,
+                params,
+                headers,
+                supplier,
+                n -> {
+                    consumer.accept(n);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType updateObject(
+            final String containerName, final String objectName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Supplier<EntityType> supplier,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return updateObject(
+                containerName,
+                objectName,
+                params,
+                headers,
+                supplier,
+                n -> {
+                    consumer.accept(n, (ClientType) this);
+                }
+        );
+    }
+
+    public abstract <T> T configureObject(String containerName,
+                                          String objectName,
+                                          Map<String, List<Object>> params,
+                                          Map<String, List<Object>> headers,
+                                          Function<ResponseType, T> function);
+
+    public <T> T configureObject(
+            final String containerName, final String objectName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<ResponseType, ClientType, T> function) {
+        return configureObject(
+                containerName,
+                objectName,
+                params,
+                headers,
+                r -> {
+                    return function.apply(r, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType configureObject(
+            final String containerName, final String objectName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<ResponseType> consumer) {
+        return configureObject(
+                containerName,
+                objectName,
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType configureObject(
+            final String containerName, final String objectName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return configureObject(
+                containerName,
+                objectName,
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r, (ClientType) this);
+                }
+        );
+    }
+
+    public abstract <R> R deleteObject(String containerName,
+                                       String objectName,
+                                       Map<String, List<Object>> params,
+                                       Map<String, List<Object>> headers,
+                                       Function<ResponseType, R> function);
+
+    public <T> T deleteObject(
+            final String containerName, final String objectName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<ResponseType, ClientType, T> function) {
+        return deleteObject(
+                containerName,
+                objectName,
+                params,
+                headers,
+                r -> {
+                    return function.apply(r, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType deleteObject(
+            final String containerName, final String objectName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<ResponseType> consumer) {
+        return deleteObject(
+                containerName,
+                objectName,
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType deleteObject(
+            final String containerName, final String objectName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return deleteObject(
+                containerName,
+                objectName,
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r, (ClientType) this);
+                }
+        );
     }
 
     // ----------------------------------------------------------------- authUrl
