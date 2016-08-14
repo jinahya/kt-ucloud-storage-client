@@ -23,23 +23,27 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import static java.util.Objects.requireNonNull;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
+import javax.ws.rs.client.Entity;
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Response.Status.Family;
+import static javax.ws.rs.core.Response.Status.Family.SUCCESSFUL;
 import javax.ws.rs.core.Response.StatusType;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import org.testng.annotations.BeforeClass;
-import static java.util.Objects.requireNonNull;
 
 /**
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-public abstract class WsRsClientIT extends StorageClientIT<WsRsClient> {
+public class WsRsClientIT
+        extends StorageClientIT<WsRsClient, Entity<?>, Response> {
 
     private static final Logger logger = getLogger(WsRsClientIT.class);
 
@@ -47,124 +51,35 @@ public abstract class WsRsClientIT extends StorageClientIT<WsRsClient> {
     @Override
     public void doBeforeClass() throws ReflectiveOperationException {
         super.doBeforeClass();
-        accept(c -> {
-            c.setClientRequestFilter(requestContext -> {
-                logger.debug("requstContext.method: {}",
-                             requestContext.getMethod());
-                logger.debug("requstContext.uri: {}", requestContext.getUri());
-                requestContext.getHeaders().forEach((k, vs) -> {
-                    vs.forEach(v -> {
-                        logger.debug("requestContext.header: {}: {}", k, v);
-                    });
-                });
-            });
-            c.setClientResponseFilter((requestContext, responseContext) -> {
-                final StatusType statusInfo = responseContext.getStatusInfo();
-                logger.debug("responseContext.status: {} {}",
-                             statusInfo.getStatusCode(),
-                             statusInfo.getReasonPhrase());
-                responseContext.getHeaders().forEach((k, vs) -> {
-                    vs.forEach(v -> {
-                        logger.debug("responseContext.header: {}: {}", k, v);
-                    });
-                });
-            });
-        });
+//        accept(c -> {
+//            c.setClientRequestFilter(requestContext -> {
+//                logger.debug("requstContext.method: {}",
+//                             requestContext.getMethod());
+//                logger.debug("requstContext.uri: {}", requestContext.getUri());
+//                requestContext.getHeaders().forEach((k, vs) -> {
+//                    vs.forEach(v -> {
+//                        logger.debug("requestContext.header: {}: {}", k, v);
+//                    });
+//                });
+//            });
+//            c.setClientResponseFilter((requestContext, responseContext) -> {
+//                final StatusType statusInfo = responseContext.getStatusInfo();
+//                logger.debug("responseContext.status: {} {}",
+//                             statusInfo.getStatusCode(),
+//                             statusInfo.getReasonPhrase());
+//                responseContext.getHeaders().forEach((k, vs) -> {
+//                    vs.forEach(v -> {
+//                        logger.debug("responseContext.header: {}: {}", k, v);
+//                    });
+//                });
+//            });
+//        });
     }
 
-//    private static WsRsClient client;
-//    @BeforeSuite
-//    void doBeforeSuite() {
-//        final String authUrl = System.getProperty("authUrl");
-//        if (authUrl == null) {
-//            logger.error("missing property; authUrl; skipping...");
-//            throw new SkipException("missing property; authUrl");
-//        }
-//        final String authUser = System.getProperty("authUser");
-//        if (authUser == null) {
-//            logger.error("missing property; authUser; skipping...");
-//            throw new SkipException("missing property; authUser");
-//        }
-//        final String authPass = System.getProperty("authPass");
-//        if (authPass == null) {
-//            logger.error("missing proprety; authPass; skipping...");
-//            throw new SkipException("missing property; authPass");
-//        }
-//        client = new WsRsClient(authUrl, authUser, authPass)
-//                .authenticateUser(r -> {
-//                    status(r, Family.SUCCESSFUL, Status.OK);
-//                });
-////        client = client().authenticateUser(r -> {
-////            status(r, Family.SUCCESSFUL, Status.OK.getStatusCode());
-////        });
-//    }
-//
-//    @AfterSuite
-//    void doAfterSuite() {
-//        client.invalidate();
-//        client = null;
-//    }
     public WsRsClientIT() {
         super(WsRsClient.class);
     }
 
-//    private static StorageClient client() {
-//        final String authUrl = System.getProperty("authUrl");
-//        if (authUrl == null) {
-//            logger.error("missing property; authUrl; skipping...");
-//            throw new SkipException("missing property; authUrl");
-//        }
-//        final String authUser = System.getProperty("authUser");
-//        if (authUser == null) {
-//            logger.error("missing property; authUser; skipping...");
-//            throw new SkipException("missing property; authUser");
-//        }
-//        final String authPass = System.getProperty("authPass");
-//        if (authPass == null) {
-//            logger.error("missing proprety; authPass; skipping...");
-//            throw new SkipException("missing property; authPass");
-//        }
-//        return new StorageClient(authUrl, authUser, authPass);
-//    }
-//    @Deprecated
-//    static void status(final StatusType statusInfo, final Family expected) {
-//        final Family family = statusInfo.getFamily();
-//        final int statusCode = statusInfo.getStatusCode();
-//        final String reasonPhrase = statusInfo.getReasonPhrase();
-//        logger.debug("-> response.status: {} {}", statusCode, reasonPhrase);
-//        assertEquals(family, expected);
-//    }
-//
-//    @Deprecated
-//    static void status(final Response response, final Family expected) {
-//        status(response.getStatusInfo(), expected);
-//    }
-//    @Deprecated
-//    static void status(final StatusType statusInfo, final Family expectedFamily,
-//                       final int... expectedStatuses) {
-//        requireNonNull(statusInfo, "null statusInfo");
-//        final Family actualFamily = statusInfo.getFamily();
-//        final int actualStatus = statusInfo.getStatusCode();
-//        final String reasonPhrase = statusInfo.getReasonPhrase();
-//        logger.debug("-> response.status: {} {}", actualStatus, reasonPhrase);
-//        if (expectedFamily != null) {
-//            assertEquals(actualFamily, expectedFamily);
-//        }
-//        if (expectedStatuses != null && expectedStatuses.length > 0) {
-//            assertTrue(
-//                    IntStream.of(expectedStatuses)
-//                    .filter(v -> v == actualStatus)
-//                    .findAny()
-//                    .isPresent()
-//            );
-//        }
-//    }
-//
-//    @Deprecated
-//    static void status(final Response response, final Family expectedFamily,
-//                       final int... expectedStatuses) {
-//        status(response.getStatusInfo(), expectedFamily, expectedStatuses);
-//    }
     static void status(final StatusType statusInfo, final Family expectedFamily,
                        final Status... expectedStatuses) {
         requireNonNull(statusInfo, "null statusInfo");
@@ -185,11 +100,10 @@ public abstract class WsRsClientIT extends StorageClientIT<WsRsClient> {
         }
     }
 
-    static void status(final Response response, final Family expectedFamily,
-                       final Status... expectedStatuses) {
-        status(response.getStatusInfo(), expectedFamily, expectedStatuses);
-    }
-
+//    static void status(final Response response, final Family expectedFamily,
+//                       final Status... expectedStatuses) {
+//        status(response.getStatusInfo(), expectedFamily, expectedStatuses);
+//    }
     static void headers(final Response response) {
         response.getHeaders().entrySet().forEach(e -> {
             e.getValue().forEach(value -> {
@@ -224,29 +138,31 @@ public abstract class WsRsClientIT extends StorageClientIT<WsRsClient> {
         }
     }
 
-//    <T> T apply(final Function<WsRsClient, T> function) {
-//        return requireNonNull(function, "null function").apply(client);
-//    }
-//
-//    <U, R> R apply(final BiFunction<WsRsClient, U, R> function,
-//                   final Supplier<U> u) {
-//        return apply(
-//                c -> requireNonNull(function, "null function")
-//                .apply(c, requireNonNull(u, "null u").get())
-//        );
-//    }
-//
-//    void accept(final Consumer<WsRsClient> consumer) {
-//        apply(c -> {
-//            requireNonNull(consumer, "null consumer").accept(c);
-//            return null;
-//        });
-//    }
-//
-//    <U> void accept(final BiConsumer<WsRsClient, U> consumer,
-//                    final Supplier<U> u) {
-//        accept(c -> requireNonNull(consumer, "null consumer").accept(
-//                c, requireNonNull(u, "null u").get())
-//        );
-//    }
+    @Override
+    protected void assertSuccesfulAuthentication(final Response response) {
+        final StatusType statusInfo = response.getStatusInfo();
+        final Family family = statusInfo.getFamily();
+        final int statusCode = statusInfo.getStatusCode();
+        final String reasonPhrase = statusInfo.getReasonPhrase();
+        assertEquals(family, SUCCESSFUL,
+                     "status: " + statusCode + " " + reasonPhrase);
+    }
+
+    @Override
+    protected int statusCode(Response response) {
+        return WsRsClient.statusCode(response);
+    }
+
+    @Override
+    protected String reasonPhrase(Response response) {
+        return WsRsClient.reasonPhrase(response);
+    }
+
+    @Override
+    protected Entity<?> entity() {
+        final byte[] bytes
+                = new byte[ThreadLocalRandom.current().nextInt(1024)];
+        ThreadLocalRandom.current().nextBytes(bytes);
+        return Entity.entity(bytes, APPLICATION_OCTET_STREAM);
+    }
 }

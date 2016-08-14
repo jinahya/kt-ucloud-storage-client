@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import static java.lang.Boolean.TRUE;
-import static java.lang.System.currentTimeMillis;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -30,11 +29,7 @@ import static java.util.Collections.singletonList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
@@ -50,12 +45,12 @@ public class NetClient
 
     private static final Logger logger = getLogger(NetClient.class.getName());
 
-    private static StringBuilder queryParameters(
+    private static StringBuilder params(
             final StringBuilder builder,
-            final Map<String, List<Object>> parameters) {
-        if (parameters != null && !parameters.isEmpty()) {
+            final Map<String, List<Object>> params) {
+        if (params != null && !params.isEmpty()) {
             builder.append('?').append(
-                    parameters.entrySet().stream().flatMap(
+                    params.entrySet().stream().flatMap(
                             e -> e.getValue().stream()
                             .map(v -> e.getKey() + "=" + v))
                     .collect(joining("&")));
@@ -63,10 +58,10 @@ public class NetClient
         return builder;
     }
 
-    private static <T extends URLConnection> T requestProperties(
-            final T connection, final Map<String, List<Object>> properties) {
-        if (properties != null) {
-            properties.forEach((n, vs) -> {
+    private static <T extends URLConnection> T headers(
+            final T connection, final Map<String, List<Object>> headers) {
+        if (headers != null) {
+            headers.forEach((n, vs) -> {
                 vs.forEach(v -> {
                     connection.setRequestProperty(n, String.valueOf(v));
                 });
@@ -75,18 +70,30 @@ public class NetClient
         return connection;
     }
 
-    public static void status(final HttpURLConnection connection,
-                              final BiConsumer<Integer, String> consumer)
-            throws IOException {
-        consumer.accept(connection.getResponseCode(),
-                        connection.getResponseMessage());
+    public static <R> R status(final HttpURLConnection connection,
+                               final BiFunction<Integer, String, R> consumer) {
+        try {
+            final int statusCode = connection.getResponseCode();
+            final String reasonPhrase = connection.getResponseMessage();
+            return consumer.apply(statusCode, reasonPhrase);
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
+        }
     }
 
-    // ----------------------------------------------------------------- account
+    public static int statusCode(final HttpURLConnection connection) {
+        return status(connection, (c, p) -> c);
+    }
+
+    public static String reasonPhrase(final HttpURLConnection connection) {
+        return status(connection, (c, p) -> p);
+    }
+
+    // ---------------------------------------------------------------- /account
     public static StringBuilder buildAccount(
             final String storageUrl,
             final Map<String, List<Object>> params) {
-        return queryParameters(new StringBuilder(storageUrl), params);
+        return params(new StringBuilder(storageUrl), params);
     }
 
     public static URL locateAccount(
@@ -102,11 +109,11 @@ public class NetClient
         return locateAccount(storageUrl, params).openConnection();
     }
 
-    // --------------------------------------------------------------- container
+    // ------------------------------------------------------ /account/container
     public static StringBuilder buildContainer(
             final String storageUrl, final String containerName,
             final Map<String, List<Object>> params) {
-        return queryParameters(
+        return params(
                 new StringBuilder(storageUrl)
                 .append('/')
                 .append(containerName),
@@ -129,11 +136,11 @@ public class NetClient
                 .openConnection();
     }
 
-    // ------------------------------------------------------------------ object
+    // ----------------------------------------------- /account/container/object
     public static StringBuilder buildObject(
             final String storageUrl, final String containerName,
             final String objectName, final Map<String, List<Object>> params) {
-        return queryParameters(
+        return params(
                 new StringBuilder(storageUrl)
                 .append('/')
                 .append(containerName)
@@ -158,120 +165,28 @@ public class NetClient
                 .openConnection();
     }
 
+    // ------------------------------------------------------- /reseller/account
+    // -------------------------------------------------- /reseller/account/user
     // -------------------------------------------------------------------------
-    public NetClient(final String storageUrl, final String authUser,
+    public NetClient(final String authUrl, final String authUser,
                      final String authKey) {
-        super(storageUrl, authUser, authKey);
+        super(authUrl, authUser, authKey);
     }
 
     public NetClient(final StorageClient client) {
-        this(client.getStorageUrl(), client.getAuthUser(),
-             client.getAuthKey());
-        storageUrl = client.getStorageUrl();
-        authToken = client.getAuthToken();
-        authTokenExpires = client.getAuthTokenExpires();
+        this(client.getAuthUrl(), client.getAuthUser(), client.getAuthKey());
+        setStorageUrl(client.getStorageUrl());
+        setAuthToken(client.getAuthToken());
+        setAuthTokenExpires(client.getAuthTokenExpires());
     }
 
-    // -------------------------------------------------------------------------
+//    // -------------------------------------------------------------------------
 //    @Override
-//    @Deprecated
-//    protected void authenticateUser() {
-//        try {
-//            authenticateUser(
-//                    n -> {
-//                        return null;
-//                    });
-//        } catch (final IOException ioe) {
-//            throw new RuntimeException(ioe);
-//        }
+//    protected int statusCode(final URLConnection connection) {
+//        return statusCode(((HttpURLConnection) connection));
 //    }
+    // -------------------------------------------------------------------------
     @Override
-    protected int authenticateUser(final boolean newToken) {
-//        try {
-        return this.<Integer>authenticateUser(
-                newToken,
-                n -> {
-                    try {
-                        return ((HttpURLConnection) n).getResponseCode();
-                    } catch (final IOException ioe) {
-                        throw new RuntimeException(ioe);
-                    }
-                });
-//        } catch (final IOException ioe) {
-//            throw new RuntimeException(ioe);
-//        }
-    }
-
-//    public <R> R authenticateUser(final boolean newToken,
-//                                  final Function<URLConnection, R> function)
-//            throws IOException {
-//        final HttpURLConnection connection
-//                = (HttpURLConnection) new URL(authUrl).openConnection();
-//        connection.setRequestMethod("GET");
-//        final Map<String, List<Object>> headers = new HashMap<>();
-//        headers.put(HEADER_X_AUTH_USER, singletonList(authUser));
-//        headers.put(HEADER_X_AUTH_PASS, singletonList(authKey));
-//        if (newToken) {
-//            headers.put(HEADER_X_AUTH_NEW_TOKEN, singletonList(Boolean.TRUE));
-//        }
-//        requestProperties(connection, headers);
-//        connection.setDoOutput(false);
-//        connection.setDoInput(true);
-//        connection.connect();
-//        try {
-//            final int statusCode = connection.getResponseCode();
-//            if (statusCode != 200) {
-//                final String reasonPhrase = connection.getResponseMessage();
-//                throw new IOException(
-//                        "failed to authenticate user; " + statusCode + " "
-//                        + reasonPhrase);
-//            }
-//            storageUrl = connection.getHeaderField(HEADER_X_STORAGE_URL);
-//            authToken = connection.getHeaderField(HEADER_X_AUTH_TOKEN);
-//            setAuthTokenExpires(
-//                    connection.getHeaderField(HEADER_X_AUTH_TOKEN_EXPIRES));
-//            return function.apply(connection);
-//        } finally {
-//            connection.disconnect();
-//        }
-//    }
-//
-//    public <R> R authenticateUser(
-//            final boolean newToken,
-//            final BiFunction<URLConnection, NetClient, R> function)
-//            throws IOException {
-//        return authenticateUser(
-//                newToken,
-//                n -> {
-//                    return function.apply(n, this);
-//                }
-//        );
-//    }
-//
-//    public NetClient authenticateUser(
-//            final boolean newToken,
-//            final Consumer<URLConnection> consumer)
-//            throws IOException {
-//        return authenticateUser(
-//                newToken,
-//                n -> {
-//                    consumer.accept(n);
-//                    return this;
-//                }
-//        );
-//    }
-//
-//    public NetClient authenticateUser(
-//            final boolean newToken,
-//            final BiConsumer<URLConnection, NetClient> consumer)
-//            throws IOException {
-//        return authenticateUser(
-//                newToken,
-//                n -> {
-//                    consumer.accept(n, this);
-//                }
-//        );
-//    }
     public <R> R authenticateUser(final boolean newToken,
                                   final Function<URLConnection, R> function) {
         try {
@@ -284,7 +199,7 @@ public class NetClient
             if (newToken) {
                 headers.put(HEADER_X_AUTH_NEW_TOKEN, singletonList(TRUE));
             }
-            requestProperties(connection, headers);
+            headers(connection, headers);
             connection.setDoOutput(false);
             connection.setDoInput(true);
             connection.connect();
@@ -296,8 +211,8 @@ public class NetClient
                             "failed to authenticate user; " + statusCode + " "
                             + reasonPhrase);
                 }
-                storageUrl = connection.getHeaderField(HEADER_X_STORAGE_URL);
-                authToken = connection.getHeaderField(HEADER_X_AUTH_TOKEN);
+                setStorageUrl(connection.getHeaderField(HEADER_X_STORAGE_URL));
+                setAuthToken(connection.getHeaderField(HEADER_X_AUTH_TOKEN));
                 setAuthTokenExpires(
                         connection.getHeaderField(HEADER_X_AUTH_TOKEN_EXPIRES));
                 return function.apply(connection);
@@ -309,136 +224,20 @@ public class NetClient
         }
     }
 
-//    public <R> R authenticateUser(
-//            final boolean newToken,
-//            final BiFunction<URLConnection, NetClient, R> function)
-//            throws IOException {
-//        return authenticateUser(
-//                newToken,
-//                n -> {
-//                    return function.apply(n, this);
-//                }
-//        );
-//    }
-//
-//    public NetClient authenticateUser(
-//            final boolean newToken,
-//            final Consumer<URLConnection> consumer)
-//            throws IOException {
-//        return authenticateUser(
-//                newToken,
-//                n -> {
-//                    consumer.accept(n);
-//                    return this;
-//                }
-//        );
-//    }
-//
-//    public NetClient authenticateUser(
-//            final boolean newToken,
-//            final BiConsumer<URLConnection, NetClient> consumer)
-//            throws IOException {
-//        return authenticateUser(
-//                newToken,
-//                n -> {
-//                    consumer.accept(n, this);
-//                }
-//        );
-//    }
-    @Deprecated
-    public <R> R authenticateUser(final Function<URLConnection, R> function)
-            throws IOException {
-        final HttpURLConnection connection
-                = (HttpURLConnection) new URL(authUrl).openConnection();
-        connection.setRequestMethod("GET");
-        final Map<String, List<Object>> headers = new HashMap<>();
-        headers.put(HEADER_X_AUTH_USER, singletonList(authUser));
-        headers.put(HEADER_X_AUTH_PASS, singletonList(authKey));
-        headers.put(HEADER_X_AUTH_NEW_TOKEN, singletonList(Boolean.TRUE));
-        requestProperties(connection, headers);
-        connection.setDoOutput(false);
-        connection.setDoInput(true);
-        connection.connect();
-        try {
-            final int statusCode = connection.getResponseCode();
-            if (statusCode != 200) {
-                final String reasonPhrase = connection.getResponseMessage();
-                throw new IOException(
-                        "failed to authenticate user; " + statusCode + " "
-                        + reasonPhrase);
-            }
-            storageUrl = connection.getHeaderField(HEADER_X_STORAGE_URL);
-            authToken = connection.getHeaderField(HEADER_X_AUTH_TOKEN);
-            setAuthTokenExpires(
-                    connection.getHeaderField(HEADER_X_AUTH_TOKEN_EXPIRES));
-            return function.apply(connection);
-        } finally {
-            connection.disconnect();
-        }
-    }
-
-    @Deprecated
-    public <R> R authenticateUser(
-            final BiFunction<URLConnection, NetClient, R> function)
-            throws IOException {
-        return authenticateUser(
-                n -> {
-                    return function.apply(n, this);
-                }
-        );
-    }
-
-    @Deprecated
-    public NetClient authenticateUser(final Consumer<URLConnection> consumer)
-            throws IOException {
-        return authenticateUser(
-                n -> {
-                    consumer.accept(n);
-                    return this;
-                }
-        );
-    }
-
-    @Deprecated
-    public NetClient authenticateUser(
-            final BiConsumer<URLConnection, NetClient> consumer)
-            throws IOException {
-        return authenticateUser(
-                n -> {
-                    consumer.accept(n, this);
-                }
-        );
-    }
-
-    protected void ensureValid(final TimeUnit unit, final long duration)
-            throws IOException {
-        if (!isValid(currentTimeMillis() + unit.toMillis(duration))) {
-            authenticateUser(
-                    n -> {
-                    }
-            );
-        }
-    }
-
-    protected void ensureValid() throws IOException {
-        ensureValid(MINUTES, 10L);
-    }
-
-    // ----------------------------------------------------------------- account
+    // ---------------------------------------------------------------- /account
     @Override
     public <R> R peekAccount(final Map<String, List<Object>> params,
                              Map<String, List<Object>> headers,
                              final Function<URLConnection, R> function) {
         try {
             final HttpURLConnection connection
-                    = (HttpURLConnection) openAccount(
-                            storageUrl, params);
+                    = (HttpURLConnection) openAccount(getStorageUrl(), params);
             connection.setRequestMethod("HEAD");
             if (headers == null) {
                 headers = new HashMap<>();
             }
-            headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-            requestProperties(connection, headers);
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(getAuthToken()));
+            headers(connection, headers);
             connection.setDoOutput(false);
             connection.setDoInput(true);
             connection.connect();
@@ -452,61 +251,19 @@ public class NetClient
         }
     }
 
-//    public <R> R peekAccount(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<URLConnection, NetClient, R> function)
-//            throws IOException {
-//        return peekAccount(
-//                params,
-//                headers,
-//                n -> {
-//                    return function.apply(n, this);
-//                }
-//        );
-//    }
-//
-//    public NetClient peekAccount(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<URLConnection> consumer)
-//            throws IOException {
-//        return peekAccount(
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n);
-//                    return this;
-//                }
-//        );
-//    }
-//
-//    public NetClient peekAccount(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<URLConnection, NetClient> consumer)
-//            throws IOException {
-//        return peekAccount(
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n, this);
-//                }
-//        );
-//    }
     @Override
     public <R> R readAccount(final Map<String, List<Object>> params,
                              Map<String, List<Object>> headers,
                              final Function<URLConnection, R> function) {
         try {
             final HttpURLConnection connection = (HttpURLConnection) openAccount(
-                    storageUrl, params);
+                    getStorageUrl(), params);
             connection.setRequestMethod("GET");
             if (headers == null) {
                 headers = new HashMap<>();
             }
-            headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-            requestProperties(connection, headers);
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(getAuthToken()));
+            headers(connection, headers);
             connection.setDoOutput(false);
             connection.setDoInput(true);
             connection.connect();
@@ -520,48 +277,6 @@ public class NetClient
         }
     }
 
-//    public <R> R readAccount(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<URLConnection, NetClient, R> function)
-//            throws IOException {
-//        return readAccount(
-//                params,
-//                headers,
-//                n -> {
-//                    return function.apply(n, this);
-//                }
-//        );
-//    }
-//
-//    public NetClient readAccount(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<URLConnection> consumer)
-//            throws IOException {
-//        return readAccount(
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n);
-//                    return this;
-//                }
-//        );
-//    }
-//
-//    public NetClient readAccount(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<URLConnection, NetClient> consumer)
-//            throws IOException {
-//        return readAccount(
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n, this);
-//                }
-//        );
-//    }
     @Override
     public <R> R configureAccount(final Map<String, List<Object>> params,
                                   Map<String, List<Object>> headers,
@@ -569,13 +284,14 @@ public class NetClient
         try {
             final HttpURLConnection connection
                     = (HttpURLConnection) openAccount(
-                            storageUrl, params);
+                            getStorageUrl(), params);
             connection.setRequestMethod("POST");
             if (headers == null) {
                 headers = new HashMap<>();
             }
-            headers.putIfAbsent(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-            requestProperties(connection, headers);
+            headers.putIfAbsent(HEADER_X_AUTH_TOKEN,
+                                singletonList(getAuthToken()));
+            headers(connection, headers);
             connection.setDoOutput(false);
             connection.setDoInput(true);
             connection.connect();
@@ -589,48 +305,6 @@ public class NetClient
         }
     }
 
-//    public <R> R configureAccount(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<URLConnection, NetClient, R> function)
-//            throws IOException {
-//        return configureAccount(
-//                params,
-//                headers,
-//                n -> {
-//                    return function.apply(n, this);
-//                }
-//        );
-//    }
-//
-//    public NetClient configureAccount(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<URLConnection> consumer)
-//            throws IOException {
-//        return configureAccount(
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n);
-//                    return this;
-//                }
-//        );
-//    }
-//
-//    public NetClient configureAccount(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<URLConnection, NetClient> consumer)
-//            throws IOException {
-//        return configureAccount(
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n, this);
-//                }
-//        );
-//    }
     // ------------------------------------------------------ /account/container
     public <R> R peekContainer(final String containerName,
                                final Map<String, List<Object>> params,
@@ -639,13 +313,13 @@ public class NetClient
         try {
             final HttpURLConnection connection
                     = (HttpURLConnection) openContainer(
-                            storageUrl, containerName, params);
+                            getStorageUrl(), containerName, params);
             connection.setRequestMethod("HEAD");
             if (headers == null) {
                 headers = new HashMap<>();
             }
-            headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-            requestProperties(connection, headers);
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(getAuthToken()));
+            headers(connection, headers);
             connection.setDoOutput(false);
             connection.setDoInput(true);
             connection.connect();
@@ -659,54 +333,6 @@ public class NetClient
         }
     }
 
-//    public <R> R peekContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<URLConnection, NetClient, R> function)
-//            throws IOException {
-//        return peekContainer(
-//                containerName,
-//                params,
-//                headers,
-//                n -> {
-//                    return function.apply(n, this);
-//                }
-//        );
-//    }
-//
-//    public NetClient peekContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<URLConnection> consumer)
-//            throws IOException {
-//        return peekContainer(
-//                containerName,
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n);
-//                    return this;
-//                }
-//        );
-//    }
-//
-//    public NetClient peekContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<URLConnection, NetClient> consumer)
-//            throws IOException {
-//        return peekContainer(
-//                containerName,
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n, this);
-//                }
-//        );
-//    }
     @Override
     public <R> R readContainer(final String containerName,
                                final Map<String, List<Object>> params,
@@ -715,14 +341,13 @@ public class NetClient
         try {
             final HttpURLConnection connection
                     = (HttpURLConnection) openContainer(
-                            storageUrl, containerName, params);
+                            getStorageUrl(), containerName, params);
             connection.setRequestMethod("GET");
             if (headers == null) {
                 headers = new HashMap<>();
             }
-//        headers.putIfAbsent(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-            headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-            requestProperties(connection, headers);
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(getAuthToken()));
+            headers(connection, headers);
             connection.setDoOutput(false);
             connection.setDoInput(true);
             connection.connect();
@@ -736,67 +361,88 @@ public class NetClient
         }
     }
 
-//    public <R> R readContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<URLConnection, NetClient, R> function)
-//            throws IOException {
-//        return readContainer(
-//                containerName,
-//                params,
-//                headers,
-//                n -> {
-//                    return function.apply(n, this);
-//                }
-//        );
-//    }
-//
-//    public NetClient readContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<URLConnection> consumer)
-//            throws IOException {
-//        return readContainer(
-//                containerName,
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n);
-//                    return this;
-//                }
-//        );
-//    }
-//
-//    public NetClient readContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<URLConnection, NetClient> consumer)
-//            throws IOException {
-//        return readContainer(
-//                containerName,
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n, this);
-//                }
-//        );
-//    }
     @Override
-    public <R> R updateContainer(String containerName, Map<String, List<Object>> params, Map<String, List<Object>> headers, Function<URLConnection, R> function) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public <R> R updateContainer(final String containerName,
+                                 final Map<String, List<Object>> params,
+                                 Map<String, List<Object>> headers,
+                                 final Function<URLConnection, R> function) {
+        try {
+            final HttpURLConnection connection
+                    = (HttpURLConnection) openContainer(
+                            getStorageUrl(), containerName, params);
+            connection.setRequestMethod("PUT");
+            if (headers == null) {
+                headers = new HashMap<>();
+            }
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(getAuthToken()));
+            headers(connection, headers);
+            connection.setDoOutput(false);
+            connection.setDoInput(true);
+            connection.connect();
+            try {
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
+        }
     }
 
     @Override
-    public <R> R configureContainer(String containerName, Map<String, List<Object>> params, Map<String, List<Object>> headers, Function<URLConnection, R> function) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public <R> R configureContainer(final String containerName,
+                                    final Map<String, List<Object>> params,
+                                    Map<String, List<Object>> headers,
+                                    final Function<URLConnection, R> function) {
+        try {
+            final HttpURLConnection connection
+                    = (HttpURLConnection) openContainer(
+                            getStorageUrl(), containerName, params);
+            connection.setRequestMethod("POST");
+            if (headers == null) {
+                headers = new HashMap<>();
+            }
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(getAuthToken()));
+            headers(connection, headers);
+            connection.setDoOutput(false);
+            connection.setDoInput(true);
+            connection.connect();
+            try {
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
+        }
     }
 
     @Override
-    public <R> R deleteContainer(String containerName, Map<String, List<Object>> params, Map<String, List<Object>> headers, Function<URLConnection, R> function) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public <R> R deleteContainer(final String containerName,
+                                 final Map<String, List<Object>> params,
+                                 Map<String, List<Object>> headers,
+                                 final Function<URLConnection, R> function) {
+        try {
+            final HttpURLConnection connection
+                    = (HttpURLConnection) openContainer(
+                            getStorageUrl(), containerName, params);
+            connection.setRequestMethod("DELETE");
+            if (headers == null) {
+                headers = new HashMap<>();
+            }
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(getAuthToken()));
+            headers(connection, headers);
+            connection.setDoOutput(false);
+            connection.setDoInput(true);
+            connection.connect();
+            try {
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
+        }
     }
 
     // ----------------------------------------------- /account/container/object
@@ -806,13 +452,13 @@ public class NetClient
                             final Function<URLConnection, R> function) {
         try {
             final HttpURLConnection connection = (HttpURLConnection) openObject(
-                    storageUrl, containerName, objectName, params);
+                    getStorageUrl(), containerName, objectName, params);
             connection.setRequestMethod("HEAD");
             if (headers == null) {
                 headers = new HashMap<>();
             }
-            headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-            requestProperties(connection, headers);
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(getAuthToken()));
+            headers(connection, headers);
             connection.setDoOutput(false);
             connection.setDoInput(false); // @@?
             connection.connect();
@@ -825,58 +471,6 @@ public class NetClient
             throw new StorageClientException(ioe);
         }
     }
-//
-//    public <R> R peekObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<URLConnection, NetClient, R> function)
-//            throws IOException {
-//        return peekObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                n -> {
-//                    return function.apply(n, this);
-//                }
-//        );
-//    }
-//
-//    public NetClient peekObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<URLConnection> consumer)
-//            throws IOException {
-//        return peekObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n);
-//                    return this;
-//                }
-//        );
-//    }
-//
-//    public NetClient peekObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<URLConnection, NetClient> consumer)
-//            throws IOException {
-//        return peekObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n, this);
-//                }
-//        );
-//    }
 
     @Override
     public <R> R readObject(final String containerName, final String objectName,
@@ -885,13 +479,13 @@ public class NetClient
                             final Function<URLConnection, R> function) {
         try {
             final HttpURLConnection connection = (HttpURLConnection) openObject(
-                    storageUrl, containerName, objectName, params);
+                    getStorageUrl(), containerName, objectName, params);
             connection.setRequestMethod("GET");
             if (headers == null) {
                 headers = new HashMap<>();
             }
-            headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-            requestProperties(connection, headers);
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(getAuthToken()));
+            headers(connection, headers);
             connection.setDoOutput(true);
             connection.setDoInput(true);
             connection.connect();
@@ -914,16 +508,16 @@ public class NetClient
                               final Function<URLConnection, R> function) {
         try {
             final HttpURLConnection connection = (HttpURLConnection) openObject(
-                    storageUrl, containerName, objectName, params);
+                    getStorageUrl(), containerName, objectName, params);
             connection.setRequestMethod("PUT");
             if (headers == null) {
                 headers = new HashMap<>();
             }
-//        headers.putIfAbsent(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-            headers.put(HEADER_X_AUTH_TOKEN, singletonList(authToken));
-            requestProperties(connection, headers);
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(getAuthToken()));
+            headers(connection, headers);
             connection.setDoOutput(true);
             connection.setDoInput(true);
+            connection.setChunkedStreamingMode(0);
             connection.connect();
             try {
                 try (InputStream input = entity.get();
@@ -943,70 +537,82 @@ public class NetClient
         }
     }
 
-//    public <R> R updateObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<URLConnection, NetClient, R> function)
-//            throws IOException {
-//        return updateObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                n -> {
-//                    return function.apply(n, this);
-//                }
-//        );
-//    }
-//
-//    public NetClient updateObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<URLConnection> consumer)
-//            throws IOException {
-//        return updateObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n);
-//                    return this;
-//                }
-//        );
-//    }
-//
-//    public NetClient updateObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<URLConnection, NetClient> consumer)
-//            throws IOException {
-//        return updateObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n, this);
-//                }
-//        );
-//    }
     @Override
-    public <T> T configureObject(String containerName, String objectName, Map<String, List<Object>> params, Map<String, List<Object>> headers, Function<URLConnection, T> function) {
+    public <T> T configureObject(final String containerName,
+                                 final String objectName,
+                                 final Map<String, List<Object>> params,
+                                 Map<String, List<Object>> headers,
+                                 final Function<URLConnection, T> function) {
+        try {
+            final HttpURLConnection connection = (HttpURLConnection) openObject(
+                    getStorageUrl(), containerName, objectName, params);
+            connection.setRequestMethod("POST");
+            if (headers == null) {
+                headers = new HashMap<>();
+            }
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(getAuthToken()));
+            headers(connection, headers);
+            connection.setDoOutput(false);
+            connection.setDoInput(true);
+            connection.connect();
+            try {
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
+        }
+    }
+
+    @Override
+    public <R> R deleteObject(final String containerName,
+                              final String objectName,
+                              final Map<String, List<Object>> params,
+                              Map<String, List<Object>> headers,
+                              final Function<URLConnection, R> function) {
+        try {
+            final HttpURLConnection connection = (HttpURLConnection) openObject(
+                    getStorageUrl(), containerName, objectName, params);
+            connection.setRequestMethod("DELETE");
+            if (headers == null) {
+                headers = new HashMap<>();
+            }
+            headers.put(HEADER_X_AUTH_TOKEN, singletonList(getAuthToken()));
+            headers(connection, headers);
+            connection.setDoOutput(false);
+            connection.setDoInput(true);
+            connection.connect();
+            try {
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
+        }
+    }
+
+    // ------------------------------------------------------- /reseller/account
+    @Override
+    public <R> R readResellerAccount(Map<String, List<Object>> params, Map<String, List<Object>> headers, Function<URLConnection, R> function) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    // -------------------------------------------------- /reseller/account/user
+    @Override
+    public <R> R readResellerUser(String userName, Map<String, List<Object>> params, Map<String, List<Object>> headers, Function<URLConnection, R> function) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public <R> R deleteObject(String containerName, String objectName, Map<String, List<Object>> params, Map<String, List<Object>> headers, Function<URLConnection, R> function) {
+    public <R> R updateResellerUser(String userName, String userKey, final boolean admin, Map<String, List<Object>> params, Map<String, List<Object>> headers, Function<URLConnection, R> function) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    // ------------------------------------------------------------- authAccount
     @Override
-    public NetClient authAccount(final String authAccount) {
-        return (NetClient) super.authAccount(authAccount);
+    public <R> R deleteResellerUser(String userName, Map<String, List<Object>> params, Map<String, List<Object>> headers, Function<URLConnection, R> function) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+
 }

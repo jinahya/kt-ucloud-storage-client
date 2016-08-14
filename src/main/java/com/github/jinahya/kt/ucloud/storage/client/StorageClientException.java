@@ -21,20 +21,22 @@ package com.github.jinahya.kt.ucloud.storage.client;
  */
 public class StorageClientException extends RuntimeException {
 
-    public StorageClientException(String message) {
+    public StorageClientException(final String message) {
         super(message);
     }
 
-    public StorageClientException(String message, Throwable cause) {
+    public StorageClientException(final String message, final Throwable cause) {
         super(message, cause);
     }
 
-    public StorageClientException(Throwable cause) {
+    public StorageClientException(final Throwable cause) {
         super(cause);
     }
 
-    public StorageClientException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public StorageClientException(final String message,
+                                  final Throwable cause,
+                                  final boolean enableSuppression,
+                                  final boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
-
 }

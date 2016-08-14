@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Jin Kwon &lt;onacit at gmail.com&gt;.
+ * Copyright 2016 Jin Kwon &lt;onacit_at_gmail.com&gt;.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.jinahya.kt.ucloud.storage.client.net;
-
-import org.slf4j.Logger;
-import static org.slf4j.LoggerFactory.getLogger;
-import org.testng.annotations.Test;
+package com.github.jinahya.kt.ucloud.storage.client.bind;
 
 /**
  *
- * @author Jin Kwon &lt;onacit at gmail.com&gt;
+ * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-@Test(dependsOnGroups = {"net.container"}, groups = {"net.object"})
-public class NetClientObjectIT extends NetClientIT {
+public final class XmlConstants {
 
-    private static final Logger logger = getLogger(NetClientObjectIT.class);
+    public static final String KT_ULCOUD_STORAGE_CLIENT_NS_PREFIX = "kusb";
 
-    @Test
-    public void test() {
+    public static final String KT_UCLOUD_STORAGE_CLIENT_NS_URI
+            = "http://github.com/jinahya/kt/ucloud/storage/bind";
+
+    private XmlConstants() {
+        super();
     }
 }

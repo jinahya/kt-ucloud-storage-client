@@ -13,21 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.jinahya.kt.ucloud.storage.client;
+package com.github.jinahya.kt.ucloud.storage.client.bind;
+
+import com.github.jinahya.kt.ucloud.storage.client.bind.StorageAccountInfo;
 
 /**
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-public class XmlConstants {
+public class StorageAccountInfoTest {
 
-    public static final String KT_ULCOUD_STORAGE_CLIENT_NS_PREFIX = "kusc";
-
-    public static final String KT_UCLOUD_STORAGE_CLIENT_NS_URI
-            = "http://github.com/jinahya/kt/ucloud/storage/client";
-
-    //static final String IPPL_NS_PREFIX = "ippl";
-    private XmlConstants() {
-        super();
+    public static void printXml(final StorageAccountInfo instance) {
+        JaxbTests.printXml(StorageAccountInfo.class, instance);
     }
 }

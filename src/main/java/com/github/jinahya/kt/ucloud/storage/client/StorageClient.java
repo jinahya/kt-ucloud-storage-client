@@ -45,7 +45,7 @@ import javax.ws.rs.core.MultivaluedHashMap;
  *
  * @author Jin Kwon &lt;onacit at gmail.com&gt;
  * @param <ClientType> storage client implementation type parameter
- * @param <RequestType> client request type parameter
+ * @param <EntityType> request entity type parameter
  * @param <ResponseType> server response type parameter
  */
 public abstract class StorageClient<ClientType extends StorageClient, EntityType, ResponseType> {
@@ -107,6 +107,8 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
 
     public static final String HEADER_X_AUTH_USER_KEY = "X-Auth-User-Key";
 
+    public static final String HEADER_X_AUTH_USER_ADMIN = "X-Auth-User-Admin";
+
     public static String capitalize(final String token) {
         return token.substring(0, 1).toUpperCase()
                + token.substring(1).toLowerCase();
@@ -137,13 +139,16 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
         return metaHeader(remove, "Object", tokens);
     }
 
-    public static String resellerUrl(final String storageUrl,
-                                     final String resellerAccount) {
+    public static String resellerAccountUrl(final String storageUrl,
+                                            final String resellerAccountName) {
         try {
-            final URL url = new URL(storageUrl);
+            final URL url
+                    = new URL(requireNonNull(storageUrl, "null storageUrl"));
             final String protocol = url.getProtocol();
             final String authority = url.getAuthority();
-            return protocol + "://" + authority + "/auth/v2/" + resellerAccount;
+            return protocol + "://" + authority + "/auth/v2/"
+                   + requireNonNull(resellerAccountName,
+                                    "null resellerAccountName");
         } catch (final MalformedURLException murle) {
             throw new StorageClientException(murle);
         }
@@ -194,12 +199,15 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
                          final String authKey) {
         this.authUrl = requireNonNull(authUrl, "null authUrl");
         this.authUser = requireNonNull(authUser, "null authUser");
+        {
+            final int i = this.authUser.indexOf(':');
+            resellerAccountName
+                    = i == -1 ? null : this.authUser.substring(0, i);
+        }
         this.authKey = requireNonNull(authKey, "null authKey");
     }
 
-    @Deprecated
-    protected abstract int authenticateUser(boolean newToken);
-
+//    protected abstract int statusCode(ResponseType response);
     public abstract <R> R authenticateUser(boolean newToken,
                                            Function<ResponseType, R> function);
 
@@ -258,12 +266,9 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
      * {@code false} otherwise.
      */
     public boolean isValid(final long until) {
-        if (storageUrl == null || authToken == null
-            || authTokenExpires == null) {
-            invalidate();
-            return false;
-        }
-        return authTokenExpires.getTime() >= until;
+        return storageUrl != null && authToken != null
+               && authTokenExpires != null
+               && authTokenExpires.getTime() >= until;
     }
 
     /**
@@ -364,6 +369,57 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
                 n -> {
                     consumer.accept(n, (ClientType) this);
                 }
+        );
+    }
+
+    public ClientType readAccountContainerNames(
+            Map<String, List<Object>> params,
+            Map<String, List<Object>> headers,
+            final Function<ResponseType, Reader> function,
+            final Consumer<String> consumer) {
+        if (params == null) {
+            params = new MultivaluedHashMap<>();
+        }
+        params.putIfAbsent(QUERY_PARAM_LIMIT, singletonList(512));
+        if (headers == null) {
+            headers = new MultivaluedHashMap<>();
+        }
+        headers.put("Accept", singletonList("text/plain"));
+        for (final String[] marker = new String[1];;) {
+            if (marker[0] != null) {
+                params.put(QUERY_PARAM_MARKER, singletonList(marker[0]));
+            }
+            marker[0] = null;
+            readAccount(
+                    params,
+                    headers,
+                    r -> {
+                        try {
+                            try (Reader reader = function.apply(r)) {
+                                lines(reader, consumer);
+                            }
+                        } catch (final IOException ioe) {
+                            throw new StorageClientException(ioe);
+                        }
+                    }
+            );
+            if (marker[0] == null) {
+                break;
+            }
+        }
+        return (ClientType) this;
+    }
+
+    public ClientType readAccountContainerNames(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Function<ResponseType, Reader> function,
+            final BiConsumer<String, ClientType> consumer) {
+        return readAccountContainerNames(
+                params,
+                headers,
+                function,
+                l -> consumer.accept(l, (ClientType) this)
         );
     }
 
@@ -1003,23 +1059,215 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
         );
     }
 
+    // ------------------------------------------------------- /reseller/account
+    public abstract <R> R readResellerAccount(
+            Map<String, List<Object>> params, Map<String, List<Object>> headers,
+            Function<ResponseType, R> function);
+
+    public <R> R readResellerAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<ResponseType, ClientType, R> function) {
+        return readResellerAccount(
+                params,
+                headers,
+                r -> {
+                    return function.apply(r, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType readResellerAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<ResponseType> consumer) {
+        return readResellerAccount(
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType readResellerAccount(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return readResellerAccount(
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r, (ClientType) this);
+                }
+        );
+    }
+
+    // -------------------------------------------------- /reseller/account/user
+    public abstract <R> R readResellerUser(String userName,
+                                           Map<String, List<Object>> params,
+                                           Map<String, List<Object>> headers,
+                                           Function<ResponseType, R> function);
+
+    public <R> R readResellerUser(
+            final String userName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<ResponseType, ClientType, R> function) {
+        return readResellerUser(
+                userName,
+                params,
+                headers,
+                r -> {
+                    return function.apply(r, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType readResellerUser(
+            final String userName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<ResponseType> consumer) {
+        return readResellerUser(
+                userName,
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType readResellerUser(
+            final String userName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return readResellerUser(
+                userName,
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r, (ClientType) this);
+                }
+        );
+    }
+
+    public abstract <R> R updateResellerUser(
+            String userName, String userKey, boolean admin,
+            Map<String, List<Object>> params,
+            Map<String, List<Object>> headers,
+            Function<ResponseType, R> function);
+
+    public <R> R updateResellerUser(
+            final String userName, final String userKey, final boolean admin,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<ResponseType, ClientType, R> function) {
+        return updateResellerUser(
+                userName,
+                userKey,
+                admin,
+                params,
+                headers,
+                r -> {
+                    return function.apply(r, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType updateResellerUser(
+            final String userName, final String userKey, final boolean admin,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<ResponseType> consumer) {
+        return updateResellerUser(
+                userName,
+                userKey,
+                admin,
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType updateResellerUser(
+            final String userName, final String userKey, final boolean admin,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return updateResellerUser(
+                userName,
+                userKey,
+                admin,
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r, (ClientType) this);
+                }
+        );
+    }
+
+    public abstract <R> R deleteResellerUser(
+            String userName, Map<String, List<Object>> params,
+            Map<String, List<Object>> headers,
+            Function<ResponseType, R> function);
+
+    public <R> R deleteResellerUser(
+            final String userName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<ResponseType, ClientType, R> function) {
+        return deleteResellerUser(
+                userName,
+                params,
+                headers,
+                r -> {
+                    return function.apply(r, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType deleteResellerUser(
+            final String userName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<ResponseType> consumer) {
+        return deleteResellerUser(
+                userName,
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType deleteResellerUser(
+            final String userName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return deleteResellerUser(
+                userName,
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r, (ClientType) this);
+                }
+        );
+    }
+
     // ----------------------------------------------------------------- authUrl
     public String getAuthUrl() {
         return authUrl;
-    }
-
-    // ------------------------------------------------------------- authAccount
-    public String getAuthAccount() {
-        return authAccount;
-    }
-
-    public void setAuthAccount(final String authAccount) {
-        this.authAccount = authAccount;
-    }
-
-    public StorageClient authAccount(final String authAccount) {
-        setAuthAccount(authAccount);
-        return this;
     }
 
     // ---------------------------------------------------------------- authUser
@@ -1027,14 +1275,18 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
         return authUser;
     }
 
-    // ---------------------------------------------------- authAccount/authUser
-    protected String getXAuthUserHeaderValue() {
-        return (authAccount != null ? authAccount + ":" : "") + authUser;
-    }
-
     // ----------------------------------------------------------------- authKey
     public String getAuthKey() {
         return authKey;
+    }
+
+    // ----------------------------------------------------- resellerAccountName
+    public String getResellerAccountName() {
+        return resellerAccountName;
+    }
+
+    public String resellerAccountName() {
+        return getResellerAccountName();
     }
 
     // -------------------------------------------------------------- storageUrl
@@ -1047,6 +1299,32 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
         return storageUrl;
     }
 
+    public String storageUrl() {
+        return getStorageUrl();
+    }
+
+    protected void setStorageUrl(final String storageUrl) {
+        this.storageUrl = requireNonNull(storageUrl, "null storageUrl");
+        if (resellerAccountName != null) {
+            resellerAccountUrl
+                    = resellerAccountUrl(storageUrl, resellerAccountName);
+        }
+    }
+
+    protected StorageClient storegeUrl(final String storageUrl) {
+        setStorageUrl(storageUrl);
+        return this;
+    }
+
+    // ------------------------------------------------------ resellerAccountUrl
+    public String getResllerAccountUrl() {
+        return resellerAccountUrl;
+    }
+
+    public String resellerAccountUrl() {
+        return getResellerAccountName();
+    }
+
     // --------------------------------------------------------------- authToken
     /**
      * Returns the authorization token.
@@ -1055,6 +1333,10 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
      */
     public String getAuthToken() {
         return authToken;
+    }
+
+    protected void setAuthToken(final String authToken) {
+        this.authToken = authToken;
     }
 
     // ------------------------------------------------------------ tokenExpires
@@ -1091,15 +1373,17 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
     // -------------------------------------------------------------------------
     protected final String authUrl;
 
-    protected String authAccount;
-
     protected final String authUser;
 
     protected final String authKey;
 
-    protected transient String storageUrl;
+    private final String resellerAccountName;
 
-    protected transient String authToken;
+    private transient String storageUrl;
 
-    protected transient Date authTokenExpires;
+    private transient String resellerAccountUrl;
+
+    private transient String authToken;
+
+    private transient Date authTokenExpires;
 }

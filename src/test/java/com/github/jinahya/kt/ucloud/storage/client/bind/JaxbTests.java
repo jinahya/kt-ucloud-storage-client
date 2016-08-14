@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.jinahya.kt.ucloud.storage.client;
+package com.github.jinahya.kt.ucloud.storage.client.bind;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -24,7 +24,7 @@ import static org.testng.Assert.fail;
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-public class JaxbTest {
+public final class JaxbTests {
 
     public static <T> void printXml(final Class<T> type, final T instance) {
         try {
@@ -36,5 +36,9 @@ public class JaxbTest {
         } catch (final JAXBException jaxbe) {
             fail("failed to print xml", jaxbe);
         }
+    }
+
+    private JaxbTests() {
+        super();
     }
 }

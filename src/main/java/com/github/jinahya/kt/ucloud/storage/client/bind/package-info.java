@@ -27,7 +27,7 @@
         }
 )
 @XmlAccessorType(XmlAccessType.NONE)
-package com.github.jinahya.kt.ucloud.storage.client;
+package com.github.jinahya.kt.ucloud.storage.client.bind;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.annotation.XmlAccessType;

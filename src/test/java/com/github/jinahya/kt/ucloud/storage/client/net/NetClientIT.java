@@ -17,6 +17,7 @@ package com.github.jinahya.kt.ucloud.storage.client.net;
 
 import com.github.jinahya.kt.ucloud.storage.client.StorageClientIT;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -26,18 +27,21 @@ import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import static java.util.Arrays.stream;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import javax.ws.rs.core.Response;
 import static javax.ws.rs.core.Response.Status.OK;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 /**
  *
  * @author Jin Kwon &lt;onacit at gmail.com&gt;
  */
-public abstract class NetClientIT extends StorageClientIT<NetClient> {
+public class NetClientIT
+        extends StorageClientIT<NetClient, InputStream, URLConnection> {
 
     private static final Logger logger = getLogger(NetClientIT.class);
 
@@ -114,5 +118,37 @@ public abstract class NetClientIT extends StorageClientIT<NetClient> {
 
     public NetClientIT() {
         super(NetClient.class);
+    }
+
+    @Override
+    protected void assertSuccesfulAuthentication(final URLConnection response) {
+        try {
+            final int statusCode
+                    = ((HttpURLConnection) response).getResponseCode();
+            final String reasonPhrase
+                    = ((HttpURLConnection) response).getResponseMessage();
+            assertTrue(statusCode / 100 == 2,
+                       "status: " + statusCode + " " + reasonPhrase);
+        } catch (final IOException ioe) {
+            fail("failed to get status info", ioe);
+        }
+    }
+
+    @Override
+    protected int statusCode(final URLConnection response) {
+        return NetClient.statusCode((HttpURLConnection) response);
+    }
+
+    @Override
+    protected String reasonPhrase(URLConnection response) {
+        return NetClient.reasonPhrase((HttpURLConnection) response);
+    }
+
+    @Override
+    protected InputStream entity() {
+        final byte[] bytes
+                = new byte[ThreadLocalRandom.current().nextInt(1024)];
+        ThreadLocalRandom.current().nextBytes(bytes);
+        return new ByteArrayInputStream(bytes);
     }
 }

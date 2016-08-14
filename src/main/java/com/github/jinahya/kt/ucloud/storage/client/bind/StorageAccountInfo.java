@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.jinahya.kt.ucloud.storage.client;
+package com.github.jinahya.kt.ucloud.storage.client.bind;
 
-import java.net.URLConnection;
-import javax.ws.rs.core.Response;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -25,22 +23,21 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @author Jin Kwon &lt;onacit at gmail.com&gt;
  */
 @XmlRootElement
-public class AccountInfo extends ContainerInfo {
+public class StorageAccountInfo extends StorageContainerInfo {
 
-    public static AccountInfo newInstance(final Response response) {
-        final AccountInfo instance = newInstance(new AccountInfo(), response);
-        instance.containerCount = Integer.parseInt(response.getHeaderString(
-                StorageClient.HEADER_X_ACCOUNT_CONTAINER_COUNT));
-        return instance;
-    }
-
-    public static AccountInfo newInstance(final URLConnection connection) {
-        final AccountInfo instance = newInstance(new AccountInfo(), connection);
-        instance.containerCount = Integer.parseInt(connection.getHeaderField(
-                StorageClient.HEADER_X_ACCOUNT_CONTAINER_COUNT));
-        return instance;
-    }
-
+//    public static StorageAccountInfo newInstance(final Response response) {
+//        final StorageAccountInfo instance = newInstance(new StorageAccountInfo(), response);
+//        instance.containerCount = Integer.parseInt(response.getHeaderString(
+//                StorageClient.HEADER_X_ACCOUNT_CONTAINER_COUNT));
+//        return instance;
+//    }
+//
+//    public static StorageAccountInfo newInstance(final URLConnection connection) {
+//        final StorageAccountInfo instance = newInstance(new StorageAccountInfo(), connection);
+//        instance.containerCount = Integer.parseInt(connection.getHeaderField(
+//                StorageClient.HEADER_X_ACCOUNT_CONTAINER_COUNT));
+//        return instance;
+//    }
     // -------------------------------------------------------------------------
     @Override
     public String toString() {
@@ -51,14 +48,14 @@ public class AccountInfo extends ContainerInfo {
 
     // ------------------------------------------------------------- objectCount
     @Override
-    public AccountInfo objectCount(final int objectCount) {
-        return (AccountInfo) super.objectCount(objectCount);
+    public StorageAccountInfo objectCount(final int objectCount) {
+        return (StorageAccountInfo) super.objectCount(objectCount);
     }
 
     // --------------------------------------------------------------- bytesUsed
     @Override
-    public ContainerInfo bytesUsed(final long bytesUsed) {
-        return (AccountInfo) super.bytesUsed(bytesUsed);
+    public StorageContainerInfo bytesUsed(final long bytesUsed) {
+        return (StorageAccountInfo) super.bytesUsed(bytesUsed);
     }
 
     // ---------------------------------------------------------- containerCount
@@ -70,7 +67,7 @@ public class AccountInfo extends ContainerInfo {
         this.containerCount = containerCount;
     }
 
-    public AccountInfo containerCount(final int containerCount) {
+    public StorageAccountInfo containerCount(final int containerCount) {
         setContainerCount(containerCount);
         return this;
     }
