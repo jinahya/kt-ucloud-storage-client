@@ -45,10 +45,10 @@ import javax.ws.rs.core.MultivaluedHashMap;
  *
  * @author Jin Kwon &lt;onacit at gmail.com&gt;
  * @param <ClientType> storage client implementation type parameter
- * @param <EntityType> request entity type parameter
- * @param <ResponseType> server response type parameter
+ * @param <RequestEntityType> request entity type parameter
+ * @param <ResponseType> response type parameter
  */
-public abstract class StorageClient<ClientType extends StorageClient, EntityType, ResponseType> {
+public abstract class StorageClient<ClientType extends StorageClient, RequestEntityType, ResponseType> {
 
     public static final String AUTH_URL_STANDARD_KOR_CENTER
             = "https://api.ucloudbiz.olleh.com/storage/v1/auth";
@@ -891,14 +891,14 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
     public abstract <R> R updateObject(String containerName, String objectName,
                                        Map<String, List<Object>> params,
                                        Map<String, List<Object>> headers,
-                                       Supplier<EntityType> supplier,
+                                       Supplier<RequestEntityType> supplier,
                                        Function<ResponseType, R> function);
 
     public <R> R updateObject(
             final String containerName, final String objectName,
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
-            final Supplier<EntityType> entity,
+            final Supplier<RequestEntityType> entity,
             final BiFunction<ResponseType, ClientType, R> function) {
         return updateObject(
                 containerName,
@@ -916,7 +916,7 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
             final String containerName, final String objectName,
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
-            final Supplier<EntityType> supplier,
+            final Supplier<RequestEntityType> supplier,
             final Consumer<ResponseType> consumer) {
         return updateObject(
                 containerName,
@@ -935,7 +935,7 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
             final String containerName, final String objectName,
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
-            final Supplier<EntityType> supplier,
+            final Supplier<RequestEntityType> supplier,
             final BiConsumer<ResponseType, ClientType> consumer) {
         return updateObject(
                 containerName,
@@ -1317,12 +1317,12 @@ public abstract class StorageClient<ClientType extends StorageClient, EntityType
     }
 
     // ------------------------------------------------------ resellerAccountUrl
-    public String getResllerAccountUrl() {
+    public String getResellerAccountUrl() {
         return resellerAccountUrl;
     }
 
     public String resellerAccountUrl() {
-        return getResellerAccountName();
+        return getResellerAccountUrl();
     }
 
     // --------------------------------------------------------------- authToken

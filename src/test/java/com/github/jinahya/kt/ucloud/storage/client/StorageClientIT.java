@@ -16,6 +16,7 @@
 package com.github.jinahya.kt.ucloud.storage.client;
 
 import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.accountMetaHeader;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.containerMetaHeader;
 import java.util.Arrays;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -23,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import static java.util.UUID.randomUUID;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -59,10 +61,8 @@ import org.testng.annotations.Test;
  */
 public abstract class StorageClientIT<ClientType extends StorageClient<ClientType, EntityType, ResponseType>, EntityType, ResponseType> {
 
-    private static final Logger logger = getLogger(StorageClientIT.class);
-
-    protected static void status(final int actual, final Family family,
-                                 final Status... expecteds) {
+    protected static void assertStatus(final int actual, final Family family,
+                                       final Status... expecteds) {
         if (family != null) {
             assertEquals(familyOf(actual), family);
         }
@@ -93,20 +93,27 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
             logger.error("missing property; authUrl; skipping...");
             throw new SkipException("missing property; authUrl");
         }
+        logger.debug("authUrl: {}", authUrl);
         final String authUser = System.getProperty("authUser");
         if (authUser == null) {
             logger.error("missing property; authUser; skipping...");
             throw new SkipException("missing property; authUser");
         }
+        logger.debug("authUser: {}", authUser);
         final String authKey = System.getProperty("authKey");
         if (authKey == null) {
             logger.error("missing proprety; authKey; skipping...");
             throw new SkipException("missing property; authKey");
         }
+        logger.debug("authKey: {}", authKey);
         clientInstance = clientClass
                 .getConstructor(String.class, String.class, String.class)
                 .newInstance(authUrl, authUser, authKey);
         logger.debug("client instantiated: {}", clientInstance);
+        logger.debug("client.authUser: {}", clientInstance.getAuthUser());
+        logger.debug("client.authKey: {}", clientInstance.getAuthKey());
+        logger.debug("client.resellerAccountName: {}",
+                     clientInstance.getResellerAccountName());
         clientInstance.authenticateUser(
                 false,
                 r -> {
@@ -114,6 +121,9 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                 }
         );
         logger.debug("client authenticted");
+        logger.debug("client.storageUrl: {}", clientInstance.getStorageUrl());
+        logger.debug("client.resellerAccountUrl: {}",
+                     clientInstance.getResellerAccountUrl());
     }
 
     protected abstract void assertSuccesfulAuthentication(
@@ -128,31 +138,6 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         logger.debug("=======================================================");
     }
 
-    @Deprecated
-    protected <R> R apply(final Function<ClientType, R> function) {
-        return function.apply(clientInstance);
-    }
-
-    @Deprecated
-    protected <U, R> R apply(final BiFunction<ClientType, U, R> function,
-                             final Supplier<U> u) {
-        return apply(c -> function.apply(c, u.get()));
-    }
-
-    @Deprecated
-    protected void accept(final Consumer<ClientType> consumer) {
-        apply(c -> {
-            consumer.accept(c);
-            return null;
-        });
-    }
-
-    @Deprecated
-    protected <U> void accept(final BiConsumer<ClientType, U> consumer,
-                              final Supplier<U> u) {
-        accept(c -> consumer.accept(c, u.get()));
-    }
-
     protected <R> R apply(final boolean reseller,
                           final Function<ClientType, R> function) {
 //        if (reseller) {
@@ -162,7 +147,11 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
 //        } else if (clientInstance.getResellerAccountName() != null) {
 //            throw new SkipException("skipping...");
 //        }
+        logger.debug("apply({}, {})", reseller, function);
+        logger.debug("resellerAccountName: {}",
+                     clientInstance.getResellerAccountName());
         if (reseller ^ clientInstance.getResellerAccountName() != null) {
+            logger.debug("skipping...");
             throw new SkipException("skipping...");
         }
         return function.apply(clientInstance);
@@ -196,12 +185,18 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
 
     protected abstract String reasonPhrase(ResponseType response);
 
-    protected void status(final ResponseType response,
-                          final Family family, final Status... statuses) {
-        status(statusCode(response), family, statuses);
+    protected abstract void printHeaders(final ResponseType response);
+
+    protected abstract void printBody(final ResponseType response);
+
+    protected void assertStatus(final ResponseType response,
+                                final Family family, final Status... statuses) {
+        final int statusCode = statusCode(response);
+        logger.debug("statusCode: {}", statusCode);
+        assertStatus(statusCode, family, statuses);
     }
 
-    protected abstract EntityType entity();
+    protected abstract EntityType requestEntity();
 
     // ---------------------------------------------------------------- /account
     @Test
@@ -216,31 +211,28 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            headers,
                            r -> {
-                               status(r, SUCCESSFUL, NO_CONTENT);
+                               assertStatus(r, SUCCESSFUL, NO_CONTENT);
                            }
                    );
                }
         );
-        asList(TEXT_PLAIN, APPLICATION_XML, APPLICATION_JSON).forEach(
-                a -> {
-                    logger.debug("--------------- reading account in {}...", a);
-                    accept(false,
-                           c -> {
-                               final MultivaluedMap<String, Object> headers
-                               = new MultivaluedHashMap<>();
-                               headers.putSingle(ACCEPT, a);
-                               c.readAccount(
-                                       null,
-                                       headers,
-                                       r -> {
-                                           status(r, SUCCESSFUL, OK,
-                                                  NO_CONTENT);
-                                       }
-                               );
-                           }
-                    );
-                }
-        );
+        asList(TEXT_PLAIN, APPLICATION_XML, APPLICATION_JSON).forEach(a -> {
+            logger.debug("--------------- reading account in {}...", a);
+            accept(false,
+                   c -> {
+                       final MultivaluedMap<String, Object> headers
+                       = new MultivaluedHashMap<>();
+                       headers.putSingle(ACCEPT, a);
+                       c.readAccount(
+                               null,
+                               headers,
+                               r -> {
+                                   assertStatus(r, SUCCESSFUL, OK, NO_CONTENT);
+                               }
+                       );
+                   }
+            );
+        });
         {
             logger.debug("---------------------------- configuring account...");
             final String[] tokens = randomUUID().toString().split("-");
@@ -249,13 +241,13 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                        logger.debug("--------------------- adding metadata...");
                        final MultivaluedMap<String, Object> headers
                        = new MultivaluedHashMap<>();
-                       headers.putSingle(ACCEPT,
-                                         accountMetaHeader(false, tokens));
+                       headers.putSingle(
+                               accountMetaHeader(false, tokens), "irrelevant");
                        c.configureAccount(
                                null,
                                headers,
                                r -> {
-                                   status(r, SUCCESSFUL, NO_CONTENT);
+                                   assertStatus(r, SUCCESSFUL, NO_CONTENT);
                                }
                        );
                    }
@@ -265,13 +257,13 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                        logger.debug("------------------- removing metadata...");
                        final MultivaluedMap<String, Object> headers
                        = new MultivaluedHashMap<>();
-                       headers.putSingle(ACCEPT,
-                                         accountMetaHeader(true, tokens));
+                       headers.putSingle(
+                               accountMetaHeader(true, tokens), "irrelevant");
                        c.configureAccount(
                                null,
                                headers,
                                r -> {
-                                   status(r, SUCCESSFUL, NO_CONTENT);
+                                   assertStatus(r, SUCCESSFUL, NO_CONTENT);
                                }
                        );
                    }
@@ -294,11 +286,47 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            null,
                            r -> {
-                               status(r, SUCCESSFUL);
+                               assertStatus(r, SUCCESSFUL);
                            }
                    );
                }
         );
+        {
+            logger.debug("-------------------------- configuring container...");
+            final String[] tokens = randomUUID().toString().split("-");
+            accept(false,
+                   c -> {
+                       logger.debug("--------------------- adding metadata...");
+                       final MultivaluedMap<String, Object> headers
+                       = new MultivaluedHashMap<>();
+                       headers.putSingle(containerMetaHeader(false, tokens),
+                                         "irrelevant");
+                       c.configureAccount(
+                               null,
+                               headers,
+                               r -> {
+                                   assertStatus(r, SUCCESSFUL, NO_CONTENT);
+                               }
+                       );
+                   }
+            );
+            accept(false,
+                   c -> {
+                       logger.debug("------------------- removing metadata...");
+                       final MultivaluedMap<String, Object> headers
+                       = new MultivaluedHashMap<>();
+                       headers.putSingle(
+                               containerMetaHeader(true, tokens), "irrelevant");
+                       c.configureAccount(
+                               null,
+                               headers,
+                               r -> {
+                                   assertStatus(r, SUCCESSFUL, NO_CONTENT);
+                               }
+                       );
+                   }
+            );
+        }
         accept(false,
                c -> {
                    logger.debug("---------------------- deleting container...");
@@ -307,7 +335,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            null,
                            r -> {
-                               status(r, SUCCESSFUL);
+                               assertStatus(r, SUCCESSFUL);
                            }
                    );
                }
@@ -317,6 +345,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
     // ----------------------------------------------- /account/container/object
     @Test
     public void testObject() {
+        final long sleep = SECONDS.toMillis(2L);
         logger.debug("------------------------------------- testing object...");
         final String containerName
                 = getClass().getSimpleName() + "-" + randomUUID().toString();
@@ -332,7 +361,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            null,
                            r -> {
-                               status(r, SUCCESSFUL);
+                               assertStatus(r, SUCCESSFUL);
                            }
                    );
                }
@@ -340,14 +369,27 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         accept(false,
                c -> {
                    logger.debug("------------------------- updating object...");
-                   c.updateObject(
+                   c.updateObject(containerName,
+                                  objectName,
+                                  null,
+                                  null,
+                                  () -> requestEntity(),
+                                  r -> {
+                                      assertStatus(r, SUCCESSFUL);
+                                  }
+                   );
+               }
+        );
+        accept(false,
+               c -> {
+                   logger.debug("-------------------------- reading object...");
+                   c.readObject(
                            containerName,
                            objectName,
                            null,
                            null,
-                           () -> entity(),
                            r -> {
-                               status(r, SUCCESSFUL);
+                               assertStatus(r, SUCCESSFUL, OK);
                            }
                    );
                }
@@ -361,7 +403,29 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            null,
                            r -> {
-                               status(r, SUCCESSFUL);
+                               assertStatus(r, SUCCESSFUL);
+                           }
+                   );
+               }
+        );
+        logger.debug("sleeping for " + sleep + "ms...");
+        try {
+            Thread.sleep(2000L);
+        } catch (final InterruptedException ie) {
+            fail("failed to sleep", ie);
+        }
+        accept(false,
+               c -> {
+                   logger.debug("----------------------- peeking container...");
+                   final Map<String, List<Object>> headers = new HashMap<>();
+                   headers.put(ACCEPT, singletonList(WILDCARD));
+                   c.peekContainer(
+                           containerName,
+                           null,
+                           headers,
+                           r -> {
+                               printHeaders(r);
+                               assertStatus(r, SUCCESSFUL, NO_CONTENT);
                            }
                    );
                }
@@ -374,7 +438,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            null,
                            r -> {
-                               status(r, SUCCESSFUL);
+                               assertStatus(r, SUCCESSFUL);
                            }
                    );
                }
@@ -382,7 +446,27 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
     }
 
     // ------------------------------------------------------- /reseller/account
+    @Test
+    public void testResellerAccount() {
+        logger.debug("--------------------------- testing reseller account...");
+        accept(true,
+               c -> {
+                   logger.debug("---------------- reading reseller account...");
+                   c.readResellerAccount(
+                           null,
+                           null,
+                           r -> {
+                               printBody(r);
+                               assertStatus(r, SUCCESSFUL);
+                           }
+                   );
+               }
+        );
+    }
+
     // -------------------------------------------------- /reseller/account/user
+    protected final Logger logger = getLogger(getClass());
+
     protected final Class<ClientType> clientClass;
 
     private transient ClientType clientInstance;

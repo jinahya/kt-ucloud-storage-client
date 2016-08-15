@@ -25,19 +25,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class StorageAccountInfo extends StorageContainerInfo {
 
-//    public static StorageAccountInfo newInstance(final Response response) {
-//        final StorageAccountInfo instance = newInstance(new StorageAccountInfo(), response);
-//        instance.containerCount = Integer.parseInt(response.getHeaderString(
-//                StorageClient.HEADER_X_ACCOUNT_CONTAINER_COUNT));
-//        return instance;
-//    }
-//
-//    public static StorageAccountInfo newInstance(final URLConnection connection) {
-//        final StorageAccountInfo instance = newInstance(new StorageAccountInfo(), connection);
-//        instance.containerCount = Integer.parseInt(connection.getHeaderField(
-//                StorageClient.HEADER_X_ACCOUNT_CONTAINER_COUNT));
-//        return instance;
-//    }
     // -------------------------------------------------------------------------
     @Override
     public String toString() {

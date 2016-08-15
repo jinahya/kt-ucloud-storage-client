@@ -25,31 +25,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class StorageContainerInfo {
 
-//    protected static <T extends StorageContainerInfo> T newInstance(
-//            final T instance, final Response response) {
-//        instance.setObjectCount(parseInt(response.getHeaderString(
-//                StorageClient.HEADER_X_ACCOUNT_OBJECT_COUNT)));
-//        instance.setBytesUsed(parseInt(response.getHeaderString(
-//                StorageClient.HEADER_X_ACCOUNT_BYTES_USED)));
-//        return instance;
-//    }
-//
-//    public static StorageContainerInfo newInstance(final Response response) {
-//        return newInstance(new StorageContainerInfo(), response);
-//    }
-//
-//    protected static <T extends StorageContainerInfo> T newInstance(
-//            final T instance, final URLConnection connection) {
-//        instance.setObjectCount(parseInt(connection.getHeaderField(
-//                StorageClient.HEADER_X_ACCOUNT_OBJECT_COUNT)));
-//        instance.setBytesUsed(parseInt(connection.getHeaderField(
-//                StorageClient.HEADER_X_ACCOUNT_BYTES_USED)));
-//        return instance;
-//    }
-//
-//    public static StorageContainerInfo newInstance(final URLConnection connection) {
-//        return newInstance(new StorageContainerInfo(), connection);
-//    }
     // -------------------------------------------------------------------------
     @Override
     public String toString() {

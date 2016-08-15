@@ -35,6 +35,8 @@ import java.util.function.Supplier;
 import java.util.logging.Logger;
 import static java.util.logging.Logger.getLogger;
 import static java.util.stream.Collectors.joining;
+import static java.util.logging.Logger.getLogger;
+import static java.util.stream.Collectors.joining;
 
 /**
  *
@@ -166,6 +168,37 @@ public class NetClient
     }
 
     // ------------------------------------------------------- /reseller/account
+    public static StringBuilder buildResellerAccount(
+            final String resellerAccountUrl,
+            final Map<String, List<Object>> params) {
+        final StringBuilder builder = new StringBuilder(resellerAccountUrl);
+        params(builder, params);
+        return builder;
+    }
+
+    public static URL locateResellerAccount(
+            final String resellerAccountUrl,
+            final Map<String, List<Object>> params)
+            throws MalformedURLException {
+        final StringBuilder builder
+                = buildResellerAccount(resellerAccountUrl, params);
+        final URL locator = new URL(builder.toString());
+        return locator;
+    }
+
+    public static URLConnection openResellerAccount(
+            final String resellerAccountUrl,
+            final Map<String, List<Object>> params, final String authAdminUser,
+            final String authAdminKey)
+            throws IOException {
+        logger.info("openResellerAccount(" + resellerAccountUrl + ", " + params + ", " + authAdminUser + ", " + authAdminKey + ")");
+        final URL locator = locateResellerAccount(resellerAccountUrl, params);
+        final URLConnection connection = locator.openConnection();
+        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_USER, authAdminUser);
+        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_KEY, authAdminKey);
+        return connection;
+    }
+
     // -------------------------------------------------- /reseller/account/user
     // -------------------------------------------------------------------------
     public NetClient(final String authUrl, final String authUser,
@@ -595,8 +628,31 @@ public class NetClient
 
     // ------------------------------------------------------- /reseller/account
     @Override
-    public <R> R readResellerAccount(Map<String, List<Object>> params, Map<String, List<Object>> headers, Function<URLConnection, R> function) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public <R> R readResellerAccount(
+            final Map<String, List<Object>> params,
+            Map<String, List<Object>> headers,
+            final Function<URLConnection, R> function) {
+        try {
+            final HttpURLConnection connection
+                    = (HttpURLConnection) openResellerAccount(
+                            resellerAccountUrl(), params, authUser, authKey);
+            connection.setRequestMethod("GET");
+            if (headers != null) {
+                headers.put(HEADER_X_AUTH_USER, singletonList(authUser));
+                headers.put(HEADER_X_AUTH_PASS, singletonList(authKey));
+            }
+            headers(connection, headers);
+            connection.setDoOutput(false);
+            connection.setDoInput(true);
+            connection.connect();
+            try {
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
+        }
     }
 
     // -------------------------------------------------- /reseller/account/user

@@ -45,6 +45,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status.Family;
 import static javax.ws.rs.core.Response.Status.OK;
 import javax.ws.rs.core.Response.StatusType;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
 
 /**
  * A client for accessing kt ucloud storage using JAX-RS.

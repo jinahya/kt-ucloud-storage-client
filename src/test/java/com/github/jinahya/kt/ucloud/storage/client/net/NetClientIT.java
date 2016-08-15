@@ -15,26 +15,22 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.net;
 
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
 import com.github.jinahya.kt.ucloud.storage.client.StorageClientIT;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import static java.util.Arrays.stream;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.BiFunction;
-import javax.ws.rs.core.Response;
-import static javax.ws.rs.core.Response.Status.OK;
-import org.slf4j.Logger;
-import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
 
 /**
  *
@@ -42,79 +38,6 @@ import static org.testng.Assert.fail;
  */
 public class NetClientIT
         extends StorageClientIT<NetClient, InputStream, URLConnection> {
-
-    private static final Logger logger = getLogger(NetClientIT.class);
-
-    static <R> R status(final HttpURLConnection connection,
-                        final BiFunction<Integer, String, R> function) {
-        try {
-            final int statusCode = connection.getResponseCode();
-            final String reasonPhrase = connection.getResponseMessage();
-            return function.apply(statusCode, reasonPhrase);
-        } catch (final IOException ioe) {
-            fail("failed to read status", ioe);
-            throw new RuntimeException("failed to read status", ioe);
-        }
-    }
-
-    static int statusCode(final HttpURLConnection connection) {
-        return status(connection, (c, p) -> c);
-    }
-
-    static String reasonPhrase(final HttpURLConnection connection) {
-        return status(connection, (c, p) -> p);
-    }
-
-    static void status(final HttpURLConnection connection,
-                       final Response.Status... expectedStatuses) {
-        try {
-            final int statusCode = connection.getResponseCode();
-            final String reasonPhrase = connection.getResponseMessage();
-            logger.debug("-> status: {} {}", statusCode, reasonPhrase);
-            if (expectedStatuses != null) {
-                if (stream(expectedStatuses)
-                        .map(Response.Status::getStatusCode)
-                        .filter(v -> v == statusCode).findAny()
-                        .orElse(null) == null) {
-                    fail("status is non of expec†ed: " + statusCode
-                         + " \u2288 " + Arrays.toString(expectedStatuses));
-                }
-            }
-        } catch (final IOException ioe) {
-            fail("failed to read status", ioe);
-        }
-    }
-
-    static void status(final URLConnection connection,
-                       final Response.Status... allowedStatuses) {
-        status((HttpURLConnection) connection, allowedStatuses);
-    }
-
-    static void headers(final URLConnection connection) {
-        connection.getHeaderFields().forEach((n, vs) -> {
-            vs.forEach(v -> {
-                logger.debug("-> header: {}: {}", n, v);
-            });
-        });
-    }
-
-    static void body(final URLConnection connection, final Charset charset) {
-        try {
-            final int statusCode
-                    = ((HttpURLConnection) connection).getResponseCode();
-            if (statusCode != OK.getStatusCode()) {
-                logger.debug("status is not ok. skipping...");
-                return;
-            }
-            try (InputStream stream = connection.getInputStream();
-                 Reader reader = new InputStreamReader(stream, charset);
-                 BufferedReader buffered = new BufferedReader(reader)) {
-                buffered.lines().forEach(l -> logger.debug("-> body: {}", l));
-            }
-        } catch (final IOException ioe) {
-            fail("failed to read body", ioe);
-        }
-    }
 
     public NetClientIT() {
         super(NetClient.class);
@@ -145,7 +68,32 @@ public class NetClientIT
     }
 
     @Override
-    protected InputStream entity() {
+    protected void printHeaders(URLConnection response) {
+        response.getHeaderFields().forEach((k, vs) -> {
+            vs.forEach(v -> {
+                logger.debug("header: {}: {}", k, v);
+            });
+        });
+    }
+
+    @Override
+    protected void printBody(URLConnection response) {
+        try {
+            try (InputStream stream = response.getInputStream()) {
+                lines(stream,
+                      UTF_8,
+                      l -> {
+                          logger.debug("line: {}", l);
+                      }
+                );
+            }
+        } catch (final IOException ioe) {
+            fail("failed to print body", ioe);
+        }
+    }
+
+    @Override
+    protected InputStream requestEntity() {
         final byte[] bytes
                 = new byte[ThreadLocalRandom.current().nextInt(1024)];
         ThreadLocalRandom.current().nextBytes(bytes);

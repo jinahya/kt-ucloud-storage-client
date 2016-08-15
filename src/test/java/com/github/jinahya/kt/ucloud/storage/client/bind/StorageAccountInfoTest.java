@@ -15,8 +15,6 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.bind;
 
-import com.github.jinahya.kt.ucloud.storage.client.bind.StorageAccountInfo;
-
 /**
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
