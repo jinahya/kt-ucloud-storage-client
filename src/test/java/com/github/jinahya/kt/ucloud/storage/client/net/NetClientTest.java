@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
+package com.github.jinahya.kt.ucloud.storage.client.net;
 
 import com.github.jinahya.kt.ucloud.storage.client.StorageClientTest;
 
@@ -21,9 +21,9 @@ import com.github.jinahya.kt.ucloud.storage.client.StorageClientTest;
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-public class WsRsClientTest extends StorageClientTest<WsRsClient> {
+public class NetClientTest extends StorageClientTest<NetClient> {
 
-    public WsRsClientTest() {
-        super(WsRsClient.class);
+    public NetClientTest() {
+        super(NetClient.class);
     }
 }

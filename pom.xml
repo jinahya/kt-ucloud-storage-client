@@ -10,7 +10,7 @@
 
   <groupId>com.github.jinahya</groupId>
   <artifactId>kt-ucloud-storage-client</artifactId>
-  <version>0.3.1</version>
+  <version>0.3.2</version>
   <packaging>jar</packaging>
 
   <name>${project.artifactId}</name>
@@ -21,7 +21,7 @@
     <connection>scm:git:git@github.com:jinahya/${project.artifactId}.git</connection>
     <developerConnection>scm:git:git@github.com:jinahya/${project.artifactId}.git</developerConnection>
     <url>https://github.com/jinahya/${project.artifactId}</url>
-    <tag>0.3.1</tag>
+    <tag>0.3.2</tag>
   </scm>
   <issueManagement>
     <system>GitHub Issues</system>
@@ -50,7 +50,7 @@
         <artifactId>resteasy-client</artifactId>
         <version>3.1.0.Beta1</version>
       </dependency>
-    </dependencies>  
+    </dependencies>
   </dependencyManagement>
   <dependencies>
     <dependency>
@@ -64,6 +64,12 @@
       <artifactId>javax.ws.rs-api</artifactId>
       <version>2.0.1</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>3.4</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.testng</groupId>
@@ -84,6 +90,11 @@
               <link>http://docs.oracle.com/javaee/7/api/</link>
             </links>
           </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.19.1</version>
         </plugin>
       </plugins>
     </pluginManagement>

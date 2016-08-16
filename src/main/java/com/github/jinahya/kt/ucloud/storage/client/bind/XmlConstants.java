@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
-
-import com.github.jinahya.kt.ucloud.storage.client.StorageClientTest;
+package com.github.jinahya.kt.ucloud.storage.client.bind;
 
 /**
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-public class WsRsClientTest extends StorageClientTest<WsRsClient> {
+public final class XmlConstants {
 
-    public WsRsClientTest() {
-        super(WsRsClient.class);
+    public static final String KT_ULCOUD_STORAGE_CLIENT_NS_PREFIX = "kusb";
+
+    public static final String KT_UCLOUD_STORAGE_CLIENT_NS_URI
+            = "http://github.com/jinahya/kt/ucloud/storage/bind";
+
+    private XmlConstants() {
+        super();
     }
 }

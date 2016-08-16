@@ -15,29 +15,75 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client;
 
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.accountMetaHeader;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.containerMetaHeader;
+import java.util.Arrays;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import static java.util.Objects.requireNonNull;
+import static java.util.UUID.randomUUID;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.MediaType.WILDCARD;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.Response.Status.Family;
+import static javax.ws.rs.core.Response.Status.Family.SUCCESSFUL;
+import static javax.ws.rs.core.Response.Status.Family.familyOf;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.OK;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
- * @param <T>
+ * @param <ClientType> client type parameter
+ * @param <EntityType> request entity type parameter
+ * @param <ResponseType> response type parameter
  */
-public abstract class StorageClientIT<T extends StorageClient> {
+public abstract class StorageClientIT<ClientType extends StorageClient<ClientType, EntityType, ResponseType>, EntityType, ResponseType> {
 
-    private static final Logger logger = getLogger(StorageClientIT.class);
+    protected static void assertStatus(final int actual, final Family family,
+                                       final Status... expecteds) {
+        if (family != null) {
+            assertEquals(familyOf(actual), family);
+        }
+        if (expecteds != null && expecteds.length > 0) {
+            boolean matched = false;
+            for (final Status expected : expecteds) {
+                if (actual == expected.getStatusCode()) {
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched) {
+                fail(actual + " \u2288 " + Arrays.toString(expecteds));
+            }
+        }
+    }
 
-    public StorageClientIT(final Class<T> clientClass) {
+    public StorageClientIT(final Class<ClientType> clientClass) {
         super();
-        this.clientClass = clientClass;
+        this.clientClass = requireNonNull(clientClass, "null clientClass");
     }
 
     @BeforeClass
@@ -48,55 +94,370 @@ public abstract class StorageClientIT<T extends StorageClient> {
             logger.error("missing property; authUrl; skipping...");
             throw new SkipException("missing property; authUrl");
         }
+        logger.debug("authUrl: {}", authUrl);
         final String authUser = System.getProperty("authUser");
         if (authUser == null) {
             logger.error("missing property; authUser; skipping...");
             throw new SkipException("missing property; authUser");
         }
-        final String authPass = System.getProperty("authPass");
-        if (authPass == null) {
-            logger.error("missing proprety; authPass; skipping...");
-            throw new SkipException("missing property; authPass");
+        logger.debug("authUser: {}", authUser);
+        final String authKey = System.getProperty("authKey");
+        if (authKey == null) {
+            logger.error("missing proprety; authKey; skipping...");
+            throw new SkipException("missing property; authKey");
         }
-        client = clientClass
+        logger.debug("authKey: {}", authKey);
+        clientInstance = clientClass
                 .getConstructor(String.class, String.class, String.class)
-                .newInstance(authUrl, authUser, authPass);
-        logger.debug("client constructed: {}", client);
-        client.authenticateUser();
+                .newInstance(authUrl, authUser, authKey);
+        logger.debug("client instantiated: {}", clientInstance);
+        logger.debug("client.authUser: {}", clientInstance.getAuthUser());
+        logger.debug("client.authKey: {}", clientInstance.getAuthKey());
+        logger.debug("client.resellerAccountName: {}",
+                     clientInstance.getResellerAccountName());
+        clientInstance.authenticateUser(
+                false,
+                r -> {
+                    assertSuccesfulAuthentication(r);
+                }
+        );
         logger.debug("client authenticted");
+        logger.debug("client.storageUrl: {}", clientInstance.getStorageUrl());
+        logger.debug("client.resellerAccountUrl: {}",
+                     clientInstance.getResellerAccountUrl());
     }
+
+    protected abstract void assertSuccesfulAuthentication(
+            ResponseType response);
 
     @AfterClass
     public void doAfterClass() {
-        client.invalidate();
+        clientInstance.invalidate();
         logger.debug("client invalidated");
-        client = null;
+        clientInstance = null;
         logger.debug("client nullified");
         logger.debug("=======================================================");
     }
 
-    protected <R> R apply(final Function<T, R> function) {
-        return function.apply(client);
+    protected <R> R apply(final boolean reseller,
+                          final Function<ClientType, R> function) {
+        if (reseller ^ clientInstance.getResellerAccountName() != null) {
+            throw new SkipException("skipping...");
+        }
+        return function.apply(clientInstance);
     }
 
-    protected <U, R> R apply(final BiFunction<T, U, R> function,
+    protected <U, R> R apply(final boolean reseller,
+                             final BiFunction<ClientType, U, R> function,
                              final Supplier<U> u) {
-        return apply(c -> function.apply(c, u.get()));
+        return apply(reseller, c -> function.apply(c, u.get()));
     }
 
-    protected void accept(final Consumer<T> consumer) {
-        apply(c -> {
-            consumer.accept(c);
-            return null;
-        });
+    protected void accept(final boolean reseller,
+                          final Consumer<ClientType> consumer) {
+        apply(reseller, c -> {
+          consumer.accept(c);
+          return null;
+      });
     }
 
-    protected <U> void accept(final BiConsumer<T, U> consumer,
+    protected <U> void accept(final boolean reseller,
+                              final BiConsumer<ClientType, U> consumer,
                               final Supplier<U> u) {
-        accept(c -> consumer.accept(c, u.get()));
+        accept(reseller, c -> consumer.accept(c, u.get()));
     }
 
-    protected final Class<T> clientClass;
+    protected Family family(ResponseType response) {
+        return Family.familyOf(statusCode(response));
+    }
 
-    private T client;
+    protected abstract int statusCode(ResponseType response);
+
+    protected abstract String reasonPhrase(ResponseType response);
+
+    protected abstract void printHeaders(final ResponseType response);
+
+    protected abstract void printBody(final ResponseType response);
+
+    protected void assertStatus(final ResponseType response,
+                                final Family family, final Status... statuses) {
+        final int statusCode = statusCode(response);
+        logger.debug("statusCode: {}", statusCode);
+        assertStatus(statusCode, family, statuses);
+    }
+
+    protected abstract EntityType requestEntity();
+
+    // ---------------------------------------------------------------- /account
+    @Test
+    public void testAccount() {
+        logger.debug("------------------------------------ testing account...");
+        accept(false,
+               c -> {
+                   logger.debug("------------------------ peeking account...");
+                   final Map<String, List<Object>> headers = new HashMap<>();
+                   headers.put(ACCEPT, singletonList(WILDCARD));
+                   c.peekAccount(
+                           null,
+                           headers,
+                           r -> {
+                               assertStatus(r, SUCCESSFUL, NO_CONTENT);
+                           }
+                   );
+               }
+        );
+        asList(TEXT_PLAIN, APPLICATION_XML, APPLICATION_JSON).forEach(a -> {
+            logger.debug("--------------- reading account in {}...", a);
+            accept(false,
+                   c -> {
+                       final MultivaluedMap<String, Object> headers
+                       = new MultivaluedHashMap<>();
+                       headers.putSingle(ACCEPT, a);
+                       c.readAccount(
+                               null,
+                               headers,
+                               r -> {
+                                   assertStatus(r, SUCCESSFUL, OK, NO_CONTENT);
+                               }
+                       );
+                   }
+            );
+        });
+        {
+            logger.debug("---------------------------- configuring account...");
+            final String[] tokens = randomUUID().toString().split("-");
+            accept(false,
+                   c -> {
+                       logger.debug("--------------------- adding metadata...");
+                       final MultivaluedMap<String, Object> headers
+                       = new MultivaluedHashMap<>();
+                       headers.putSingle(
+                               accountMetaHeader(false, tokens), "irrelevant");
+                       c.configureAccount(
+                               null,
+                               headers,
+                               r -> {
+                                   assertStatus(r, SUCCESSFUL, NO_CONTENT);
+                               }
+                       );
+                   }
+            );
+            accept(false,
+                   c -> {
+                       logger.debug("------------------- removing metadata...");
+                       final MultivaluedMap<String, Object> headers
+                       = new MultivaluedHashMap<>();
+                       headers.putSingle(
+                               accountMetaHeader(true, tokens), "irrelevant");
+                       c.configureAccount(
+                               null,
+                               headers,
+                               r -> {
+                                   assertStatus(r, SUCCESSFUL, NO_CONTENT);
+                               }
+                       );
+                   }
+            );
+        }
+    }
+
+    // ------------------------------------------------------ /account/container
+    @Test
+    public void testContainer() {
+        logger.debug("---------------------------------- testing container...");
+        final String containerName
+                = getClass().getSimpleName() + "-" + randomUUID().toString();
+        logger.debug("containerName: {}", containerName);
+        accept(false,
+               c -> {
+                   logger.debug("---------------------- updating container...");
+                   c.updateContainer(
+                           containerName,
+                           null,
+                           null,
+                           r -> {
+                               assertStatus(r, SUCCESSFUL);
+                           }
+                   );
+               }
+        );
+        {
+            logger.debug("-------------------------- configuring container...");
+            final String[] tokens = randomUUID().toString().split("-");
+            accept(false,
+                   c -> {
+                       logger.debug("--------------------- adding metadata...");
+                       final MultivaluedMap<String, Object> headers
+                       = new MultivaluedHashMap<>();
+                       headers.putSingle(containerMetaHeader(false, tokens),
+                                         "irrelevant");
+                       c.configureAccount(
+                               null,
+                               headers,
+                               r -> {
+                                   assertStatus(r, SUCCESSFUL, NO_CONTENT);
+                               }
+                       );
+                   }
+            );
+            accept(false,
+                   c -> {
+                       logger.debug("------------------- removing metadata...");
+                       final MultivaluedMap<String, Object> headers
+                       = new MultivaluedHashMap<>();
+                       headers.putSingle(
+                               containerMetaHeader(true, tokens), "irrelevant");
+                       c.configureAccount(
+                               null,
+                               headers,
+                               r -> {
+                                   assertStatus(r, SUCCESSFUL, NO_CONTENT);
+                               }
+                       );
+                   }
+            );
+        }
+        accept(false,
+               c -> {
+                   logger.debug("---------------------- deleting container...");
+                   c.deleteContainer(
+                           containerName,
+                           null,
+                           null,
+                           r -> {
+                               assertStatus(r, SUCCESSFUL);
+                           }
+                   );
+               }
+        );
+    }
+
+    // ----------------------------------------------- /account/container/object
+    @Test
+    public void testObject() {
+        final long sleep = SECONDS.toMillis(2L);
+        logger.debug("------------------------------------- testing object...");
+        final String containerName
+                = getClass().getSimpleName() + "-" + randomUUID().toString();
+        logger.debug("containerName: {}", containerName);
+        final String objectName
+                = getClass().getSimpleName() + "-" + randomUUID().toString();
+        logger.debug("objectName: {}", objectName);
+        accept(false,
+               c -> {
+                   logger.debug("---------------------- updating container...");
+                   c.updateContainer(
+                           containerName,
+                           null,
+                           null,
+                           r -> {
+                               assertStatus(r, SUCCESSFUL);
+                           }
+                   );
+               }
+        );
+        accept(false,
+               c -> {
+                   logger.debug("------------------------- updating object...");
+                   c.updateObject(containerName,
+                                  objectName,
+                                  null,
+                                  null,
+                                  () -> requestEntity(),
+                                  r -> {
+                                      assertStatus(r, SUCCESSFUL);
+                                  }
+                   );
+               }
+        );
+        accept(false,
+               c -> {
+                   logger.debug("-------------------------- reading object...");
+                   c.readObject(
+                           containerName,
+                           objectName,
+                           null,
+                           null,
+                           r -> {
+                               assertStatus(r, SUCCESSFUL, OK);
+                           }
+                   );
+               }
+        );
+        accept(false,
+               c -> {
+                   logger.debug("------------------------- deleting object...");
+                   c.deleteObject(
+                           containerName,
+                           objectName,
+                           null,
+                           null,
+                           r -> {
+                               assertStatus(r, SUCCESSFUL);
+                           }
+                   );
+               }
+        );
+        logger.debug("sleeping for " + sleep + "ms...");
+        try {
+            Thread.sleep(2000L);
+        } catch (final InterruptedException ie) {
+            fail("failed to sleep", ie);
+        }
+        accept(false,
+               c -> {
+                   logger.debug("----------------------- peeking container...");
+                   final Map<String, List<Object>> headers = new HashMap<>();
+                   headers.put(ACCEPT, singletonList(WILDCARD));
+                   c.peekContainer(
+                           containerName,
+                           null,
+                           headers,
+                           r -> {
+                               printHeaders(r);
+                               assertStatus(r, SUCCESSFUL, NO_CONTENT);
+                           }
+                   );
+               }
+        );
+        accept(false,
+               c -> {
+                   logger.debug("---------------------- deleting container...");
+                   c.deleteContainer(
+                           containerName,
+                           null,
+                           null,
+                           r -> {
+                               assertStatus(r, SUCCESSFUL);
+                           }
+                   );
+               }
+        );
+    }
+
+    // ------------------------------------------------------- /reseller/account
+    @Test
+    public void testResellerAccount() {
+        logger.debug("--------------------------- testing reseller account...");
+        accept(true,
+               c -> {
+                   logger.debug("---------------- reading reseller account...");
+                   c.readResellerAccount(
+                           null,
+                           null,
+                           r -> {
+                               printBody(r);
+                               assertStatus(r, SUCCESSFUL);
+                           }
+                   );
+               }
+        );
+    }
+
+    // -------------------------------------------------- /reseller/account/user
+    protected final Logger logger = getLogger(getClass());
+
+    protected final Class<ClientType> clientClass;
+
+    private transient ClientType clientInstance;
 }

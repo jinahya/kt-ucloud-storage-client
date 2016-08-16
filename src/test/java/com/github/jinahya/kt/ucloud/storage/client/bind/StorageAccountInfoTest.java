@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
-
-import com.github.jinahya.kt.ucloud.storage.client.StorageClientTest;
+package com.github.jinahya.kt.ucloud.storage.client.bind;
 
 /**
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-public class WsRsClientTest extends StorageClientTest<WsRsClient> {
+public class StorageAccountInfoTest {
 
-    public WsRsClientTest() {
-        super(WsRsClient.class);
+    public static void printXml(final StorageAccountInfo instance) {
+        JaxbTests.printXml(StorageAccountInfo.class, instance);
     }
 }

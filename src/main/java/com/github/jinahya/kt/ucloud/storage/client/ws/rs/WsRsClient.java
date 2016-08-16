@@ -16,98 +16,82 @@
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
 import com.github.jinahya.kt.ucloud.storage.client.StorageClient;
-import java.io.BufferedReader;
+import com.github.jinahya.kt.ucloud.storage.client.StorageClientException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
-import static java.util.Collections.singletonList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import static java.util.Objects.requireNonNull;
-import static java.util.Optional.ofNullable;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 import static java.util.logging.Logger.getLogger;
-import javax.ws.rs.HttpMethod;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status.Family;
 import static javax.ws.rs.core.Response.Status.OK;
+import javax.ws.rs.core.Response.StatusType;
+import static java.util.Objects.requireNonNull;
+import static java.util.logging.Logger.getLogger;
 
 /**
  * A client for accessing kt ucloud storage using JAX-RS.
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-public class WsRsClient extends StorageClient {
+public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
 
     private static final Logger logger = getLogger(WsRsClient.class.getName());
 
-//    public static final String AUTH_URL_STANDARD_KOR_CENTER
-//            = "https://api.ucloudbiz.olleh.com/storage/v1/auth";
-//
-//    public static final String AUTH_URL_STANDARD_JPN
-//            = "https://api.ucloudbiz.olleh.com/storage/v1/authjp";
-//
-//    public static final String AUTH_URL_LITE_KOR_HA
-//            = "https://api.ucloudbiz.olleh.com/storage/v1/authlite";
-//
-//    public static final String QUERY_PARAM_LIMIT = "limit";
-//
-//    public static final String QUERY_PARAM_MARKER = "marker";
-//
-//    public static final String QUERY_PARAM_FORMAT = "format";
-//
-//    public static final String HEADER_X_AUTH_USER = "X-Storage-User";
-//
-//    public static final String HEADER_X_AUTH_PASS = "X-Storage-Pass";
-//
-//    public static final String HEADER_X_AUTH_NEW_TOKEN = "X-Auth-New-Token";
-//
-//    public static final String HEADER_X_AUTH_TOKEN = "X-Auth-Token";
-//
-//    public static final String HEADER_X_AUTH_TOKEN_EXPIRES
-//            = "X-Auth-Token-Expires";
-//
-//    public static final String HEADER_X_STORAGE_URL = "X-Storage-Url";
-//
-//    public static final String HEADER_X_ACCOUNT_OBJECT_COUNT
-//            = "X-Account-Object-Count";
-//
-//    public static final String HEADER_X_ACCOUNT_BYTES_USED
-//            = "X-Account-Bytes-Used";
-//
-//    public static final String HEADER_X_ACCOUNT_CONTAINER_COUNT
-//            = "X-Account-Container-Count";
-//
-//    public static final String HEADER_X_CONTAINER_OBJECT_COUNT
-//            = "X-Container-Object-Count";
-//
-//    public static final String HEADER_X_CONTAINER_BYTES_USED
-//            = "X-Container-Bytes-Used";
-//
-//    public static final String HEADER_X_COPY_FROM = "X-Copy-From";
+    public static <R> R statusInfo(final Response response,
+                                   final Function<StatusType, R> function) {
+        return function.apply(response.getStatusInfo());
+    }
+
+    public static Family statusFamily(final Response response) {
+        return statusInfo(response, StatusType::getFamily);
+    }
+
+    public static int statusCode(final Response response) {
+        return statusInfo(response, StatusType::getStatusCode);
+    }
+
+    public static String reasonPhrase(final Response response) {
+        return statusInfo(response, StatusType::getReasonPhrase);
+    }
+
+    public static <K, V> MultivaluedMap<K, V> multivalued(
+            final Map<K, List<V>> map) {
+        if (map == null) {
+            return null;
+        }
+        if (map instanceof MultivaluedMap) {
+            return (MultivaluedMap<K, V>) map;
+        }
+        final MultivaluedMap<K, V> multi = new MultivaluedHashMap<>(map.size());
+        multi.putAll(map);
+        return multi;
+    }
+
+    // -------------------------------------------------------------------------
     public static Response authenticateUser(final Client client,
                                             final String authUrl,
                                             final String authUser,
-                                            final String authPass,
+                                            final String authKey,
                                             final boolean newToken) {
         Invocation.Builder builder = client
                 .target(requireNonNull(authUrl, "null authUrl"))
@@ -115,44 +99,16 @@ public class WsRsClient extends StorageClient {
                 .header(HEADER_X_AUTH_USER,
                         requireNonNull(authUser, "null authUser"))
                 .header(HEADER_X_AUTH_PASS,
-                        requireNonNull(authPass, "null authPass"));
+                        requireNonNull(authKey, "null authKey"));
         if (newToken) {
             builder = builder.header(HEADER_X_AUTH_NEW_TOKEN, Boolean.TRUE);
         }
         return builder.buildGet().invoke();
     }
 
+    // ---------------------------------------------------------------- /account
     /**
-     * Authenticates with given arguments. This method invokes
-     * {@link #authenticateUser(javax.ws.rs.client.Client, java.lang.String, java.lang.String, java.lang.String, boolean)}
-     * with given arguments and a {@code true} and returns the result.
-     *
-     * @param client the client
-     * @param authUrl authentication URL
-     * @param authUser authentication username
-     * @param authPass authentication password
-     * @return a response
-     * @see #authenticateUser(javax.ws.rs.client.Client, java.lang.String,
-     * java.lang.String, java.lang.String, boolean)
-     */
-    public static Response authenticateUser(final Client client,
-                                            final String authUrl,
-                                            final String authUser,
-                                            final String authPass) {
-        return authenticateUser(client, authUrl, authUser, authPass, true);
-//        return client
-//                .target(authUrl)
-//                .request(MediaType.APPLICATION_JSON_TYPE)
-//                .header(HEADER_X_AUTH_USER, authUser) // X-Auth-User -> 500
-//                .header(HEADER_X_AUTH_PASS, authPass) // X-Auth-Pass -> 500
-//                .header(HEADER_X_AUTH_NEW_TOKEN, true)
-//                .buildGet()
-//                .invoke();
-    }
-
-    // ----------------------------------------------------------------- storage
-    /**
-     * Targets a account.
+     * Targets an account.
      *
      * @param client a client to use
      * @param storageUrl storage URL
@@ -175,7 +131,7 @@ public class WsRsClient extends StorageClient {
     }
 
     /**
-     * Builds for a storage.
+     * Builds for an account.
      *
      * @param client a client to use
      * @param storageUrl a storage URL
@@ -193,79 +149,7 @@ public class WsRsClient extends StorageClient {
                         requireNonNull(authToken, "null authToken"));
     }
 
-    /**
-     * Peeks an account using {@link HttpMethod#HEAD}.
-     *
-     * @param client a client to use
-     * @param storageUrl a storage URL
-     * @param params query parameters; may be {@code null}
-     * @param authToken an authorization token
-     * @param headers request headers; may be {@code null}
-     * @return a server response
-     */
-    public static Response peekAccount(
-            final Client client, final String storageUrl,
-            final MultivaluedMap<String, Object> params,
-            final String authToken,
-            final MultivaluedMap<String, Object> headers) {
-        Invocation.Builder builder = buildAccount(
-                client, storageUrl, params, authToken);
-        if (headers != null) {
-            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-            builder = builder.headers(headers);
-        }
-        return builder.head();
-    }
-
-    /**
-     * Reads an account using {@link HttpMethod#GET}.
-     *
-     * @param client a client to use
-     * @param storageUrl a storage URL
-     * @param params query parameters; may be {@code null}
-     * @param authToken an authorization token
-     * @param headers request headers; may be {@code null}
-     * @return a server response
-     */
-    public static Response readAccount(
-            final Client client, final String storageUrl,
-            final MultivaluedMap<String, Object> params,
-            final String authToken,
-            final MultivaluedMap<String, Object> headers) {
-        Invocation.Builder builder = buildAccount(
-                client, storageUrl, params, authToken);
-        if (headers != null) {
-            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-            builder = builder.headers(headers);
-        }
-        return builder.get();
-    }
-
-    /**
-     * Updates an account using {@link HttpMethod#POST}.
-     *
-     * @param client a client to use
-     * @param storageUrl a storage URL
-     * @param params query parameters; may be {@code null}
-     * @param authToken an authorization token.
-     * @param headers request headers; may be {@code null}
-     * @return a server response
-     */
-    public static Response configureAccount(
-            final Client client, final String storageUrl,
-            final MultivaluedMap<String, Object> params,
-            final String authToken,
-            final MultivaluedMap<String, Object> headers) {
-        Invocation.Builder builder = buildAccount(
-                client, storageUrl, params, authToken);
-        if (headers != null) {
-            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-            builder = builder.headers(headers);
-        }
-        return builder.post(null);
-    }
-
-    // --------------------------------------------------------------- container
+    // ------------------------------------------------------ /account/container
     /**
      * Targets a container.
      *
@@ -317,82 +201,7 @@ public class WsRsClient extends StorageClient {
                         requireNonNull(authToken, "null authToken"));
     }
 
-    public static Response peekContainer(
-            final Client client, final String storageUrl,
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final String authToken,
-            final MultivaluedMap<String, Object> headers) {
-        Invocation.Builder builder = buildContainer(
-                client, storageUrl, containerName, params, authToken);
-        if (headers != null) {
-            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-            builder = builder.headers(headers);
-        }
-        return builder.head();
-    }
-
-    public static Response readContainer(
-            final Client client, final String storageUrl,
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final String authToken,
-            final MultivaluedMap<String, Object> headers) {
-        Invocation.Builder builder = buildContainer(
-                client, storageUrl, containerName, params, authToken);
-        if (headers != null) {
-            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-            builder = builder.headers(headers);
-        }
-        return builder.get();
-    }
-
-    public static Response updateContainer(
-            final Client client, final String storageUrl,
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final String authToken,
-            final MultivaluedMap<String, Object> headers) {
-        Invocation.Builder builder = buildContainer(
-                client, storageUrl, containerName, params, authToken);
-        if (headers != null) {
-            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-            builder = builder.headers(headers);
-        }
-        return builder.put(Entity.text(""));
-    }
-
-    public static Response configureContainer(
-            final Client client, final String storageUrl,
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final String authToken,
-            final MultivaluedMap<String, Object> headers) {
-        final Invocation.Builder builder = buildContainer(
-                client, storageUrl, containerName, params, authToken);
-        if (headers != null) {
-            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-            builder.headers(headers);
-        }
-        return builder.post(null);
-    }
-
-    public static Response deleteContainer(
-            final Client client, final String storageUrl,
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final String authToken,
-            final MultivaluedMap<String, Object> headers) {
-        final Invocation.Builder builder = buildContainer(
-                client, storageUrl, containerName, params, authToken);
-        if (headers != null) {
-            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-            builder.headers(headers);
-        }
-        return builder.delete();
-    }
-
-    // ------------------------------------------------------------------ object
+    // ----------------------------------------------- /account/container/object
     /**
      * Targets an object.
      *
@@ -449,85 +258,101 @@ public class WsRsClient extends StorageClient {
                         requireNonNull(authToken, "null authToken"));
     }
 
-    public static Response peekObject(
-            final Client client, final String storageUrl,
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final String authToken,
-            final MultivaluedMap<String, Object> headers) {
-        final Invocation.Builder builder = buildObject(
-                client, storageUrl, containerName, objectName, params,
-                authToken);
-        if (headers != null) {
-            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-            builder.headers(headers);
+    // ------------------------------------------------------- /reseller/account
+    public static WebTarget targetResellerAccount(
+            final Client client, final String resellerAccountUrl,
+            final MultivaluedMap<String, Object> params) {
+        WebTarget target
+                = requireNonNull(client, "null client")
+                .target(resellerAccountUrl);
+        if (params != null) {
+            for (final Entry<String, List<Object>> entry : params.entrySet()) {
+                final String name = entry.getKey();
+                final Object[] values = entry.getValue().toArray();
+                target = target.queryParam(name, values);
+            }
         }
-        return builder.head();
+        return target;
     }
 
-    public static Response readObject(
-            final Client client, final String storageUrl,
-            final String containerName, final String objectName,
+    public static Invocation.Builder buildResellerAccount(
+            final Client client, final String resellerAccountUrl,
             final MultivaluedMap<String, Object> params,
-            final String authToken,
-            final MultivaluedMap<String, Object> headers) {
-        final Invocation.Builder builder = buildObject(
-                client, storageUrl, containerName, objectName, params,
-                authToken);
-        if (headers != null) {
-            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-            builder.headers(headers);
-        }
-        return builder.get();
+            final String authAdminUser, final String authAdminKey) {
+        return targetResellerAccount(client, resellerAccountUrl, params)
+                .request()
+                .header(HEADER_X_AUTH_ADMIN_USER, authAdminUser)
+                .header(HEADER_X_AUTH_ADMIN_KEY, authAdminKey);
     }
 
-    public static Response updateObject(
-            final Client client, final String storageUrl,
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final String authToken,
-            final MultivaluedMap<String, Object> headers,
-            final Entity<?> entity) {
-        final Invocation.Builder builder = buildObject(
-                client, storageUrl, containerName, objectName, params,
-                authToken);
-        if (headers != null) {
-            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-            builder.headers(headers);
-        }
-        return builder.put(entity);
+    // -------------------------------------------------- /reseller/account/user
+    public static WebTarget targetResellerUser(
+            final Client client, final String resellerStorageUrl,
+            final String userName,
+            final MultivaluedMap<String, Object> params) {
+        return targetResellerAccount(
+                client, resellerStorageUrl, params)
+                .path(requireNonNull(userName, "null userName"));
     }
 
-    public static Response configureObject(
-            final Client client, final String storageUrl,
-            final String containerName, final String objectName,
+    public static Invocation.Builder buildResellerUser(
+            final Client client, final String resellerAccountUrl,
+            final String userName,
             final MultivaluedMap<String, Object> params,
-            final String authToken,
-            final MultivaluedMap<String, Object> headers) {
-        final Invocation.Builder builder = buildObject(
-                client, storageUrl, containerName, objectName, params,
-                authToken);
-        if (headers != null) {
-            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-            builder.headers(headers);
-        }
-        return builder.post(null);
+            final String authAdminUser, final String authAdminKey) {
+        return targetResellerUser(client, resellerAccountUrl, userName, params)
+                .request()
+                .header(HEADER_X_AUTH_ADMIN_USER, authAdminUser)
+                .header(HEADER_X_AUTH_ADMIN_KEY, authAdminKey);
     }
 
-    public static Response deleteObject(
-            final Client client, final String storageUrl,
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final String authToken,
-            final MultivaluedMap<String, Object> headers) {
-        final Invocation.Builder builder = buildObject(
-                client, storageUrl, containerName, objectName, params,
-                authToken);
-        if (headers != null) {
-            headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-            builder.headers(headers);
+    // -------------------------------------------------------------------------
+    public static void lines(final Response response, final Charset charset,
+                             final Consumer<String> consumer) {
+        try {
+            try (InputStream stream = response.readEntity(InputStream.class)) {
+                lines(stream, charset, consumer);
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
         }
-        return builder.delete();
+    }
+
+    public static WsRsClient lines(
+            final Response response, final Charset charset,
+            final BiConsumer<String, WsRsClient> consumer,
+            final WsRsClient client) {
+        try {
+            try (InputStream stream = response.readEntity(InputStream.class)) {
+                return lines(stream, charset, consumer, client);
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
+        }
+    }
+
+    public static void lines(final Response response,
+                             final Consumer<String> consumer) {
+        try {
+            try (Reader reader = response.readEntity(Reader.class)) {
+                lines(reader, consumer);
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
+        }
+    }
+
+    public static WsRsClient lines(
+            final Response response,
+            final BiConsumer<String, WsRsClient> consumer,
+            final WsRsClient client) {
+        try {
+            try (Reader reader = response.readEntity(Reader.class)) {
+                return lines(reader, consumer, client);
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -536,216 +361,57 @@ public class WsRsClient extends StorageClient {
      *
      * @param authUrl the authentication URL
      * @param authUser the authentication username
-     * @param authPass the authentication password
+     * @param authKey the authentication password
      */
-//    public StorageClient(final String authUrl, final String authUser,
-//                         final String authPass) {
-//        super();
-//        this.authUrl = requireNonNull(authUrl, "null authUrl");
-//        this.authUser = requireNonNull(authUser, "null authUser");
-//        this.authPass = requireNonNull(authPass, "null authPass");
-//    }
     public WsRsClient(final String authUrl, final String authUser,
-                      final String authPass) {
-        super(authUrl, authUser, authPass);
+                      final String authKey) {
+        super(authUrl, authUser, authKey);
     }
 
     public WsRsClient(final StorageClient client) {
         this(client.getStorageUrl(), client.getAuthUser(),
-             client.getAuthPass());
-        storageUrl = client.getStorageUrl();
-        authToken = client.getAuthToken();
-        authTokenExpires = client.getAuthTokenExpires();
+             client.getAuthKey());
+        setStorageUrl(client.getStorageUrl());
+        setAuthToken(client.getAuthToken());
+        setAuthTokenExpires(client.getAuthTokenExpires());
     }
 
     // -------------------------------------------------------------------------
     @Override
-    protected void authenticateUser() {
-        authenticateUser(
-                r -> {
-                    return null;
-                }
-        );
-    }
-
-    /**
-     * Authenticates user and applies given function with the response.
-     *
-     * @param <T> return value type parameter.
-     * @param function a function to be applied with the server response.
-     * @return the value {@code function} results or {@code null} if the
-     * {@code function} is {@code null}
-     * @see #authenticateUser(javax.ws.rs.client.Client, java.lang.String,
-     * java.lang.String, java.lang.String)
-     */
-    public <T> T authenticateUser(final Function<Response, T> function) {
-        final Client client = ClientBuilder.newClient();
-        try {
+    public <R> R authenticateUser(final boolean newToken,
+                                  final Function<Response, R> function) {
+        return applyClient(c -> {
             final Response response = authenticateUser(
-                    client, authUrl, authUser, authPass);
+                    c, authUrl, authUser, authKey, newToken);
             try {
                 if (OK.getStatusCode() != response.getStatus()) {
                     throw new WebApplicationException(
                             "failed to authenticate user", response);
                 }
-                storageUrl = response.getHeaderString(HEADER_X_STORAGE_URL);
-                authToken = response.getHeaderString(HEADER_X_AUTH_TOKEN);
+                setStorageUrl(response.getHeaderString(HEADER_X_STORAGE_URL));
+                setAuthToken(response.getHeaderString(HEADER_X_AUTH_TOKEN));
                 setAuthTokenExpires(response.getHeaderString(
                         HEADER_X_AUTH_TOKEN_EXPIRES));
-                return function == null ? null : function.apply(response);
+                return function.apply(response);
             } finally {
                 response.close();
             }
-        } finally {
-            client.close();
-        }
+        });
     }
 
-    /**
-     * Authenticates user and applies given function with the response.
-     *
-     * @param <T> return value type parameter.
-     * @param function a function to be applied with the server response.
-     * @return the value {@code function} results or {@code null} if the
-     * {@code function} is {@code null}
-     * @see #authenticateUser(javax.ws.rs.client.Client, java.lang.String,
-     * java.lang.String, java.lang.String)
-     */
-    public <T> T authenticateUser(
-            final BiFunction<Response, WsRsClient, T> function) {
-        return authenticateUser(
-                ofNullable(function)
-                .map(f -> (Function<Response, T>) r -> f.apply(r, this))
-                .orElse(null));
-    }
-
-    public WsRsClient authenticateUser(
-            final Consumer<Response> consumer) {
-        return authenticateUser(ofNullable(consumer)
-                .map(c -> (Function<Response, WsRsClient>) r -> {
-                    c.accept(r);
-                    return this;
-                })
-                .orElse(r -> this)
-        );
-    }
-
-    public WsRsClient authenticateUser(
-            final BiConsumer<Response, WsRsClient> consumer) {
-        return authenticateUser(
-                ofNullable(consumer)
-                .map(c -> (Consumer<Response>) r -> c.accept(r, this))
-                .orElse(null));
-    }
-
-    /**
-     * Invalidates this client by purging the authorization information.
-     *
-     * @return this client
-     */
-    public WsRsClient invalidate() {
-        storageUrl = null;
-        authToken = null;
-        authTokenExpires = null;
-        return this;
-    }
-
-    /**
-     * Checks if the authorization information is valid until given
-     * milliseconds.
-     *
-     * @param until the milliseconds
-     * @return {@code true} if the token is value until given milliseconds,
-     * {@code false} otherwise.
-     */
-    public boolean isValid(final long until) {
-        if (storageUrl == null || authToken == null
-            || authTokenExpires == null) {
-            invalidate();
-            return false;
-        }
-        return authTokenExpires.getTime() >= until;
-    }
-
-    /**
-     * Checks if the authentication token is valid in specified time unit and
-     * duration.
-     *
-     * @param unit time unit
-     * @param duration time unit duration.
-     * @return {@code true} if the token is valid; {@code false} otherwise.
-     */
-    public boolean isValid(final TimeUnit unit, final long duration) {
-        return isValid(System.currentTimeMillis() + unit.toMillis(duration));
-    }
-
-    private void ensureValid(final TimeUnit unit, final long duration) {
-        if (!isValid(unit, duration)) {
-            authenticateUser(r -> {
-            });
-        }
-    }
-
-    private void ensureValid() {
-        ensureValid(TimeUnit.MINUTES, 10L);
-    }
-
-    private void lines(final Response response, final Charset charset,
-                       final Consumer<String> consumer)
-            throws IOException {
-        try (InputStream stream = response.readEntity(InputStream.class);
-             Reader reader = new InputStreamReader(stream, charset);
-             BufferedReader buffered = new BufferedReader(reader);) {
-            buffered.lines().forEach(consumer::accept);
-        }
-    }
-
-    private void lines(final Response response, final Charset charset,
-                       final BiConsumer<String, WsRsClient> consumer)
-            throws IOException {
-        lines(response, charset, l -> consumer.accept(l, this));
-    }
-
-    private void lines(final Response response, final Consumer<String> consumer)
-            throws IOException {
-        try (Reader reader = response.readEntity(Reader.class);
-             BufferedReader buffered = new BufferedReader(reader);) {
-            buffered.lines().forEach(consumer::accept);
-        }
-    }
-
-    private void lines(final Response response,
-                       final BiConsumer<String, WsRsClient> consumer)
-            throws IOException {
-        lines(response, l -> consumer.accept(l, this));
-    }
-
-    // ----------------------------------------------------------------- account
-    /**
-     * Peeks a storage using {@link javax.ws.rs.HttpMethod#HEAD}.
-     *
-     * @param <T> result type parameter
-     * @param params query parameters; may be {@code null}
-     * @param headers request headers; may be {@code null}
-     * @param function the function to be applied with the response
-     * @return the value the {@code function} results
-     */
-    public <T> T peekAccount(final MultivaluedMap<String, Object> params,
+    // ---------------------------------------------------------------- /account
+    public <R> R peekAccount(final MultivaluedMap<String, Object> params,
                              final MultivaluedMap<String, Object> headers,
-                             final Function<Response, T> function) {
-        ensureValid();
-        final Client client = ClientBuilder.newClient();
+                             final Function<Response, R> function) {
+        final Client client = getClient();
         try {
-            client.register((ClientRequestFilter) rc -> {
-                rc.getHeaders().forEach((n, vs) -> {
-                    vs.forEach(v -> System.out.println(n + ": " + v));
-                });
-            });
-            final Response response = peekAccount(
-                    client, storageUrl, params, authToken, headers);
-            headers.forEach((n, vs) -> {
-                vs.forEach(v -> System.out.println(n + ": " + v));
-            });
+            Invocation.Builder builder = buildAccount(
+                    client, getStorageUrl(), params, getAuthToken());
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
+                builder = builder.headers(headers);
+            }
+            final Response response = builder.head();
             try {
                 return function.apply(response);
             } finally {
@@ -756,98 +422,36 @@ public class WsRsClient extends StorageClient {
         }
     }
 
-    /**
-     * Peeks a storage using {@link javax.ws.rs.HttpMethod#HEAD}.
-     *
-     * @param <T> result type parameter
-     * @param params query parameters; may be {@code null}
-     * @param headers request headers; may be {@code null}
-     * @param function the function to be applied with the response and this
-     * client
-     * @return the value {@code function} results
-     * @see #peekAccount(javax.ws.rs.core.MultivaluedMap,
-     * javax.ws.rs.core.MultivaluedMap, java.util.function.Function)
-     */
-    public <T> T peekAccount(
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, WsRsClient, T> function) {
-        return peekAccount(
-                params,
-                headers,
-                r -> {
-                    return function.apply(r, this);
-                }
-        );
-    }
-
-    /**
-     * Peeks a storage using {@link javax.ws.rs.HttpMethod#HEAD}.
-     *
-     * @param params query parameters; may be {@code null}
-     * @param headers request headers; may be {@code null}
-     * @param consumer the consumer to be accepted with the response
-     * @return this client
-     * @see #peekAccount(javax.ws.rs.core.MultivaluedMap,
-     * javax.ws.rs.core.MultivaluedMap, java.util.function.Function)
-     */
-    public WsRsClient peekAccount(
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Consumer<Response> consumer) {
-        return peekAccount(
-                params,
-                headers,
-                r -> {
-                    consumer.accept(r);
-                    return this;
-                }
-        );
-    }
-
-    /**
-     * Peeks a storage using {@link javax.ws.rs.HttpMethod#HEAD}.
-     *
-     * @param params query parameters; may be {@code null}
-     * @param headers request headers; may be {@code null}
-     * @param consumer the consumer to be accepted with the response and this
-     * client
-     * @return this client
-     * @see #peekAccount(javax.ws.rs.core.MultivaluedMap,
-     * javax.ws.rs.core.MultivaluedMap, java.util.function.Consumer)
-     */
-    public WsRsClient peekAccount(
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, WsRsClient> consumer) {
-        return peekAccount(
-                params,
-                headers,
-                r -> {
-                    requireNonNull(consumer, "null consumer").accept(r, this);
-                }
-        );
+    @Override
+    public <R> R peekAccount(final Map<String, List<Object>> params,
+                             final Map<String, List<Object>> headers,
+                             final Function<Response, R> function) {
+        return peekAccount(multivalued(params), multivalued(headers), function);
     }
 
     /**
      * Reads a storage using {@link javax.ws.rs.HttpMethod#GET}.
      *
+     * @param <R> result type parameter
      * @param params query parameters; may be {@code null}
      * @param headers request headers; may be {@code null}
      * @param function a function to be applied with the server response
      * @return the value {@code function} results
      */
-    public <T> T readAccount(final MultivaluedMap<String, Object> params,
+    public <R> R readAccount(final MultivaluedMap<String, Object> params,
                              final MultivaluedMap<String, Object> headers,
-                             final Function<Response, T> function) {
-        ensureValid(TimeUnit.MINUTES, 10L);
-        final Client client = ClientBuilder.newClient();
+                             final Function<Response, R> function) {
+        final Client client = getClient();
         try {
-            final Response response = readAccount(
-                    client, storageUrl, params, authToken, headers);
+            Invocation.Builder builder = buildAccount(
+                    client, getStorageUrl(), params, getAuthToken());
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
+                builder = builder.headers(headers);
+            }
+            final Response response = builder.get();
             try {
-                return requireNonNull(function, "null function")
-                        .apply(response);
+                return function.apply(response);
             } finally {
                 response.close();
             }
@@ -856,172 +460,25 @@ public class WsRsClient extends StorageClient {
         }
     }
 
-    public <T> T readAccount(
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, WsRsClient, T> function) {
-        return readAccount(
-                params,
-                headers,
-                r -> {
-                    return requireNonNull(function, "null function")
-                    .apply(r, this);
-                }
-        );
+    @Override
+    public <R> R readAccount(final Map<String, List<Object>> params,
+                             final Map<String, List<Object>> headers,
+                             final Function<Response, R> function) {
+        return readAccount(multivalued(params), multivalued(headers), function);
     }
 
-    public WsRsClient readAccount(
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Consumer<Response> consumer) {
-        return readAccount(
-                params,
-                headers,
-                r -> {
-                    requireNonNull(consumer, "null consumer").accept(r);
-                    return this;
-                }
-        );
-    }
-
-    public WsRsClient readAccount(
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, WsRsClient> consumer) {
-        return readAccount(
-                params,
-                headers,
-                r -> {
-                    requireNonNull(consumer, "null consumer").accept(r, this);
-                }
-        );
-    }
-
-//    public StorageClient readAccountContainerNames(
-//            MultivaluedMap<String, Object> params,
-//            MultivaluedMap<String, Object> headers,
-//            final Consumer<String> consumer) {
-//        if (params == null) {
-//            params = new MultivaluedHashMap<>();
-//        }
-//        params.putIfAbsent(QUERY_PARAM_LIMIT, singletonList(512));
-//        if (headers == null) {
-//            headers = new MultivaluedHashMap<>();
-//        }
-//        headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
-//        return readAccount(
-//                params,
-//                headers,
-//                r -> {
-//                    final StatusType statusInfo = r.getStatusInfo();
-//                    final Family family = statusInfo.getFamily();
-//                    if (family != Family.SUCCESSFUL) {
-//                        throw new WebApplicationException(
-//                                "failed to read container names; family="
-//                                + family);
-//                    }
-//                    final int statusCode = statusInfo.getStatusCode();
-//                    if (statusCode == Status.OK.getStatusCode()) {
-//                        try {
-////                            lines(r, StandardCharsets.UTF_8, consumer);
-//                            lines(r, consumer);
-//                        } catch (final IOException ioe) {
-//                            throw new WebApplicationException(ioe);
-//                        }
-//                    }
-//                }
-//        );
-//    }
-//
-//    public StorageClient readAccountContainerNames(
-//            MultivaluedMap<String, Object> params,
-//            MultivaluedMap<String, Object> headers,
-//            final BiConsumer<String, StorageClient> consumer) {
-//        return readAccountContainerNames(
-//                params,
-//                headers,
-//                l -> consumer.accept(l, this)
-//        );
-//    }
-    /**
-     * Reads an account and consumes all container names.
-     *
-     * @param params query parameters; may be {@code null}
-     * @param headers request headers; may be {@code null}
-     * @param consumer the consumer to be accepted with each of the consumer
-     * names and this client; may be {@code null}
-     * @return this client
-     */
-    public WsRsClient readAccountContainerNames(
-            MultivaluedMap<String, Object> params,
-            MultivaluedMap<String, Object> headers,
-            final Predicate<Response> predicate,
-            final Consumer<String> consumer) {
-        if (params == null) {
-            params = new MultivaluedHashMap<>();
-        }
-        params.putIfAbsent(QUERY_PARAM_LIMIT, singletonList(512));
-        if (headers == null) {
-            headers = new MultivaluedHashMap<>();
-        }
-        headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
-        for (final String[] marker = new String[1];;) {
-            if (marker[0] != null) {
-                params.putSingle(QUERY_PARAM_MARKER, marker[0]);
-            }
-            marker[0] = null;
-            readAccount(
-                    params,
-                    headers,
-                    r -> {
-                        if (!predicate.test(r)) {
-                            return;
-                        }
-                        try {
-//                            lines(r, StandardCharsets.UTF_8, consumer);
-                            lines(r, consumer);
-                        } catch (final IOException ioe) {
-                            throw new WebApplicationException(ioe);
-                        }
-                    }
-            );
-            if (marker[0] == null) {
-                break;
-            }
-        }
-        return this;
-    }
-
-    /**
-     * Reads an account and consumes all container names.
-     *
-     * @param params query parameters; may be {@code null}
-     * @param headers request headers; may be {@code null}
-     * @param consumer the consumer to be accepted with each of the consumer
-     * names and this client; may be {@code null}
-     * @return this client
-     */
-    public WsRsClient readAccountContainerNames(
-            MultivaluedMap<String, Object> params,
-            MultivaluedMap<String, Object> headers,
-            final Predicate<Response> prediate,
-            final BiConsumer<String, WsRsClient> consumer) {
-        return readAccountContainerNames(
-                params,
-                headers,
-                prediate,
-                l -> consumer.accept(l, this)
-        );
-    }
-
-    public <T> T configureAccount(final MultivaluedMap<String, Object> params,
+    public <R> R configureAccount(final MultivaluedMap<String, Object> params,
                                   final MultivaluedMap<String, Object> headers,
-                                  final Function<Response, T> function) {
-        ensureValid(TimeUnit.MINUTES, 10L);
-        final Client client = ClientBuilder.newClient();
+                                  final Function<Response, R> function) {
+        final Client client = getClient();
         try {
-            final Response response = configureAccount(
-                    client, storageUrl, params, authToken, headers);
+            Invocation.Builder builder = buildAccount(
+                    client, getStorageUrl(), params, getAuthToken());
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
+                builder = builder.headers(headers);
+            }
+            final Response response = builder.post(null);
             try {
                 return requireNonNull(function, "null function")
                         .apply(response);
@@ -1033,58 +490,28 @@ public class WsRsClient extends StorageClient {
         }
     }
 
-    public <T> T configureAccount(
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, WsRsClient, T> function) {
+    @Override
+    public <R> R configureAccount(final Map<String, List<Object>> params,
+                                  final Map<String, List<Object>> headers,
+                                  final Function<Response, R> function) {
         return configureAccount(
-                params,
-                headers,
-                r -> {
-                    return requireNonNull(function, "null function")
-                    .apply(r, this);
-                }
-        );
+                multivalued(params), multivalued(headers), function);
     }
 
-    public WsRsClient configureAccount(
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Consumer<Response> consumer) {
-        return configureAccount(
-                params,
-                headers,
-                r -> {
-                    requireNonNull(consumer, "null consumer").accept(r);
-                    return this;
-                }
-        );
-    }
-
-    public WsRsClient configureAccount(
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, WsRsClient> consumer) {
-        return configureAccount(
-                params,
-                headers,
-                r -> {
-                    requireNonNull(consumer, "null consumer").accept(r, this);
-                }
-        );
-    }
-
-    // --------------------------------------------------------------- container
-    public <T> T peekContainer(final String containerName,
+    // ------------------------------------------------------ /account/container
+    public <R> R peekContainer(final String containerName,
                                final MultivaluedMap<String, Object> params,
                                final MultivaluedMap<String, Object> headers,
-                               final Function<Response, T> function) {
-        ensureValid();
-        final Client client = ClientBuilder.newClient();
+                               final Function<Response, R> function) {
+        final Client client = getClient();
         try {
-            final Response response = peekContainer(
-                    client, storageUrl, containerName, params, authToken,
-                    headers);
+            Invocation.Builder builder = buildContainer(
+                    client, getStorageUrl(), containerName, params, getAuthToken());
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
+                builder = builder.headers(headers);
+            }
+            final Response response = builder.head();
             try {
                 return requireNonNull(function, "null function")
                         .apply(response);
@@ -1096,92 +523,30 @@ public class WsRsClient extends StorageClient {
         }
     }
 
-    /**
-     * Requests {@value javax.ws.rs.HttpMethod#HEAD} for a container. Currently,
-     * the server responds
-     * {@link javax.ws.rs.core.Response.Status#NOT_ACCEPTABLE} when requested
-     * without {@value javax.ws.rs.core.HttpHeaders#ACCEPT} with
-     * {@value javax.ws.rs.core.MediaType#TEXT_HTML}.
-     *
-     * @param <T> result type parameter
-     * @param containerName the name of the container
-     * @param params query parameters
-     * @param headers request headers.
-     * @param function the function to be applied with the response and this
-     * client.
-     * @return the value the function results.
-     */
-    public <T> T peekContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, WsRsClient, T> function) {
-        return peekContainer(
-                containerName,
-                params,
-                headers,
-                r -> {
-                    return requireNonNull(function, "null function")
-                    .apply(r, this);
-                }
-        );
+    @Override
+    public <R> R peekContainer(final String containerName,
+                               final Map<String, List<Object>> params,
+                               final Map<String, List<Object>> headers,
+                               final Function<Response, R> function) {
+        return peekContainer(containerName, multivalued(params),
+                             multivalued(headers), function);
     }
 
-    public WsRsClient peekContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Consumer<Response> consumer) {
-        return peekContainer(
-                containerName,
-                params,
-                headers,
-                r -> {
-                    requireNonNull(consumer, "null consumer").accept(r);
-                    return this;
-                }
-        );
-    }
-
-    public WsRsClient peekContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, WsRsClient> consumer) {
-        return peekContainer(
-                containerName,
-                params,
-                headers,
-                r -> {
-                    requireNonNull(consumer, "null consumer").accept(r, this);
-                }
-        );
-    }
-
-    /**
-     * Reads container.
-     *
-     * @param <T> result type parameter
-     * @param containerName container name
-     * @param params query parameters
-     * @param headers request headers.
-     * @param function the function to be applied with the response
-     * @return the value the function results or else if {@code function} is
-     * {@code null}
-     */
-    public <T> T readContainer(final String containerName,
+    public <R> R readContainer(final String containerName,
                                final MultivaluedMap<String, Object> params,
                                final MultivaluedMap<String, Object> headers,
-                               final Function<Response, T> function) {
-        ensureValid();
-        final Client client = ClientBuilder.newClient();
+                               final Function<Response, R> function) {
+        final Client client = getClient();
         try {
-            final Response response = readContainer(
-                    client, storageUrl, containerName, params, authToken,
-                    headers);
+            Invocation.Builder builder = buildContainer(
+                    client, getStorageUrl(), containerName, params, getAuthToken());
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
+                builder = builder.headers(headers);
+            }
+            final Response response = builder.get();
             try {
-                return requireNonNull(function, "null function")
-                        .apply(response);
+                return function.apply(response);
             } finally {
                 response.close();
             }
@@ -1190,116 +555,19 @@ public class WsRsClient extends StorageClient {
         }
     }
 
-    public <T> T readContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, WsRsClient, T> function) {
-        return readContainer(
-                containerName,
-                params,
-                headers,
-                r -> {
-                    return requireNonNull(function, "null function")
-                    .apply(r, this);
-                }
-        );
-    }
-
-    public WsRsClient readContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Consumer<Response> consumer) {
-        return readContainer(
-                containerName,
-                params,
-                headers,
-                r -> {
-                    requireNonNull(consumer, "null consumer").accept(r);
-                    return this;
-                }
-        );
-    }
-
-    public WsRsClient readContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, WsRsClient> consumer) {
-        return readContainer(
-                containerName,
-                params,
-                headers,
-                r -> {
-                    requireNonNull(consumer, "null consumer").accept(r, this);
-                }
-        );
-    }
-
-    public WsRsClient readContainerObjectNames(
-            final String containerName,
-            MultivaluedMap<String, Object> params,
-            MultivaluedMap<String, Object> headers,
-            final Predicate<Response> predicate,
-            final Consumer<String> consumer) {
-        requireNonNull(predicate, "null predicate");
-        if (params == null) {
-            params = new MultivaluedHashMap<>();
-        }
-        params.putIfAbsent(QUERY_PARAM_LIMIT, singletonList(512));
-        if (headers == null) {
-            headers = new MultivaluedHashMap<>();
-        }
-        headers.putSingle(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN);
-        for (final String[] marker = new String[1];;) {
-            if (marker[0] != null) {
-                params.putSingle(QUERY_PARAM_MARKER, marker[0]);
-            }
-            marker[0] = null;
-            readContainer(
-                    containerName,
-                    params,
-                    headers,
-                    r -> {
-                        if (!predicate.test(r)) {
-                            return;
-                        }
-                        try {
-                            lines(r, requireNonNull(consumer, "null consumer"));
-                        } catch (final IOException ioe) {
-                            throw new WebApplicationException(
-                                    "failed to read object names", ioe);
-                        }
-                    }
-            );
-            if (marker[0] == null) {
-                break;
-            }
-        }
-        return this;
-    }
-
-    public WsRsClient readContainerObjectNames(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Predicate<Response> predicate,
-            final BiConsumer<String, WsRsClient> consumer) {
-        requireNonNull(consumer, "null consumer");
-        return readContainerObjectNames(
-                containerName,
-                params,
-                headers,
-                predicate,
-                l -> consumer.accept(l, this)
-        );
+    @Override
+    public <R> R readContainer(final String containerName,
+                               final Map<String, List<Object>> params,
+                               final Map<String, List<Object>> headers,
+                               final Function<Response, R> function) {
+        return readContainer(containerName, multivalued(params),
+                             multivalued(headers), function);
     }
 
     /**
      * Creates or updates a container.
      *
-     * @param <T> result type parameter
+     * @param <R> result type parameter
      * @param containerName container name
      * @param params query parameters; may be {@code null}
      * @param headers request headers; may be {@code null}
@@ -1308,23 +576,19 @@ public class WsRsClient extends StorageClient {
      * @return the value the function results; {@code null} if the
      * {@code function} is {@code null}
      */
-    public <T> T updateContainer(final String containerName,
+    public <R> R updateContainer(final String containerName,
                                  final MultivaluedMap<String, Object> params,
                                  final MultivaluedMap<String, Object> headers,
-                                 final Function<Response, T> function) {
-        ensureValid();
-        final Client client = ClientBuilder.newClient();
+                                 final Function<Response, R> function) {
+        final Client client = getClient();
         try {
-//            final Invocation.Builder builder = buildContainer(
-//                    client, storageUrl, containerName, params, authToken);
-//            if (headers != null) {
-//                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
-//                builder.headers(headers);
-//            }
-//            final Response response = builder.put(Entity.text(""));
-            final Response response = updateContainer(
-                    client, storageUrl, containerName, params, authToken,
-                    headers);
+            final Invocation.Builder builder = buildContainer(
+                    client, getStorageUrl(), containerName, params, getAuthToken());
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
+                builder.headers(headers);
+            }
+            final Response response = builder.put(Entity.text(""));
             try {
                 return function.apply(response);
             } finally {
@@ -1335,64 +599,27 @@ public class WsRsClient extends StorageClient {
         }
     }
 
-    public <T> T updateContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, WsRsClient, T> function) {
-        return updateContainer(
-                containerName,
-                params,
-                headers,
-                r -> {
-                    return function.apply(r, this);
-                }
-        );
+    @Override
+    public <R> R updateContainer(final String containerName,
+                                 final Map<String, List<Object>> params,
+                                 final Map<String, List<Object>> headers,
+                                 final Function<Response, R> function) {
+        return updateContainer(containerName, multivalued(params),
+                               multivalued(headers), function);
     }
 
-    public WsRsClient updateContainer(
+    public <R> R configureContainer(
             final String containerName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final Consumer<Response> consumer) {
-        return updateContainer(
-                containerName,
-                params,
-                headers,
-                r -> {
-                    consumer.accept(r);
-                    return this;
-                }
-        );
-    }
-
-    public WsRsClient updateContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, WsRsClient> consumer) {
-        return updateContainer(
-                containerName,
-                params,
-                headers,
-                r -> {
-                    consumer.accept(r, this);
-                }
-        );
-    }
-
-    public <T> T configureContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Function<Response, T> function) {
-        ensureValid();
-        final Client client = ClientBuilder.newClient();
+            final Function<Response, R> function) {
+        final Client client = getClient();
         try {
             final Invocation.Builder builder = buildContainer(
-                    client, storageUrl, containerName, params, authToken);
+                    client, getStorageUrl(), containerName, params,
+                    getAuthToken());
             if (headers != null) {
-                headers.putSingle(HEADER_X_AUTH_TOKEN, authToken);
+                headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
                 builder.headers(headers);
             }
             final Response response = builder.post(null);
@@ -1406,56 +633,19 @@ public class WsRsClient extends StorageClient {
         }
     }
 
-    public <T> T configureContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, WsRsClient, T> function) {
-        return configureContainer(
-                containerName,
-                params,
-                headers,
-                r -> {
-                    return function.apply(r, this);
-                }
-        );
-    }
-
-    public WsRsClient configureContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Consumer<Response> consumer) {
-        return configureContainer(
-                containerName,
-                params,
-                headers,
-                r -> {
-                    consumer.accept(r);
-                    return this;
-                }
-        );
-    }
-
-    public WsRsClient configureContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, WsRsClient> consumer) {
-        return configureContainer(
-                containerName,
-                params,
-                headers,
-                r -> {
-                    consumer.accept(r, this);
-                }
-        );
+    @Override
+    public <R> R configureContainer(final String containerName,
+                                    final Map<String, List<Object>> params,
+                                    final Map<String, List<Object>> headers,
+                                    final Function<Response, R> function) {
+        return configureContainer(containerName, multivalued(params),
+                                  multivalued(headers), function);
     }
 
     /**
      * Deletes a container identified by given name and returns the result .
      *
-     * @param <T> return value type parameter
+     * @param <R> return value type parameter
      * @param containerName the container name
      * @param params query parameters
      * @param headers additional request headers
@@ -1463,16 +653,19 @@ public class WsRsClient extends StorageClient {
      * @return the value function results or {@code null} if the
      * {@code function} is {@code null}.
      */
-    public <T> T deleteContainer(final String containerName,
+    public <R> R deleteContainer(final String containerName,
                                  final MultivaluedMap<String, Object> params,
                                  final MultivaluedMap<String, Object> headers,
-                                 final Function<Response, T> function) {
-        ensureValid();
-        final Client client = ClientBuilder.newClient();
+                                 final Function<Response, R> function) {
+        final Client client = getClient();
         try {
-            final Response response = deleteContainer(
-                    client, storageUrl, containerName, params, authToken,
-                    headers);
+            final Invocation.Builder builder = buildContainer(
+                    client, getStorageUrl(), containerName, params, getAuthToken());
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
+                builder.headers(headers);
+            }
+            final Response response = builder.delete();
             try {
                 return function.apply(response);
             } finally {
@@ -1483,64 +676,31 @@ public class WsRsClient extends StorageClient {
         }
     }
 
-    public <T> T deleteContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, WsRsClient, T> function) {
-        return deleteContainer(
-                containerName,
-                params,
-                headers,
-                r -> {
-                    return function.apply(r, this);
-                }
-        );
+    @Override
+    public <R> R deleteContainer(final String containerName,
+                                 final Map<String, List<Object>> params,
+                                 final Map<String, List<Object>> headers,
+                                 final Function<Response, R> function) {
+        return deleteContainer(containerName, multivalued(params),
+                               multivalued(headers), function);
     }
 
-    public WsRsClient deleteContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Consumer<Response> consumer) {
-        return deleteContainer(
-                containerName,
-                params,
-                headers,
-                r -> {
-                    consumer.accept(r);
-                    return this;
-                }
-        );
-    }
-
-    public WsRsClient deleteContainer(
-            final String containerName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, WsRsClient> consumer) {
-        return deleteContainer(
-                containerName,
-                params,
-                headers,
-                r -> {
-                    consumer.accept(r, this);
-                }
-        );
-    }
-
-    // ------------------------------------------------------------------ object
-    public <T> T peekObject(
+    // ----------------------------------------------- /account/container/object
+    public <R> R peekObject(
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final Function<Response, T> function) {
-        ensureValid();
-        final Client client = ClientBuilder.newClient();
+            final Function<Response, R> function) {
+        final Client client = getClient();
         try {
-            final Response response = peekObject(
-                    client, storageUrl, containerName, objectName, params,
-                    authToken, headers);
+            Invocation.Builder builder = buildObject(
+                    client, getStorageUrl(), containerName, objectName, params,
+                    getAuthToken());
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
+                builder = builder.headers(headers);
+            }
+            final Response response = builder.head();
             try {
                 return function.apply(response);
             } finally {
@@ -1551,65 +711,29 @@ public class WsRsClient extends StorageClient {
         }
     }
 
-    public <T> T peekObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, WsRsClient, T> function) {
-        return peekObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                r -> {
-                    return function.apply(r, this);
-                }
-        );
+    @Override
+    public <R> R peekObject(final String containerName, final String objectName,
+                            final Map<String, List<Object>> params,
+                            final Map<String, List<Object>> headers,
+                            final Function<Response, R> function) {
+        return peekObject(containerName, objectName, multivalued(params),
+                          multivalued(headers), function);
     }
 
-    public WsRsClient peekObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Consumer<Response> consumer) {
-        return peekObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                r -> {
-                    consumer.accept(r);
-                    return this;
-                }
-        );
-    }
-
-    public WsRsClient peekObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, WsRsClient> consumer) {
-        return peekObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                r -> {
-                    consumer.accept(r, this);
-                }
-        );
-    }
-
-    public <T> T readObject(final String containerName, final String objectName,
+    public <R> R readObject(final String containerName, final String objectName,
                             final MultivaluedMap<String, Object> params,
                             final MultivaluedMap<String, Object> headers,
-                            final Function<Response, T> function) {
-        ensureValid();
-        final Client client = ClientBuilder.newClient();
+                            final Function<Response, R> function) {
+        final Client client = getClient();
         try {
-            final Response response = readObject(
-                    client, storageUrl, containerName, objectName, params,
-                    authToken, headers);
+            Invocation.Builder builder = buildObject(
+                    client, getStorageUrl(), containerName, objectName, params,
+                    getAuthToken());
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
+                builder = builder.headers(headers);
+            }
+            final Response response = builder.get();
             try {
                 return function.apply(response);
             } finally {
@@ -1620,80 +744,31 @@ public class WsRsClient extends StorageClient {
         }
     }
 
-    public <T> T readObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, WsRsClient, T> function) {
-        return readObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                r -> {
-                    return function.apply(r, this);
-                }
-        );
+    @Override
+    public <R> R readObject(final String containerName, final String objectName,
+                            final Map<String, List<Object>> params,
+                            final Map<String, List<Object>> headers,
+                            final Function<Response, R> function) {
+        return readObject(containerName, objectName, multivalued(params),
+                          multivalued(headers), function);
     }
 
-    public WsRsClient readObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Consumer<Response> consumer) {
-        return readObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                r -> {
-                    consumer.accept(r);
-                    return this;
-                }
-        );
-    }
-
-    public WsRsClient readObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, WsRsClient> consumer) {
-        return readObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                r -> {
-                    consumer.accept(r, this);
-                }
-        );
-    }
-
-    public <T> T updateObject(final String containerName,
+    public <R> R updateObject(final String containerName,
                               final String objectName,
                               final MultivaluedMap<String, Object> params,
                               final MultivaluedMap<String, Object> headers,
-                              final Entity<?> entity,
-                              final Function<Response, T> function) {
-        ensureValid();
-//        updateContainer(
-//                containerName,
-//                null,
-//                null,
-//                r -> {
-//                    final StatusType statusInfo = r.getStatusInfo();
-//                    final Family family = statusInfo.getFamily();
-//                    if (family != Family.SUCCESSFUL) {
-//                        throw new WebApplicationException(
-//                                "failed to update container", r);
-//                    }
-//                }
-//        );
-        final Client client = ClientBuilder.newClient();
+                              final Supplier<Entity<?>> entity,
+                              final Function<Response, R> function) {
+        final Client client = getClient();
         try {
-            final Response response = updateObject(
-                    client, storageUrl, containerName, objectName, params,
-                    authToken, headers, entity);
+            Invocation.Builder builder = buildObject(
+                    client, getStorageUrl(), containerName, objectName, params,
+                    getAuthToken());
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
+                builder = builder.headers(headers);
+            }
+            final Response response = builder.put(entity.get());
             try {
                 return function.apply(response);
             } finally {
@@ -1704,71 +779,32 @@ public class WsRsClient extends StorageClient {
         }
     }
 
-    public <T> T updateObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Entity<?> entity,
-            final BiFunction<Response, WsRsClient, T> function) {
-        return updateObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                entity,
-                r -> {
-                    return function.apply(r, this);
-                }
-        );
+    @Override
+    public <R> R updateObject(final String containerName,
+                              final String objectName,
+                              final Map<String, List<Object>> params,
+                              final Map<String, List<Object>> headers,
+                              final Supplier<Entity<?>> entity,
+                              final Function<Response, R> function) {
+        return updateObject(containerName, objectName, multivalued(params),
+                            multivalued(headers), entity, function);
     }
 
-    public WsRsClient updateObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Entity<?> entity, final Consumer<Response> consumer) {
-        return updateObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                entity,
-                r -> {
-                    consumer.accept(r);
-                    return this;
-                }
-        );
-    }
-
-    public WsRsClient updateObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Entity<?> entity,
-            final BiConsumer<Response, WsRsClient> consumer) {
-        return updateObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                entity,
-                r -> {
-                    consumer.accept(r, this);
-                }
-        );
-    }
-
-    public <T> T configureObject(final String containerName,
+    public <R> R configureObject(final String containerName,
                                  final String objectName,
                                  final MultivaluedMap<String, Object> params,
                                  final MultivaluedMap<String, Object> headers,
-                                 final Function<Response, T> function) {
-        ensureValid();
-        final Client client = ClientBuilder.newClient();
+                                 final Function<Response, R> function) {
+        final Client client = getClient();
         try {
-            final Response response = configureObject(
-                    client, storageUrl, containerName, objectName, params,
-                    authToken, headers);
+            Invocation.Builder builder = buildObject(
+                    client, getStorageUrl(), containerName, objectName, params,
+                    getAuthToken());
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
+                builder = builder.headers(headers);
+            }
+            final Response response = builder.post(null);
             try {
                 return function.apply(response);
             } finally {
@@ -1779,59 +815,20 @@ public class WsRsClient extends StorageClient {
         }
     }
 
-    public <T> T configureObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, WsRsClient, T> function) {
-        return configureObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                r -> {
-                    return function.apply(r, this);
-                }
-        );
-    }
-
-    public WsRsClient configureObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Consumer<Response> consumer) {
-        return configureObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                r -> {
-                    consumer.accept(r);
-                    return this;
-                }
-        );
-    }
-
-    public WsRsClient configureObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, WsRsClient> consumer) {
-        return configureObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                r -> {
-                    consumer.accept(r, this);
-                }
-        );
+    @Override
+    public <R> R configureObject(final String containerName,
+                                 final String objectName,
+                                 final Map<String, List<Object>> params,
+                                 final Map<String, List<Object>> headers,
+                                 final Function<Response, R> function) {
+        return configureObject(containerName, objectName, multivalued(params),
+                               multivalued(headers), function);
     }
 
     /**
      * Deletes an object using {@link javax.ws.rs.HttpMethod#DELETE}.
      *
-     * @param <T> return value type parameter
+     * @param <R> return value type parameter
      * @param containerName the container name
      * @param objectName the object name
      * @param params query parameters; may be {@code null}
@@ -1841,17 +838,22 @@ public class WsRsClient extends StorageClient {
      * @return a value the {@code function} results or {@code null} if the
      * {@code function} is {@code null}
      */
-    public <T> T deleteObject(final String containerName,
+    public <R> R deleteObject(final String containerName,
                               final String objectName,
                               final MultivaluedMap<String, Object> params,
                               final MultivaluedMap<String, Object> headers,
-                              final Function<Response, T> function) {
-        ensureValid();
-        final Client client = ClientBuilder.newClient();
+                              final Function<Response, R> function) {
+//        ensureValid();
+        final Client client = getClient();
         try {
-            final Response response = deleteObject(
-                    client, storageUrl, containerName, objectName, params,
-                    authToken, headers);
+            Invocation.Builder builder = buildObject(
+                    client, getStorageUrl(), containerName, objectName, params,
+                    getAuthToken());
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
+                builder = builder.headers(headers);
+            }
+            final Response response = builder.delete();
             try {
                 return function.apply(response);
             } finally {
@@ -1862,112 +864,210 @@ public class WsRsClient extends StorageClient {
         }
     }
 
-    public <T> T deleteObject(
-            final String containerName, final String objectName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final BiFunction<Response, WsRsClient, T> function) {
-        return deleteObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                r -> {
-                    return function.apply(r, this);
-                }
-        );
+    @Override
+    public <R> R deleteObject(final String containerName,
+                              final String objectName,
+                              final Map<String, List<Object>> params,
+                              final Map<String, List<Object>> headers,
+                              final Function<Response, R> function) {
+        return deleteObject(containerName, objectName, multivalued(params),
+                            multivalued(headers), function);
     }
 
-    public WsRsClient deleteObject(
-            final String containerName, final String objectName,
+    // ------------------------------------------------------- /reseller/account
+    public <R> R readResellerAccount(
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final Consumer<Response> consumer) {
-        return deleteObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                r -> {
-                    consumer.accept(r);
-                    return this;
-                }
-        );
+            final Function<Response, R> function) {
+        final Client client = getClient();
+        try {
+            final Invocation.Builder builder = buildResellerAccount(
+                    client, resellerAccountUrl(), params, authUser, authKey);
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_ADMIN_USER, authUser);
+                headers.putSingle(HEADER_X_AUTH_ADMIN_KEY, authKey);
+                builder.headers(headers);
+            }
+            final Response response = builder.get();
+            try {
+                return function.apply(response);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
     }
 
-    public WsRsClient deleteObject(
-            final String containerName, final String objectName,
+    @Override
+    public <R> R readResellerAccount(final Map<String, List<Object>> params,
+                                     final Map<String, List<Object>> headers,
+                                     final Function<Response, R> function) {
+        return readResellerAccount(multivalued(params), multivalued(headers),
+                                   function);
+    }
+
+    // -------------------------------------------------- /reseller/account/user
+    public <R> R readResellerUser(final String userName,
+                                  final MultivaluedMap<String, Object> params,
+                                  final MultivaluedMap<String, Object> headers,
+                                  final Function<Response, R> function) {
+        final Client client = getClient();
+        try {
+            final Invocation.Builder builder = buildResellerUser(
+                    client, resellerAccountUrl(), userName, params, authUser,
+                    authKey);
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_ADMIN_USER, authUser);
+                headers.putSingle(HEADER_X_AUTH_ADMIN_KEY, authKey);
+                builder.headers(headers);
+            }
+            final Response response = builder.get();
+            try {
+                return function.apply(response);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
+    }
+
+    @Override
+    public <R> R readResellerUser(final String userName,
+                                  final Map<String, List<Object>> params,
+                                  final Map<String, List<Object>> headers,
+                                  final Function<Response, R> function) {
+        return readResellerUser(userName, multivalued(params),
+                                multivalued(headers), function);
+    }
+
+    public <R> R updateResellerUser(final String userName, final String userKey,
+                                    final boolean admin,
+                                    final MultivaluedMap<String, Object> params,
+                                    MultivaluedMap<String, Object> headers,
+                                    final Function<Response, R> function) {
+        final Client client = getClient();
+        try {
+            Invocation.Builder builder = buildResellerUser(
+                    client, resellerAccountUrl(), userName, params, authUser,
+                    authKey);
+            if (headers == null) {
+                headers = new MultivaluedHashMap<>();
+            }
+            headers.putSingle(HEADER_X_AUTH_ADMIN_USER, authUser);
+            headers.putSingle(HEADER_X_AUTH_ADMIN_KEY, authKey);
+            headers.putSingle(HEADER_X_AUTH_USER_KEY, userKey);
+            if (admin) {
+                headers.putSingle(HEADER_X_AUTH_USER_ADMIN, admin);
+            }
+            builder = builder.headers(headers);
+            final Response response = builder.put(Entity.text(""));
+            try {
+                return function.apply(response);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
+    }
+
+    @Override
+    public <R> R updateResellerUser(final String userName, final String userKey,
+                                    final boolean admin,
+                                    final Map<String, List<Object>> params,
+                                    final Map<String, List<Object>> headers,
+                                    final Function<Response, R> function) {
+        return updateResellerUser(userName, userKey, admin, multivalued(params),
+                                  multivalued(headers), function);
+    }
+
+    public <R> R deleteResellerUser(
+            final String userName,
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
-            final BiConsumer<Response, WsRsClient> consumer) {
-        return deleteObject(
-                containerName,
-                objectName,
-                params,
-                headers,
-                r -> {
-                    consumer.accept(r, this);
-                }
-        );
+            final Function<Response, R> function) {
+        final Client client = getClient();
+        try {
+            final Invocation.Builder builder = buildResellerUser(
+                    client, resellerAccountUrl(), userName, params, authUser,
+                    authKey);
+            if (headers != null) {
+                headers.putSingle(HEADER_X_AUTH_ADMIN_USER, authUser);
+                headers.putSingle(HEADER_X_AUTH_ADMIN_KEY, authKey);
+                builder.headers(headers);
+            }
+            final Response response = builder.delete();
+            try {
+                return function.apply(response);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();;
+        }
     }
 
-//    // ----------------------------------------------------------------- authUrl
-//    public String getAuthUrl() {
-//        return authUrl;
-//    }
-//
-//    // ---------------------------------------------------------------- authUser
-//    public String getAuthUser() {
-//        return authUser;
-//    }
-//
-//    // ---------------------------------------------------------------- authPass
-//    public String getAuthPass() {
-//        return authPass;
-//    }
-//
-//    // -------------------------------------------------------------- storageUrl
-//    /**
-//     * Returns the storage URL.
-//     *
-//     * @return the storage URL
-//     */
-//    public String getStorageUrl() {
-//        return storageUrl;
-//    }
-//
-//    // ---------------------------------------------------------------- authToken
-//    /**
-//     * Returns the authorization token.
-//     *
-//     * @return the authorization token.
-//     */
-//    public String getAuthToken() {
-//        return authToken;
-//    }
-//
-//    // ------------------------------------------------------------ tokenExpires
-//    /**
-//     * Return the date the authorization token expires.
-//     *
-//     * @return the date the authorization token expires.
-//     */
-//    public Date getAuthTokenExpires() {
-//        if (authTokenExpires == null) {
-//            return null;
-//        }
-//        return new Date(authTokenExpires.getTime());
-//    }
+    @Override
+    public <R> R deleteResellerUser(final String userName,
+                                    final Map<String, List<Object>> params,
+                                    final Map<String, List<Object>> headers,
+                                    final Function<Response, R> function) {
+        return deleteResellerUser(userName, multivalued(params),
+                                  multivalued(headers), function);
+    }
+
+    // ---------------------------------------------------------- clientSupplier
+    public Supplier<Client> getClientSupplier() {
+        return clientSupplier;
+    }
+
+    public void setClientSupplier(final Supplier<Client> clientSupplier) {
+        this.clientSupplier = clientSupplier;
+    }
+
+    public WsRsClient clientSupplier(final Supplier<Client> clientSupplier) {
+        setClientSupplier(clientSupplier);
+        return this;
+    }
+
+    // ------------------------------------------------------------------ client
+    protected Client getClient() {
+        return getClientSupplier().get();
+    }
+
+    protected <R> R applyClient(final Function<Client, R> function) {
+        final Client client = getClient();
+        try {
+            return function.apply(client);
+        } finally {
+            client.close();
+        }
+    }
+
+    protected <U, R> R applyClient(final BiFunction<Client, U, R> function,
+                                   final Supplier<U> supplier) {
+        return applyClient(c -> {
+            return function.apply(c, supplier.get());
+        });
+    }
+
+    protected void acceptClient(final Consumer<Client> consumer) {
+        applyClient(c -> {
+            consumer.accept(c);
+            return null;
+        });
+    }
+
+    protected <U> void acceptClient(final BiConsumer<Client, U> consumer,
+                                    final Supplier<U> supplier) {
+        acceptClient(c -> {
+            consumer.accept(c, supplier.get());
+        });
+    }
+
     // -------------------------------------------------------------------------
-//    private final String authUrl;
-//
-//    private final String authUser;
-//
-//    private final String authPass;
-//
-//    private transient String storageUrl;
-//
-//    private transient String authToken;
-//
-//    private transient Date authTokenExpires;
+    private transient Supplier<Client> clientSupplier
+            = () -> ClientBuilder.newClient();
 }
