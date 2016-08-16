@@ -23,6 +23,7 @@ import static java.util.Collections.singletonList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import static java.util.Objects.requireNonNull;
 import static java.util.UUID.randomUUID;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import java.util.function.BiConsumer;
@@ -82,7 +83,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
 
     public StorageClientIT(final Class<ClientType> clientClass) {
         super();
-        this.clientClass = clientClass;
+        this.clientClass = requireNonNull(clientClass, "null clientClass");
     }
 
     @BeforeClass
@@ -140,18 +141,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
 
     protected <R> R apply(final boolean reseller,
                           final Function<ClientType, R> function) {
-//        if (reseller) {
-//            if (clientInstance.getResellerAccountName() == null) {
-//                throw new SkipException("skipping...");
-//            }
-//        } else if (clientInstance.getResellerAccountName() != null) {
-//            throw new SkipException("skipping...");
-//        }
-        logger.debug("apply({}, {})", reseller, function);
-        logger.debug("resellerAccountName: {}",
-                     clientInstance.getResellerAccountName());
         if (reseller ^ clientInstance.getResellerAccountName() != null) {
-            logger.debug("skipping...");
             throw new SkipException("skipping...");
         }
         return function.apply(clientInstance);
