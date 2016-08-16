@@ -24,7 +24,6 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import static java.util.Objects.requireNonNull;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -68,10 +67,21 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
         return statusInfo(response, StatusType::getStatusCode);
     }
 
+    @Deprecated
     public static String reasonPhrase(final Response response) {
         return statusInfo(response, StatusType::getReasonPhrase);
     }
 
+    /**
+     * Returns a newly created instance of {@link MultivaluedMap} containing
+     * given map's entries.
+     *
+     * @param <K> key type parameter
+     * @param <V> value type parameter
+     * @param map the map
+     * @return a {@link MultivaluedMap} containing given map's entries or
+     * {@code null} if the {@code map} is {@code null}
+     */
     public static <K, V> MultivaluedMap<K, V> multivalued(
             final Map<K, List<V>> map) {
         if (map == null) {
@@ -92,12 +102,10 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
                                             final String authKey,
                                             final boolean newToken) {
         Invocation.Builder builder = client
-                .target(requireNonNull(authUrl, "null authUrl"))
+                .target(authUrl)
                 .request()
-                .header(HEADER_X_AUTH_USER,
-                        requireNonNull(authUser, "null authUser"))
-                .header(HEADER_X_AUTH_PASS,
-                        requireNonNull(authKey, "null authKey"));
+                .header(HEADER_X_AUTH_USER, authUser)
+                .header(HEADER_X_AUTH_PASS, authKey);
         if (newToken) {
             builder = builder.header(HEADER_X_AUTH_NEW_TOKEN, Boolean.TRUE);
         }
@@ -116,8 +124,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
     public static WebTarget targetAccount(
             final Client client, final String storageUrl,
             final MultivaluedMap<String, Object> params) {
-        WebTarget target = requireNonNull(client, "null client")
-                .target(requireNonNull(storageUrl, "null storageUrl"));
+        WebTarget target = client.target(storageUrl);
         if (params != null) {
             for (final Entry<String, List<Object>> entry : params.entrySet()) {
                 final String name = entry.getKey();
@@ -143,8 +150,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
             final String authToken) {
         return targetAccount(client, storageUrl, params)
                 .request()
-                .header(HEADER_X_AUTH_TOKEN,
-                        requireNonNull(authToken, "null authToken"));
+                .header(HEADER_X_AUTH_TOKEN, authToken);
     }
 
     // ------------------------------------------------------ /account/container
@@ -163,11 +169,9 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
             final MultivaluedMap<String, Object> params) {
         if (ThreadLocalRandom.current().nextBoolean()) {
             return targetAccount(client, storageUrl, params)
-                    .path(requireNonNull(containerName, "null containerName"));
+                    .path(containerName);
         }
-        WebTarget target = requireNonNull(client, "null client")
-                .target(requireNonNull(storageUrl, "null storageUrl"))
-                .path(requireNonNull(containerName, "null containerName"));
+        WebTarget target = client.target(storageUrl).path(containerName);
         if (params != null) {
             for (final Entry<String, List<Object>> entry : params.entrySet()) {
                 final String name = entry.getKey();
@@ -195,8 +199,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
             final String authToken) {
         return targetContainer(client, storageUrl, containerName, params)
                 .request()
-                .header(HEADER_X_AUTH_TOKEN,
-                        requireNonNull(authToken, "null authToken"));
+                .header(HEADER_X_AUTH_TOKEN, authToken);
     }
 
     // ----------------------------------------------- /account/container/object
@@ -214,15 +217,9 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
             final Client client, final String storageUrl,
             final String containerName, final String objectName,
             final MultivaluedMap<String, Object> params) {
-        if (ThreadLocalRandom.current().nextBoolean()) {
-            return targetContainer(client, storageUrl, containerName, params)
-                    .path(objectName);
-        }
         WebTarget target
-                = requireNonNull(client, "null client")
-                .target(requireNonNull(storageUrl, "null storageUrl"))
-                .path(requireNonNull(containerName, "containerName"))
-                .path(requireNonNull(objectName, "null objectName"));
+                = targetContainer(client, storageUrl, containerName, params)
+                .path(objectName);
         if (params != null) {
             for (final Entry<String, List<Object>> entry : params.entrySet()) {
                 final String name = entry.getKey();
@@ -252,17 +249,14 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
         return targetObject(client, storageUrl, containerName, objectName,
                             params)
                 .request()
-                .header(HEADER_X_AUTH_TOKEN,
-                        requireNonNull(authToken, "null authToken"));
+                .header(HEADER_X_AUTH_TOKEN, authToken);
     }
 
     // ------------------------------------------------------- /reseller/account
     public static WebTarget targetResellerAccount(
             final Client client, final String resellerAccountUrl,
             final MultivaluedMap<String, Object> params) {
-        WebTarget target
-                = requireNonNull(client, "null client")
-                .target(resellerAccountUrl);
+        WebTarget target = client.target(resellerAccountUrl);
         if (params != null) {
             for (final Entry<String, List<Object>> entry : params.entrySet()) {
                 final String name = entry.getKey();
@@ -288,9 +282,8 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
             final Client client, final String resellerStorageUrl,
             final String userName,
             final MultivaluedMap<String, Object> params) {
-        return targetResellerAccount(
-                client, resellerStorageUrl, params)
-                .path(requireNonNull(userName, "null userName"));
+        return targetResellerAccount(client, resellerStorageUrl, params)
+                .path(userName);
     }
 
     public static Invocation.Builder buildResellerUser(
@@ -478,8 +471,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
             }
             final Response response = builder.post(null);
             try {
-                return requireNonNull(function, "null function")
-                        .apply(response);
+                return function.apply(response);
             } finally {
                 response.close();
             }
@@ -511,8 +503,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
             }
             final Response response = builder.head();
             try {
-                return requireNonNull(function, "null function")
-                        .apply(response);
+                return function.apply(response);
             } finally {
                 response.close();
             }
