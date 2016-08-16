@@ -39,6 +39,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import static java.util.stream.Collectors.joining;
+import java.util.stream.Stream;
 import javax.ws.rs.core.MultivaluedHashMap;
 
 /**
@@ -115,7 +116,10 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     }
 
     public static String capitalizeAndJoin(final String... tokens) {
-        return stream(tokens).map(v -> capitalize(v)).collect(joining("-"));
+        //return stream(tokens).map(v -> capitalize(v)).collect(joining("-"));
+        return stream(tokens)
+                .flatMap(t -> Stream.of(t.split("-")))
+                .map(v -> capitalize(v)).collect(joining("-"));
     }
 
     public static String metaHeader(final boolean remove, final String scope,

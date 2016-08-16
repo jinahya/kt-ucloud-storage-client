@@ -16,6 +16,7 @@
 package com.github.jinahya.kt.ucloud.storage.client;
 
 import static java.lang.System.currentTimeMillis;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.fail;
 import org.testng.annotations.Test;
@@ -26,6 +27,22 @@ import org.testng.annotations.Test;
  * @param <ClientType>
  */
 public abstract class StorageClientTest<ClientType extends StorageClient> {
+
+    @Test
+    public static void capitalizeAndJoin() {
+        {
+            final String actual
+                    = StorageClient.capitalizeAndJoin("a", "b", "C");
+            final String expected = "A-B-C";
+            assertEquals(actual, expected);
+        }
+        {
+            final String actual
+                    = StorageClient.capitalizeAndJoin("a", "b-cD", "e");
+            final String expected = "A-B-Cd-E";
+            assertEquals(actual, expected);
+        }
+    }
 
     public StorageClientTest(final Class<ClientType> clientClass) {
         super();
