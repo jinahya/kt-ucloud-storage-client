@@ -35,8 +35,6 @@ import java.util.function.Supplier;
 import java.util.logging.Logger;
 import static java.util.logging.Logger.getLogger;
 import static java.util.stream.Collectors.joining;
-import static java.util.logging.Logger.getLogger;
-import static java.util.stream.Collectors.joining;
 
 /**
  *
@@ -47,6 +45,13 @@ public class NetClient
 
     private static final Logger logger = getLogger(NetClient.class.getName());
 
+    /**
+     * Appends given query parameters to specified {@code builder}.
+     *
+     * @param builder the builder
+     * @param params the query parameters; may be {@code null}
+     * @return given builder
+     */
     private static StringBuilder params(
             final StringBuilder builder,
             final Map<String, List<Object>> params) {
@@ -60,33 +65,63 @@ public class NetClient
         return builder;
     }
 
+    /**
+     * Put given request headers to specified {@code connection}.
+     *
+     * @param <T> connection type parameter
+     * @param connection the connection
+     * @param headers request headers; may be {@code null}
+     * @return given connection
+     * @see URLConnection#addRequestProperty(java.lang.String, java.lang.String)
+     */
     private static <T extends URLConnection> T headers(
             final T connection, final Map<String, List<Object>> headers) {
         if (headers != null) {
             headers.forEach((n, vs) -> {
                 vs.forEach(v -> {
-                    connection.setRequestProperty(n, String.valueOf(v));
+                    connection.addRequestProperty(n, String.valueOf(v));
                 });
             });
         }
         return connection;
     }
 
+    /**
+     * Parses {@code Status-Code} and {@code Reason-Phrase} from the given
+     * {@code connection} and applies them the the specified {@code function}.
+     *
+     * @param <R> result type parameter
+     * @param connection the connection
+     * @param function the function
+     * @return the value the {@code function} results
+     */
     public static <R> R status(final HttpURLConnection connection,
-                               final BiFunction<Integer, String, R> consumer) {
+                               final BiFunction<Integer, String, R> function) {
         try {
             final int statusCode = connection.getResponseCode();
             final String reasonPhrase = connection.getResponseMessage();
-            return consumer.apply(statusCode, reasonPhrase);
+            return function.apply(statusCode, reasonPhrase);
         } catch (final IOException ioe) {
             throw new StorageClientException(ioe);
         }
     }
 
+    /**
+     * Returns the {@code Status-Code} of given {@code connection}
+     *
+     * @param connection the connection
+     * @return the {@code Status-Code} of given {@code connection}
+     */
     public static int statusCode(final HttpURLConnection connection) {
         return status(connection, (c, p) -> c);
     }
 
+    /**
+     * Returns the {@code Reason-Phrase} of given {@code connection}.
+     *
+     * @param connection the connection
+     * @return the {@code Reason-Phrase} of given {@code connection}
+     */
     public static String reasonPhrase(final HttpURLConnection connection) {
         return status(connection, (c, p) -> p);
     }
@@ -188,24 +223,68 @@ public class NetClient
 
     public static URLConnection openResellerAccount(
             final String resellerAccountUrl,
-            final Map<String, List<Object>> params, final String authAdminUser,
-            final String authAdminKey)
+            final Map<String, List<Object>> params, final String authUser,
+            final String authKey)
             throws IOException {
-        logger.info("openResellerAccount(" + resellerAccountUrl + ", " + params + ", " + authAdminUser + ", " + authAdminKey + ")");
         final URL locator = locateResellerAccount(resellerAccountUrl, params);
         final URLConnection connection = locator.openConnection();
-        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_USER, authAdminUser);
-        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_KEY, authAdminKey);
+        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_USER, authUser);
+        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_KEY, authKey);
         return connection;
     }
 
     // -------------------------------------------------- /reseller/account/user
+    public static StringBuilder buildResellerUser(
+            final String resellerUrl, final String userName,
+            final Map<String, List<Object>> params) {
+        final StringBuilder builder
+                = new StringBuilder(resellerUrl)
+                .append("/")
+                .append(userName);
+        params(builder, params);
+        return builder;
+    }
+
+    public static URL locateResellerUser(
+            final String resellerUrl, final String userName,
+            final Map<String, List<Object>> params)
+            throws MalformedURLException {
+        final StringBuilder builder
+                = buildResellerUser(resellerUrl, userName, params);
+        final URL locator = new URL(builder.toString());
+        return locator;
+    }
+
+    /**
+     * Opens a URLConnection for reseller user.
+     *
+     * @param resellerUrl base URL
+     * @param userName username
+     * @param params query parameters
+     * @param authUser the value for {@link #HEADER_X_AUTH_ADMIN_USER}
+     * @param authKey the value for {@link #HEADER_X_AUTH_ADMIN_KEY}
+     * @return an opened URLConnection
+     * @throws IOException if an I/O error occurs.
+     */
+    public static URLConnection openResellerUser(
+            final String resellerUrl, final String userName,
+            final Map<String, List<Object>> params, final String authUser,
+            final String authKey)
+            throws IOException {
+        final URL locator = locateResellerUser(resellerUrl, userName, params);
+        final URLConnection connection = locator.openConnection();
+        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_USER, authUser);
+        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_KEY, authKey);
+        return connection;
+    }
+
     // -------------------------------------------------------------------------
     public NetClient(final String authUrl, final String authUser,
                      final String authKey) {
         super(authUrl, authUser, authKey);
     }
 
+    @Deprecated
     public NetClient(final StorageClient client) {
         this(client.getAuthUrl(), client.getAuthUser(), client.getAuthKey());
         setStorageUrl(client.getStorageUrl());
@@ -634,8 +713,7 @@ public class NetClient
             final Function<URLConnection, R> function) {
         try {
             final HttpURLConnection connection
-                    = (HttpURLConnection) openResellerAccount(
-                            resellerAccountUrl(), params, authUser, authKey);
+                    = (HttpURLConnection) openResellerAccount(resellerUrl(), params, authUser, authKey);
             connection.setRequestMethod("GET");
             if (headers != null) {
                 headers.put(HEADER_X_AUTH_USER, singletonList(authUser));
@@ -657,18 +735,81 @@ public class NetClient
 
     // -------------------------------------------------- /reseller/account/user
     @Override
-    public <R> R readResellerUser(String userName, Map<String, List<Object>> params, Map<String, List<Object>> headers, Function<URLConnection, R> function) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public <R> R readResellerUser(final String userName,
+                                  final Map<String, List<Object>> params,
+                                  final Map<String, List<Object>> headers,
+                                  final Function<URLConnection, R> function) {
+        try {
+            final HttpURLConnection connection
+                    = (HttpURLConnection) openResellerUser(
+                            resellerUrl(), userName, params, authUser, authKey);
+            connection.setRequestMethod("GET");
+            headers(connection, headers);
+            connection.setDoOutput(false);
+            connection.setDoInput(true);
+            connection.connect();
+            try {
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
+        }
     }
 
     @Override
-    public <R> R updateResellerUser(String userName, String userKey, final boolean admin, Map<String, List<Object>> params, Map<String, List<Object>> headers, Function<URLConnection, R> function) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public <R> R updateResellerUser(final String userName,
+                                    final String userKey,
+                                    final Boolean userAdmin,
+                                    final Map<String, List<Object>> params,
+                                    final Map<String, List<Object>> headers,
+                                    final Function<URLConnection, R> function) {
+        try {
+            final HttpURLConnection connection
+                    = (HttpURLConnection) openResellerUser(
+                            resellerUrl(), userName, params, authUser, authKey);
+            connection.setRequestMethod("PUT");
+            connection.setRequestProperty(HEADER_X_AUTH_USER_KEY, userKey);
+            if (userAdmin != null && userAdmin) {
+                connection.setRequestProperty(
+                        HEADER_X_AUTH_USER_ADMIN, userKey);
+            }
+            headers(connection, headers);
+            connection.setDoOutput(false);
+            connection.setDoInput(true);
+            connection.connect();
+            try {
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
+        }
     }
 
     @Override
-    public <R> R deleteResellerUser(String userName, Map<String, List<Object>> params, Map<String, List<Object>> headers, Function<URLConnection, R> function) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public <R> R deleteResellerUser(final String userName,
+                                    final Map<String, List<Object>> params,
+                                    final Map<String, List<Object>> headers,
+                                    final Function<URLConnection, R> function) {
+        try {
+            final HttpURLConnection connection
+                    = (HttpURLConnection) openResellerUser(
+                            resellerUrl(), userName, params, authUser, authKey);
+            connection.setRequestMethod("DELETE");
+            headers(connection, headers);
+            connection.setDoOutput(false);
+            connection.setDoInput(true);
+            connection.connect();
+            try {
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
+        }
     }
-
 }

@@ -143,16 +143,15 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         return metaHeader(remove, "Object", tokens);
     }
 
-    public static String resellerAccountUrl(final String storageUrl,
-                                            final String resellerAccountName) {
+    public static String resellerUrl(final String storageUrl,
+                                     final String resellerAccount) {
         try {
             final URL url
                     = new URL(requireNonNull(storageUrl, "null storageUrl"));
             final String protocol = url.getProtocol();
             final String authority = url.getAuthority();
             return protocol + "://" + authority + "/auth/v2/"
-                   + requireNonNull(resellerAccountName,
-                                    "null resellerAccountName");
+                   + requireNonNull(resellerAccount, "null resellerAccount");
         } catch (final MalformedURLException murle) {
             throw new StorageClientException(murle);
         }
@@ -205,8 +204,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         this.authUser = requireNonNull(authUser, "null authUser");
         {
             final int i = this.authUser.indexOf(':');
-            resellerAccountName
-                    = i == -1 ? null : this.authUser.substring(0, i);
+            resellerAccount = i == -1 ? null : this.authUser.substring(0, i);
         }
         this.authKey = requireNonNull(authKey, "null authKey");
     }
@@ -1161,20 +1159,20 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     }
 
     public abstract <R> R updateResellerUser(
-            String userName, String userKey, boolean admin,
-            Map<String, List<Object>> params,
-            Map<String, List<Object>> headers,
-            Function<ResponseType, R> function);
+            final String userName, final String userKey,
+            final Boolean userAdmin, final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Function<ResponseType, R> function);
 
     public <R> R updateResellerUser(
-            final String userName, final String userKey, final boolean admin,
-            final Map<String, List<Object>> params,
+            final String userName, final String userKey,
+            final Boolean userAdmin, final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiFunction<ResponseType, ClientType, R> function) {
         return updateResellerUser(
                 userName,
                 userKey,
-                admin,
+                userAdmin,
                 params,
                 headers,
                 r -> {
@@ -1184,14 +1182,14 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     }
 
     public ClientType updateResellerUser(
-            final String userName, final String userKey, final boolean admin,
-            final Map<String, List<Object>> params,
+            final String userName, final String userKey,
+            final Boolean userAdmin, final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final Consumer<ResponseType> consumer) {
         return updateResellerUser(
                 userName,
                 userKey,
-                admin,
+                userAdmin,
                 params,
                 headers,
                 r -> {
@@ -1202,14 +1200,14 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     }
 
     public ClientType updateResellerUser(
-            final String userName, final String userKey, final boolean admin,
-            final Map<String, List<Object>> params,
+            final String userName, final String userKey,
+            final Boolean userAdmin, final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiConsumer<ResponseType, ClientType> consumer) {
         return updateResellerUser(
                 userName,
                 userKey,
-                admin,
+                userAdmin,
                 params,
                 headers,
                 r -> {
@@ -1284,13 +1282,13 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         return authKey;
     }
 
-    // ----------------------------------------------------- resellerAccountName
-    public String getResellerAccountName() {
-        return resellerAccountName;
+    // --------------------------------------------------------- resellerAccount
+    public String getResellerAccount() {
+        return resellerAccount;
     }
 
-    public String resellerAccountName() {
-        return getResellerAccountName();
+    public String resellerAccount() {
+        return getResellerAccount();
     }
 
     // -------------------------------------------------------------- storageUrl
@@ -1309,9 +1307,8 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
 
     protected void setStorageUrl(final String storageUrl) {
         this.storageUrl = requireNonNull(storageUrl, "null storageUrl");
-        if (resellerAccountName != null) {
-            resellerAccountUrl
-                    = resellerAccountUrl(storageUrl, resellerAccountName);
+        if (resellerAccount != null) {
+            resellerUrl = resellerUrl(storageUrl, resellerAccount);
         }
     }
 
@@ -1320,13 +1317,13 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         return this;
     }
 
-    // ------------------------------------------------------ resellerAccountUrl
-    public String getResellerAccountUrl() {
-        return resellerAccountUrl;
+    // ------------------------------------------------------------- resellerUrl
+    public String getResellerUrl() {
+        return resellerUrl;
     }
 
-    public String resellerAccountUrl() {
-        return getResellerAccountUrl();
+    public String resellerUrl() {
+        return getResellerUrl();
     }
 
     // --------------------------------------------------------------- authToken
@@ -1381,11 +1378,11 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
 
     protected final String authKey;
 
-    private final String resellerAccountName;
+    private final String resellerAccount;
 
     private transient String storageUrl;
 
-    private transient String resellerAccountUrl;
+    private transient String resellerUrl;
 
     private transient String authToken;
 

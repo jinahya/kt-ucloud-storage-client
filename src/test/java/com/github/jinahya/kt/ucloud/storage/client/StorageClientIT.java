@@ -17,6 +17,7 @@ package com.github.jinahya.kt.ucloud.storage.client;
 
 import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.accountMetaHeader;
 import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.containerMetaHeader;
+import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -24,7 +25,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import static java.util.Objects.requireNonNull;
+import java.util.UUID;
 import static java.util.UUID.randomUUID;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -61,6 +65,20 @@ import org.testng.annotations.Test;
  * @param <ResponseType> response type parameter
  */
 public abstract class StorageClientIT<ClientType extends StorageClient<ClientType, EntityType, ResponseType>, EntityType, ResponseType> {
+
+    private static final Logger logger
+            = getLogger(MethodHandles.lookup().lookupClass());
+
+    private static final long MILLIS = TimeUnit.SECONDS.toMillis(4L);
+
+    protected static void sleep() {
+        logger.debug("------------------------- sleeping for {} ms...", MILLIS);
+        try {
+            Thread.sleep(MILLIS);
+        } catch (final InterruptedException ie) {
+            fail("faield to sleep", ie);
+        }
+    }
 
     protected static void assertStatus(final int actual, final Family family,
                                        final Status... expecteds) {
@@ -111,10 +129,11 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                 .getConstructor(String.class, String.class, String.class)
                 .newInstance(authUrl, authUser, authKey);
         logger.debug("client instantiated: {}", clientInstance);
+        clientInstantiated(clientInstance);
         logger.debug("client.authUser: {}", clientInstance.getAuthUser());
         logger.debug("client.authKey: {}", clientInstance.getAuthKey());
-        logger.debug("client.resellerAccountName: {}",
-                     clientInstance.getResellerAccountName());
+        logger.debug("client.resellerAccount: {}",
+                     clientInstance.getResellerAccount());
         clientInstance.authenticateUser(
                 false,
                 r -> {
@@ -124,11 +143,14 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         logger.debug("client authenticted");
         logger.debug("client.storageUrl: {}", clientInstance.getStorageUrl());
         logger.debug("client.resellerAccountUrl: {}",
-                     clientInstance.getResellerAccountUrl());
+                     clientInstance.getResellerUrl());
     }
 
     protected abstract void assertSuccesfulAuthentication(
             ResponseType response);
+
+    protected void clientInstantiated(final ClientType client) {
+    }
 
     @AfterClass
     public void doAfterClass() {
@@ -139,9 +161,12 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         logger.debug("=======================================================");
     }
 
+    protected void clientNullifying(final ClientType client) {
+    }
+
     protected <R> R apply(final boolean reseller,
                           final Function<ClientType, R> function) {
-        if (reseller ^ clientInstance.getResellerAccountName() != null) {
+        if (reseller ^ clientInstance.getResellerAccount() != null) {
             throw new SkipException("skipping...");
         }
         return function.apply(clientInstance);
@@ -455,7 +480,92 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
     }
 
     // -------------------------------------------------- /reseller/account/user
-    protected final Logger logger = getLogger(getClass());
+    @Test
+    public void testResellerUser() {
+        logger.debug("------------------------------ testing reseller user...");
+        final String userName = UUID.randomUUID().toString();
+
+        accept(true,
+               c -> {
+                   logger.debug("----------------- updating reseller user...1");
+                   final String userKey = UUID.randomUUID().toString();
+                   final boolean userAdmin
+                   = ThreadLocalRandom.current().nextBoolean();
+                   c.updateResellerUser(
+                           userName,
+                           userKey,
+                           userAdmin,
+                           null,
+                           null,
+                           r -> {
+                               assertStatus(r, SUCCESSFUL);
+                           }
+                   );
+               }
+        );
+        sleep();
+        accept(true,
+               c -> {
+                   logger.debug("------------------ reading reseller user...1");
+                   c.readResellerUser(
+                           userName,
+                           null,
+                           null,
+                           r -> {
+                               printBody(r);
+                               assertStatus(r, SUCCESSFUL);
+                           }
+                   );
+               }
+        );
+        accept(true,
+               c -> {
+                   logger.debug("----------------- updating reseller user...2");
+                   String userKey = UUID.randomUUID().toString();
+                   final boolean userAdmin
+                   = ThreadLocalRandom.current().nextBoolean();
+                   c.updateResellerUser(
+                           userName,
+                           userKey,
+                           null,
+                           null,
+                           null,
+                           r -> {
+                               assertStatus(r, SUCCESSFUL);
+                               printBody(r);
+                           }
+                   );
+               }
+        );
+        sleep();
+        accept(true,
+               c -> {
+                   logger.debug("------------------ reading reseller user...2");
+                   c.readResellerUser(
+                           userName,
+                           null,
+                           null,
+                           r -> {
+                               printBody(r);
+                               assertStatus(r, SUCCESSFUL);
+                           }
+                   );
+               }
+        );
+        accept(true,
+               c -> {
+                   logger.debug("------------------ deleting reseller user...");
+                   c.deleteResellerUser(
+                           userName,
+                           null,
+                           null,
+                           r -> {
+                               assertStatus(r, SUCCESSFUL);
+                           }
+                   );
+               }
+        );
+    }
 
     protected final Class<ClientType> clientClass;
 
