@@ -11,6 +11,7 @@ a simple client for [kt ucloud storage](https://ucloudbiz.olleh.com/portal/ktclo
 ```
 $ mvn -P(jersey|cxf|resteasy) -DauthUrl="" -DauthUser="" -DauthPass="" verify
 ```
+
 ## methods
 http  |java        |notes
 ------|------------|-----
@@ -19,12 +20,13 @@ GET   |read...     |reads resources
 PUT   |update...   |creates or updates resources
 POST  |configure...|creates, updates or removes metadata
 DELETE|delete...   |deletes resources
+
 ## java.net
 ```java
 final String url; // authentication url
 final String user; // access key ID
 final String pass; // secret key
-final NetStorageClient client = new NetStorageClient(url, user, pass);
+final StorageClient client = new NetClient(url, user, pass);
 ```
 ## java.net.http
 N/A yet.
@@ -33,5 +35,5 @@ N/A yet.
 final String url; // authentication url
 final String user; // access key ID
 final String pass; // secret key
-final WsRsStorageClient client = new WsRsStorageClient(url, user, pass);
+final StorageClient client = new WsRsClient(url, user, pass);
 ```
