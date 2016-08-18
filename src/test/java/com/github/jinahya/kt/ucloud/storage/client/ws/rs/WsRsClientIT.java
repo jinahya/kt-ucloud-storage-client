@@ -79,7 +79,6 @@ public class WsRsClientIT
             c.register(RESPONSE_FILTER);
             return c;
         });
-
     }
 
     @Override

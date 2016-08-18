@@ -29,6 +29,21 @@ import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
 
 /**
  *

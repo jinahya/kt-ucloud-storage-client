@@ -338,7 +338,7 @@ public class NetClient
 
     // ---------------------------------------------------------------- /account
     @Override
-    public <R> R peekAccount(final Map<String, List<Object>> params,
+    public <R> R peekStorage(final Map<String, List<Object>> params,
                              Map<String, List<Object>> headers,
                              final Function<URLConnection, R> function) {
         try {
@@ -364,7 +364,7 @@ public class NetClient
     }
 
     @Override
-    public <R> R readAccount(final Map<String, List<Object>> params,
+    public <R> R readStorage(final Map<String, List<Object>> params,
                              Map<String, List<Object>> headers,
                              final Function<URLConnection, R> function) {
         try {
@@ -390,7 +390,7 @@ public class NetClient
     }
 
     @Override
-    public <R> R configureAccount(final Map<String, List<Object>> params,
+    public <R> R configureStorage(final Map<String, List<Object>> params,
                                   Map<String, List<Object>> headers,
                                   final Function<URLConnection, R> function) {
         try {
@@ -707,13 +707,14 @@ public class NetClient
 
     // ------------------------------------------------------- /reseller/account
     @Override
-    public <R> R readResellerAccount(
+    public <R> R readAccount(
             final Map<String, List<Object>> params,
             Map<String, List<Object>> headers,
             final Function<URLConnection, R> function) {
         try {
             final HttpURLConnection connection
-                    = (HttpURLConnection) openResellerAccount(resellerUrl(), params, authUser, authKey);
+                    = (HttpURLConnection) openResellerAccount(
+                            accountUrl(), params, authUser, authKey);
             connection.setRequestMethod("GET");
             if (headers != null) {
                 headers.put(HEADER_X_AUTH_USER, singletonList(authUser));
@@ -735,14 +736,14 @@ public class NetClient
 
     // -------------------------------------------------- /reseller/account/user
     @Override
-    public <R> R readResellerUser(final String userName,
-                                  final Map<String, List<Object>> params,
-                                  final Map<String, List<Object>> headers,
-                                  final Function<URLConnection, R> function) {
+    public <R> R readUser(final String userName,
+                          final Map<String, List<Object>> params,
+                          final Map<String, List<Object>> headers,
+                          final Function<URLConnection, R> function) {
         try {
             final HttpURLConnection connection
                     = (HttpURLConnection) openResellerUser(
-                            resellerUrl(), userName, params, authUser, authKey);
+                            accountUrl(), userName, params, authUser, authKey);
             connection.setRequestMethod("GET");
             headers(connection, headers);
             connection.setDoOutput(false);
@@ -759,16 +760,15 @@ public class NetClient
     }
 
     @Override
-    public <R> R updateResellerUser(final String userName,
-                                    final String userKey,
-                                    final Boolean userAdmin,
-                                    final Map<String, List<Object>> params,
-                                    final Map<String, List<Object>> headers,
-                                    final Function<URLConnection, R> function) {
+    public <R> R updateUser(final String userName, final String userKey,
+                            final Boolean userAdmin,
+                            final Map<String, List<Object>> params,
+                            final Map<String, List<Object>> headers,
+                            final Function<URLConnection, R> function) {
         try {
             final HttpURLConnection connection
                     = (HttpURLConnection) openResellerUser(
-                            resellerUrl(), userName, params, authUser, authKey);
+                            accountUrl(), userName, params, authUser, authKey);
             connection.setRequestMethod("PUT");
             connection.setRequestProperty(HEADER_X_AUTH_USER_KEY, userKey);
             if (userAdmin != null && userAdmin) {
@@ -790,14 +790,14 @@ public class NetClient
     }
 
     @Override
-    public <R> R deleteResellerUser(final String userName,
-                                    final Map<String, List<Object>> params,
-                                    final Map<String, List<Object>> headers,
-                                    final Function<URLConnection, R> function) {
+    public <R> R deleteUser(final String userName,
+                            final Map<String, List<Object>> params,
+                            final Map<String, List<Object>> headers,
+                            final Function<URLConnection, R> function) {
         try {
             final HttpURLConnection connection
                     = (HttpURLConnection) openResellerUser(
-                            resellerUrl(), userName, params, authUser, authKey);
+                            accountUrl(), userName, params, authUser, authKey);
             connection.setRequestMethod("DELETE");
             headers(connection, headers);
             connection.setDoOutput(false);

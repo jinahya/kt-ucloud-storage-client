@@ -133,7 +133,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         logger.debug("client.authUser: {}", clientInstance.getAuthUser());
         logger.debug("client.authKey: {}", clientInstance.getAuthKey());
         logger.debug("client.resellerAccount: {}",
-                     clientInstance.getResellerAccount());
+                     clientInstance.getAccountName());
         clientInstance.authenticateUser(
                 false,
                 r -> {
@@ -143,7 +143,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         logger.debug("client authenticted");
         logger.debug("client.storageUrl: {}", clientInstance.getStorageUrl());
         logger.debug("client.resellerAccountUrl: {}",
-                     clientInstance.getResellerUrl());
+                     clientInstance.getAccountUrl());
     }
 
     protected abstract void assertSuccesfulAuthentication(
@@ -166,7 +166,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
 
     protected <R> R apply(final boolean reseller,
                           final Function<ClientType, R> function) {
-        if (reseller ^ clientInstance.getResellerAccount() != null) {
+        if (reseller ^ clientInstance.getAccountName() != null) {
             throw new SkipException("skipping...");
         }
         return function.apply(clientInstance);
@@ -215,14 +215,14 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
 
     // ---------------------------------------------------------------- /account
     @Test
-    public void testAccount() {
-        logger.debug("------------------------------------ testing account...");
+    public void testStorage() {
+        logger.debug("------------------------------------ testing storage...");
         accept(false,
                c -> {
                    logger.debug("------------------------ peeking account...");
                    final Map<String, List<Object>> headers = new HashMap<>();
                    headers.put(ACCEPT, singletonList(WILDCARD));
-                   c.peekAccount(
+                   c.peekStorage(
                            null,
                            headers,
                            r -> {
@@ -238,7 +238,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                        final MultivaluedMap<String, Object> headers
                        = new MultivaluedHashMap<>();
                        headers.putSingle(ACCEPT, a);
-                       c.readAccount(
+                       c.readStorage(
                                null,
                                headers,
                                r -> {
@@ -258,7 +258,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                        = new MultivaluedHashMap<>();
                        headers.putSingle(
                                accountMetaHeader(false, tokens), "irrelevant");
-                       c.configureAccount(
+                       c.configureStorage(
                                null,
                                headers,
                                r -> {
@@ -274,7 +274,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                        = new MultivaluedHashMap<>();
                        headers.putSingle(
                                accountMetaHeader(true, tokens), "irrelevant");
-                       c.configureAccount(
+                       c.configureStorage(
                                null,
                                headers,
                                r -> {
@@ -316,7 +316,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                        = new MultivaluedHashMap<>();
                        headers.putSingle(containerMetaHeader(false, tokens),
                                          "irrelevant");
-                       c.configureAccount(
+                       c.configureStorage(
                                null,
                                headers,
                                r -> {
@@ -332,7 +332,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                        = new MultivaluedHashMap<>();
                        headers.putSingle(
                                containerMetaHeader(true, tokens), "irrelevant");
-                       c.configureAccount(
+                       c.configureStorage(
                                null,
                                headers,
                                r -> {
@@ -467,7 +467,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         accept(true,
                c -> {
                    logger.debug("---------------- reading reseller account...");
-                   c.readResellerAccount(
+                   c.readAccount(
                            null,
                            null,
                            r -> {
@@ -491,7 +491,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                    final String userKey = UUID.randomUUID().toString();
                    final boolean userAdmin
                    = ThreadLocalRandom.current().nextBoolean();
-                   c.updateResellerUser(
+                   c.updateUser(
                            userName,
                            userKey,
                            userAdmin,
@@ -507,7 +507,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         accept(true,
                c -> {
                    logger.debug("------------------ reading reseller user...1");
-                   c.readResellerUser(
+                   c.readUser(
                            userName,
                            null,
                            null,
@@ -524,7 +524,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                    String userKey = UUID.randomUUID().toString();
                    final boolean userAdmin
                    = ThreadLocalRandom.current().nextBoolean();
-                   c.updateResellerUser(
+                   c.updateUser(
                            userName,
                            userKey,
                            null,
@@ -541,7 +541,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         accept(true,
                c -> {
                    logger.debug("------------------ reading reseller user...2");
-                   c.readResellerUser(
+                   c.readUser(
                            userName,
                            null,
                            null,
@@ -555,7 +555,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         accept(true,
                c -> {
                    logger.debug("------------------ deleting reseller user...");
-                   c.deleteResellerUser(
+                   c.deleteUser(
                            userName,
                            null,
                            null,
