@@ -149,15 +149,15 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         return metaHeader(remove, "Object", tokens);
     }
 
-    public static String resellerUrl(final String storageUrl,
-                                     final String resellerAccount) {
+    public static String accountUrl(final String storageUrl,
+                                    final String accountName) {
         try {
             final URL url
                     = new URL(requireNonNull(storageUrl, "null storageUrl"));
             final String protocol = url.getProtocol();
             final String authority = url.getAuthority();
             return protocol + "://" + authority + "/auth/v2/"
-                   + requireNonNull(resellerAccount, "null resellerAccount");
+                   + requireNonNull(accountName, "null accountName");
         } catch (final MalformedURLException murle) {
             throw new StorageClientException(murle);
         }
@@ -1072,11 +1072,11 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
             Map<String, List<Object>> params, Map<String, List<Object>> headers,
             Function<ResponseType, R> function);
 
-    public <R> R readResellerAccount(
+    public <R> R readAccount(
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiFunction<ResponseType, ClientType, R> function) {
-        return readAccount(
+        return StorageClient.this.readAccount(
                 params,
                 headers,
                 r -> {
@@ -1089,7 +1089,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final Consumer<ResponseType> consumer) {
-        return readAccount(
+        return StorageClient.this.readAccount(
                 params,
                 headers,
                 r -> {
@@ -1103,7 +1103,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiConsumer<ResponseType, ClientType> consumer) {
-        return readAccount(
+        return StorageClient.this.readAccount(
                 params,
                 headers,
                 r -> {
@@ -1227,12 +1227,12 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
             Map<String, List<Object>> headers,
             Function<ResponseType, R> function);
 
-    public <R> R deleteResellerUser(
+    public <R> R deleteUser(
             final String userName,
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiFunction<ResponseType, ClientType, R> function) {
-        return deleteUser(
+        return StorageClient.this.deleteUser(
                 userName,
                 params,
                 headers,
@@ -1247,7 +1247,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final Consumer<ResponseType> consumer) {
-        return deleteUser(
+        return StorageClient.this.deleteUser(
                 userName,
                 params,
                 headers,
@@ -1263,7 +1263,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiConsumer<ResponseType, ClientType> consumer) {
-        return deleteUser(
+        return StorageClient.this.deleteUser(
                 userName,
                 params,
                 headers,
@@ -1314,7 +1314,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     protected void setStorageUrl(final String storageUrl) {
         this.storageUrl = requireNonNull(storageUrl, "null storageUrl");
         if (accountName != null) {
-            accountUrl = resellerUrl(storageUrl, accountName);
+            accountUrl = accountUrl(storageUrl, accountName);
         }
     }
 

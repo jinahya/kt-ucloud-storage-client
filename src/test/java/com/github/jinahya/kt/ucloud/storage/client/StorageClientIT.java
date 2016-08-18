@@ -132,8 +132,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         clientInstantiated(clientInstance);
         logger.debug("client.authUser: {}", clientInstance.getAuthUser());
         logger.debug("client.authKey: {}", clientInstance.getAuthKey());
-        logger.debug("client.resellerAccount: {}",
-                     clientInstance.getAccountName());
+        logger.debug("client.accountName: {}", clientInstance.getAccountName());
         clientInstance.authenticateUser(
                 false,
                 r -> {
@@ -142,8 +141,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         );
         logger.debug("client authenticted");
         logger.debug("client.storageUrl: {}", clientInstance.getStorageUrl());
-        logger.debug("client.resellerAccountUrl: {}",
-                     clientInstance.getAccountUrl());
+        logger.debug("client.accountUrl: {}", clientInstance.getAccountUrl());
     }
 
     protected abstract void assertSuccesfulAuthentication(
@@ -164,32 +162,32 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
     protected void clientNullifying(final ClientType client) {
     }
 
-    protected <R> R apply(final boolean reseller,
+    protected <R> R apply(final boolean account,
                           final Function<ClientType, R> function) {
-        if (reseller ^ clientInstance.getAccountName() != null) {
+        if (account ^ clientInstance.getAccountName() != null) {
             throw new SkipException("skipping...");
         }
         return function.apply(clientInstance);
     }
 
-    protected <U, R> R apply(final boolean reseller,
+    protected <U, R> R apply(final boolean account,
                              final BiFunction<ClientType, U, R> function,
                              final Supplier<U> u) {
-        return apply(reseller, c -> function.apply(c, u.get()));
+        return apply(account, c -> function.apply(c, u.get()));
     }
 
-    protected void accept(final boolean reseller,
+    protected void accept(final boolean account,
                           final Consumer<ClientType> consumer) {
-        apply(reseller, c -> {
+        apply(account, c -> {
           consumer.accept(c);
           return null;
       });
     }
 
-    protected <U> void accept(final boolean reseller,
+    protected <U> void accept(final boolean account,
                               final BiConsumer<ClientType, U> consumer,
                               final Supplier<U> u) {
-        accept(reseller, c -> consumer.accept(c, u.get()));
+        accept(account, c -> consumer.accept(c, u.get()));
     }
 
     protected Family family(ResponseType response) {
@@ -460,13 +458,13 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         );
     }
 
-    // ------------------------------------------------------- /reseller/account
+    // ---------------------------------------------------------------- /account
     @Test
-    public void testResellerAccount() {
-        logger.debug("--------------------------- testing reseller account...");
+    public void testAccount() {
+        logger.debug("----------------------------------- testing  account...");
         accept(true,
                c -> {
-                   logger.debug("---------------- reading reseller account...");
+                   logger.debug("------------------------- reading account...");
                    c.readAccount(
                            null,
                            null,
@@ -479,15 +477,15 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         );
     }
 
-    // -------------------------------------------------- /reseller/account/user
+    // ----------------------------------------------------------- /account/user
     @Test
-    public void testResellerUser() {
-        logger.debug("------------------------------ testing reseller user...");
+    public void testUser() {
+        logger.debug("--------------------------------------- testing user...");
         final String userName = UUID.randomUUID().toString();
 
         accept(true,
                c -> {
-                   logger.debug("----------------- updating reseller user...1");
+                   logger.debug("-------------------------- updating user...1");
                    final String userKey = UUID.randomUUID().toString();
                    final boolean userAdmin
                    = ThreadLocalRandom.current().nextBoolean();
@@ -506,7 +504,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         sleep();
         accept(true,
                c -> {
-                   logger.debug("------------------ reading reseller user...1");
+                   logger.debug("--------------------------- reading user...1");
                    c.readUser(
                            userName,
                            null,
@@ -520,7 +518,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         );
         accept(true,
                c -> {
-                   logger.debug("----------------- updating reseller user...2");
+                   logger.debug("-------------------------- updating user...2");
                    String userKey = UUID.randomUUID().toString();
                    final boolean userAdmin
                    = ThreadLocalRandom.current().nextBoolean();
@@ -540,7 +538,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         sleep();
         accept(true,
                c -> {
-                   logger.debug("------------------ reading reseller user...2");
+                   logger.debug("--------------------------- reading user...2");
                    c.readUser(
                            userName,
                            null,
@@ -554,7 +552,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         );
         accept(true,
                c -> {
-                   logger.debug("------------------ deleting reseller user...");
+                   logger.debug("--------------------------- deleting user...");
                    c.deleteUser(
                            userName,
                            null,

@@ -121,7 +121,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
      * @param params query parameters; may be {@code null}
      * @return a web target
      */
-    public static WebTarget targetAccount(
+    public static WebTarget targetStorage(
             final Client client, final String storageUrl,
             final MultivaluedMap<String, Object> params) {
         WebTarget target = client.target(storageUrl);
@@ -144,11 +144,11 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
      * @param authToken an authorization token
      * @return a builder.
      */
-    public static Invocation.Builder buildAccount(
+    public static Invocation.Builder buildStorage(
             final Client client, final String storageUrl,
             final MultivaluedMap<String, Object> params,
             final String authToken) {
-        return targetAccount(client, storageUrl, params)
+        return targetStorage(client, storageUrl, params)
                 .request()
                 .header(HEADER_X_AUTH_TOKEN, authToken);
     }
@@ -168,7 +168,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
             final String containerName,
             final MultivaluedMap<String, Object> params) {
         if (ThreadLocalRandom.current().nextBoolean()) {
-            return targetAccount(client, storageUrl, params)
+            return targetStorage(client, storageUrl, params)
                     .path(containerName);
         }
         WebTarget target = client.target(storageUrl).path(containerName);
@@ -252,11 +252,11 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
                 .header(HEADER_X_AUTH_TOKEN, authToken);
     }
 
-    // ------------------------------------------------------- /reseller/account
-    public static WebTarget targetResellerAccount(
-            final Client client, final String resellerUrl,
+    // ---------------------------------------------------------------- /account
+    public static WebTarget targetAccount(
+            final Client client, final String accountUrl,
             final MultivaluedMap<String, Object> params) {
-        WebTarget target = client.target(resellerUrl);
+        WebTarget target = client.target(accountUrl);
         if (params != null) {
             for (final Entry<String, List<Object>> entry : params.entrySet()) {
                 final String name = entry.getKey();
@@ -267,31 +267,31 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
         return target;
     }
 
-    public static Invocation.Builder buildResellerAccount(
-            final Client client, final String resellerUrl,
+    public static Invocation.Builder buildAccount(
+            final Client client, final String accountUrl,
             final MultivaluedMap<String, Object> params,
             final String authAdminUser, final String authAdminKey) {
-        return targetResellerAccount(client, resellerUrl, params)
+        return targetAccount(client, accountUrl, params)
                 .request()
                 .header(HEADER_X_AUTH_ADMIN_USER, authAdminUser)
                 .header(HEADER_X_AUTH_ADMIN_KEY, authAdminKey);
     }
 
-    // -------------------------------------------------- /reseller/account/user
-    public static WebTarget targetResellerUser(
-            final Client client, final String resellerStorageUrl,
+    // ----------------------------------------------------------- /account/user
+    public static WebTarget targetUser(
+            final Client client, final String accountUrl,
             final String userName,
             final MultivaluedMap<String, Object> params) {
-        return targetResellerAccount(client, resellerStorageUrl, params)
+        return targetAccount(client, accountUrl, params)
                 .path(userName);
     }
 
-    public static Invocation.Builder buildResellerUser(
-            final Client client, final String resellerAccountUrl,
+    public static Invocation.Builder buildUser(
+            final Client client, final String accountUrl,
             final String userName,
             final MultivaluedMap<String, Object> params,
             final String authAdminUser, final String authAdminKey) {
-        return targetResellerUser(client, resellerAccountUrl, userName, params)
+        return targetUser(client, accountUrl, userName, params)
                 .request()
                 .header(HEADER_X_AUTH_ADMIN_USER, authAdminUser)
                 .header(HEADER_X_AUTH_ADMIN_KEY, authAdminKey);
@@ -397,7 +397,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
                              final Function<Response, R> function) {
         final Client client = getClient();
         try {
-            Invocation.Builder builder = buildAccount(
+            Invocation.Builder builder = buildStorage(
                     client, getStorageUrl(), params, getAuthToken());
             if (headers != null) {
                 headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
@@ -430,12 +430,12 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
      * @param function a function to be applied with the server response
      * @return the value {@code function} results
      */
-    public <R> R readAccount(final MultivaluedMap<String, Object> params,
+    public <R> R readStorage(final MultivaluedMap<String, Object> params,
                              final MultivaluedMap<String, Object> headers,
                              final Function<Response, R> function) {
         final Client client = getClient();
         try {
-            Invocation.Builder builder = buildAccount(
+            Invocation.Builder builder = buildStorage(
                     client, getStorageUrl(), params, getAuthToken());
             if (headers != null) {
                 headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
@@ -456,7 +456,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
     public <R> R readStorage(final Map<String, List<Object>> params,
                              final Map<String, List<Object>> headers,
                              final Function<Response, R> function) {
-        return readAccount(multivalued(params), multivalued(headers), function);
+        return readStorage(multivalued(params), multivalued(headers), function);
     }
 
     public <R> R configureStorage(final MultivaluedMap<String, Object> params,
@@ -464,7 +464,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
                                   final Function<Response, R> function) {
         final Client client = getClient();
         try {
-            Invocation.Builder builder = buildAccount(
+            Invocation.Builder builder = buildStorage(
                     client, getStorageUrl(), params, getAuthToken());
             if (headers != null) {
                 headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
@@ -864,14 +864,15 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
                             multivalued(headers), function);
     }
 
-    // ------------------------------------------------------- /reseller/account
-    public <R> R readResellerAccount(
+    // ---------------------------------------------------------------- /account
+    public <R> R readAccount(
             final MultivaluedMap<String, Object> params,
             final MultivaluedMap<String, Object> headers,
             final Function<Response, R> function) {
         final Client client = getClient();
         try {
-            final Invocation.Builder builder = buildResellerAccount(client, accountUrl(), params, authUser, authKey);
+            final Invocation.Builder builder = buildAccount(
+                    client, accountUrl(), params, authUser, authKey);
             if (headers != null) {
                 headers.putSingle(HEADER_X_AUTH_ADMIN_USER, authUser);
                 headers.putSingle(HEADER_X_AUTH_ADMIN_KEY, authKey);
@@ -892,18 +893,19 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
     public <R> R readAccount(final Map<String, List<Object>> params,
                              final Map<String, List<Object>> headers,
                              final Function<Response, R> function) {
-        return readResellerAccount(multivalued(params), multivalued(headers),
-                                   function);
+        return readAccount(multivalued(params), multivalued(headers),
+                           function);
     }
 
-    // -------------------------------------------------- /reseller/account/user
-    public <R> R readUer(final String userName,
-                         final MultivaluedMap<String, Object> params,
-                         final MultivaluedMap<String, Object> headers,
-                         final Function<Response, R> function) {
+    // ----------------------------------------------------------- /account/user
+    public <R> R readUser(final String userName,
+                          final MultivaluedMap<String, Object> params,
+                          final MultivaluedMap<String, Object> headers,
+                          final Function<Response, R> function) {
         final Client client = getClient();
         try {
-            final Invocation.Builder builder = buildResellerUser(client, accountUrl(), userName, params, authUser, authKey);
+            final Invocation.Builder builder = buildUser(
+                    client, accountUrl(), userName, params, authUser, authKey);
             if (headers != null) {
                 headers.putSingle(HEADER_X_AUTH_ADMIN_USER, authUser);
                 headers.putSingle(HEADER_X_AUTH_ADMIN_KEY, authKey);
@@ -925,8 +927,8 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
                           final Map<String, List<Object>> params,
                           final Map<String, List<Object>> headers,
                           final Function<Response, R> function) {
-        return readUser(userName, multivalued(params),
-                        multivalued(headers), function);
+        return readUser(userName, multivalued(params), multivalued(headers),
+                        function);
     }
 
     public <R> R updateUser(final String userName, final String userKey,
@@ -936,8 +938,8 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
                             final Function<Response, R> function) {
         final Client client = getClient();
         try {
-            Invocation.Builder builder = buildResellerUser(client, accountUrl(), userName, params, authUser,
-                                                           authKey);
+            Invocation.Builder builder = buildUser(
+                    client, accountUrl(), userName, params, authUser, authKey);
             if (headers == null) {
                 headers = new MultivaluedHashMap<>();
             }
@@ -969,14 +971,13 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
                           multivalued(headers), function);
     }
 
-    public <R> R deleteUser(
-            final String userName,
-            final MultivaluedMap<String, Object> params,
-            final MultivaluedMap<String, Object> headers,
-            final Function<Response, R> function) {
+    public <R> R deleteUser(final String userName,
+                            final MultivaluedMap<String, Object> params,
+                            final MultivaluedMap<String, Object> headers,
+                            final Function<Response, R> function) {
         final Client client = getClient();
         try {
-            final Invocation.Builder builder = buildResellerUser(
+            final Invocation.Builder builder = buildUser(
                     client, accountUrl(), userName, params, authUser, authKey);
             if (headers != null) {
                 headers.putSingle(HEADER_X_AUTH_ADMIN_USER, authUser);

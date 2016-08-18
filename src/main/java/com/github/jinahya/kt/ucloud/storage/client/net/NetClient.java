@@ -126,27 +126,27 @@ public class NetClient
         return status(connection, (c, p) -> p);
     }
 
-    // ---------------------------------------------------------------- /account
-    public static StringBuilder buildAccount(
+    // ---------------------------------------------------------------- /storage
+    public static StringBuilder buildStorage(
             final String storageUrl,
             final Map<String, List<Object>> params) {
         return params(new StringBuilder(storageUrl), params);
     }
 
-    public static URL locateAccount(
+    public static URL locateStorage(
             final String storageUrl,
             final Map<String, List<Object>> params)
             throws MalformedURLException {
-        return new URL(buildAccount(storageUrl, params).toString());
+        return new URL(buildStorage(storageUrl, params).toString());
     }
 
-    public static URLConnection openAccount(
+    public static URLConnection openStorage(
             final String storageUrl, final Map<String, List<Object>> params)
             throws IOException {
-        return locateAccount(storageUrl, params).openConnection();
+        return locateStorage(storageUrl, params).openConnection();
     }
 
-    // ------------------------------------------------------ /account/container
+    // ------------------------------------------------------ /storage/container
     public static StringBuilder buildContainer(
             final String storageUrl, final String containerName,
             final Map<String, List<Object>> params) {
@@ -173,7 +173,7 @@ public class NetClient
                 .openConnection();
     }
 
-    // ----------------------------------------------- /account/container/object
+    // ----------------------------------------------- /storage/container/object
     public static StringBuilder buildObject(
             final String storageUrl, final String containerName,
             final String objectName, final Map<String, List<Object>> params) {
@@ -202,63 +202,62 @@ public class NetClient
                 .openConnection();
     }
 
-    // ------------------------------------------------------- /reseller/account
-    public static StringBuilder buildResellerAccount(
-            final String resellerAccountUrl,
+    // ---------------------------------------------------------------- /account
+    public static StringBuilder buildAccount(
+            final String accountUrl,
             final Map<String, List<Object>> params) {
-        final StringBuilder builder = new StringBuilder(resellerAccountUrl);
+        final StringBuilder builder = new StringBuilder(accountUrl);
         params(builder, params);
         return builder;
     }
 
-    public static URL locateResellerAccount(
-            final String resellerAccountUrl,
+    public static URL locateAccount(
+            final String accountUrl,
             final Map<String, List<Object>> params)
             throws MalformedURLException {
-        final StringBuilder builder
-                = buildResellerAccount(resellerAccountUrl, params);
+        final StringBuilder builder = buildAccount(accountUrl, params);
         final URL locator = new URL(builder.toString());
         return locator;
     }
 
-    public static URLConnection openResellerAccount(
-            final String resellerAccountUrl,
+    public static URLConnection openAccount(
+            final String accountUrl,
             final Map<String, List<Object>> params, final String authUser,
             final String authKey)
             throws IOException {
-        final URL locator = locateResellerAccount(resellerAccountUrl, params);
+        final URL locator = locateAccount(accountUrl, params);
         final URLConnection connection = locator.openConnection();
         connection.setRequestProperty(HEADER_X_AUTH_ADMIN_USER, authUser);
         connection.setRequestProperty(HEADER_X_AUTH_ADMIN_KEY, authKey);
         return connection;
     }
 
-    // -------------------------------------------------- /reseller/account/user
-    public static StringBuilder buildResellerUser(
-            final String resellerUrl, final String userName,
+    // ----------------------------------------------------------- /account/user
+    public static StringBuilder buildUser(
+            final String accountUrl, final String userName,
             final Map<String, List<Object>> params) {
         final StringBuilder builder
-                = new StringBuilder(resellerUrl)
+                = new StringBuilder(accountUrl)
                 .append("/")
                 .append(userName);
         params(builder, params);
         return builder;
     }
 
-    public static URL locateResellerUser(
-            final String resellerUrl, final String userName,
+    public static URL locateUser(
+            final String accountUrl, final String userName,
             final Map<String, List<Object>> params)
             throws MalformedURLException {
         final StringBuilder builder
-                = buildResellerUser(resellerUrl, userName, params);
+                = buildUser(accountUrl, userName, params);
         final URL locator = new URL(builder.toString());
         return locator;
     }
 
     /**
-     * Opens a URLConnection for reseller user.
+     * Opens a URLConnection for user.
      *
-     * @param resellerUrl base URL
+     * @param accountUrl base URL
      * @param userName username
      * @param params query parameters
      * @param authUser the value for {@link #HEADER_X_AUTH_ADMIN_USER}
@@ -266,12 +265,12 @@ public class NetClient
      * @return an opened URLConnection
      * @throws IOException if an I/O error occurs.
      */
-    public static URLConnection openResellerUser(
-            final String resellerUrl, final String userName,
+    public static URLConnection openUser(
+            final String accountUrl, final String userName,
             final Map<String, List<Object>> params, final String authUser,
             final String authKey)
             throws IOException {
-        final URL locator = locateResellerUser(resellerUrl, userName, params);
+        final URL locator = locateUser(accountUrl, userName, params);
         final URLConnection connection = locator.openConnection();
         connection.setRequestProperty(HEADER_X_AUTH_ADMIN_USER, authUser);
         connection.setRequestProperty(HEADER_X_AUTH_ADMIN_KEY, authKey);
@@ -343,7 +342,7 @@ public class NetClient
                              final Function<URLConnection, R> function) {
         try {
             final HttpURLConnection connection
-                    = (HttpURLConnection) openAccount(getStorageUrl(), params);
+                    = (HttpURLConnection) openStorage(getStorageUrl(), params);
             connection.setRequestMethod("HEAD");
             if (headers == null) {
                 headers = new HashMap<>();
@@ -368,7 +367,7 @@ public class NetClient
                              Map<String, List<Object>> headers,
                              final Function<URLConnection, R> function) {
         try {
-            final HttpURLConnection connection = (HttpURLConnection) openAccount(
+            final HttpURLConnection connection = (HttpURLConnection) openStorage(
                     getStorageUrl(), params);
             connection.setRequestMethod("GET");
             if (headers == null) {
@@ -395,7 +394,7 @@ public class NetClient
                                   final Function<URLConnection, R> function) {
         try {
             final HttpURLConnection connection
-                    = (HttpURLConnection) openAccount(
+                    = (HttpURLConnection) openStorage(
                             getStorageUrl(), params);
             connection.setRequestMethod("POST");
             if (headers == null) {
@@ -705,7 +704,7 @@ public class NetClient
         }
     }
 
-    // ------------------------------------------------------- /reseller/account
+    // ---------------------------------------------------------------- /account
     @Override
     public <R> R readAccount(
             final Map<String, List<Object>> params,
@@ -713,7 +712,7 @@ public class NetClient
             final Function<URLConnection, R> function) {
         try {
             final HttpURLConnection connection
-                    = (HttpURLConnection) openResellerAccount(
+                    = (HttpURLConnection) openAccount(
                             accountUrl(), params, authUser, authKey);
             connection.setRequestMethod("GET");
             if (headers != null) {
@@ -734,7 +733,7 @@ public class NetClient
         }
     }
 
-    // -------------------------------------------------- /reseller/account/user
+    // ----------------------------------------------------------- /account/user
     @Override
     public <R> R readUser(final String userName,
                           final Map<String, List<Object>> params,
@@ -742,7 +741,7 @@ public class NetClient
                           final Function<URLConnection, R> function) {
         try {
             final HttpURLConnection connection
-                    = (HttpURLConnection) openResellerUser(
+                    = (HttpURLConnection) openUser(
                             accountUrl(), userName, params, authUser, authKey);
             connection.setRequestMethod("GET");
             headers(connection, headers);
@@ -767,7 +766,7 @@ public class NetClient
                             final Function<URLConnection, R> function) {
         try {
             final HttpURLConnection connection
-                    = (HttpURLConnection) openResellerUser(
+                    = (HttpURLConnection) openUser(
                             accountUrl(), userName, params, authUser, authKey);
             connection.setRequestMethod("PUT");
             connection.setRequestProperty(HEADER_X_AUTH_USER_KEY, userKey);
@@ -796,7 +795,7 @@ public class NetClient
                             final Function<URLConnection, R> function) {
         try {
             final HttpURLConnection connection
-                    = (HttpURLConnection) openResellerUser(
+                    = (HttpURLConnection) openUser(
                             accountUrl(), userName, params, authUser, authKey);
             connection.setRequestMethod("DELETE");
             headers(connection, headers);
