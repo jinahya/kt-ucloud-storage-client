@@ -1063,7 +1063,8 @@ public class StorageClientWsRs
         this.clientSupplier = clientSupplier;
     }
 
-    public StorageClientWsRs clientSupplier(final Supplier<Client> clientSupplier) {
+    public StorageClientWsRs clientSupplier(
+            final Supplier<Client> clientSupplier) {
         setClientSupplier(clientSupplier);
         return this;
     }
