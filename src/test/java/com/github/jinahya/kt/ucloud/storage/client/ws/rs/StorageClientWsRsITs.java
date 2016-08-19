@@ -36,9 +36,9 @@ import static org.testng.Assert.assertTrue;
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-public abstract class WsRsClientITs {
+public abstract class StorageClientWsRsITs {
 
-    private static final Logger logger = getLogger(WsRsClientITs.class);
+    private static final Logger logger = getLogger(StorageClientWsRsITs.class);
 
     static void status(final StatusType statusInfo, final Family expectedFamily,
                        final Status... expectedStatuses) {

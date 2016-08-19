@@ -1273,6 +1273,51 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
+    // -------------------------------------------------------- /account/.groups
+    public abstract <R> R readGroups(Map<String, List<Object>> params,
+                                     Map<String, List<Object>> headers,
+                                     Function<ResponseType, R> function);
+
+    public <R> R readGroups(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiFunction<ResponseType, ClientType, R> function) {
+        return readGroups(
+                params,
+                headers,
+                r -> {
+                    return function.apply(r, (ClientType) this);
+                }
+        );
+    }
+
+    public ClientType readGroups(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Consumer<ResponseType> consumer) {
+        return readGroups(
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r);
+                    return (ClientType) this;
+                }
+        );
+    }
+
+    public ClientType readGroups(
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final BiConsumer<ResponseType, ClientType> consumer) {
+        return readGroups(
+                params,
+                headers,
+                r -> {
+                    consumer.accept(r, (ClientType) this);
+                }
+        );
+    }
+
     // ----------------------------------------------------------------- authUrl
     public String getAuthUrl() {
         return authUrl;

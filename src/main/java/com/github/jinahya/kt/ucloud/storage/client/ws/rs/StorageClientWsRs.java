@@ -50,27 +50,11 @@ import javax.ws.rs.core.Response.StatusType;
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
+public class StorageClientWsRs
+        extends StorageClient<StorageClientWsRs, Entity<?>, Response> {
 
-    private static final Logger logger = getLogger(WsRsClient.class.getName());
-
-    public static <R> R statusInfo(final Response response,
-                                   final Function<StatusType, R> function) {
-        return function.apply(response.getStatusInfo());
-    }
-
-    public static Family statusFamily(final Response response) {
-        return statusInfo(response, StatusType::getFamily);
-    }
-
-    public static int statusCode(final Response response) {
-        return statusInfo(response, StatusType::getStatusCode);
-    }
-
-    @Deprecated
-    public static String reasonPhrase(final Response response) {
-        return statusInfo(response, StatusType::getReasonPhrase);
-    }
+    private static final Logger logger
+            = getLogger(StorageClientWsRs.class.getName());
 
     /**
      * Returns a newly created instance of {@link MultivaluedMap} containing
@@ -93,6 +77,24 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
         final MultivaluedMap<K, V> multi = new MultivaluedHashMap<>(map.size());
         multi.putAll(map);
         return multi;
+    }
+
+    public static <R> R statusInfo(final Response response,
+                                   final Function<StatusType, R> function) {
+        return function.apply(response.getStatusInfo());
+    }
+
+    public static Family statusFamily(final Response response) {
+        return statusInfo(response, StatusType::getFamily);
+    }
+
+    public static int statusCode(final Response response) {
+        return statusInfo(response, StatusType::getStatusCode);
+    }
+
+    @Deprecated
+    public static String reasonPhrase(final Response response) {
+        return statusInfo(response, StatusType::getReasonPhrase);
     }
 
     // -------------------------------------------------------------------------
@@ -253,6 +255,23 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
     }
 
     // ---------------------------------------------------------------- /account
+    /**
+     * Put {@link #HEADER_X_AUTH_ADMIN_USER} and
+     * {@link #HEADER_X_AUTH_ADMIN_KEY} on given invocation builder.
+     *
+     * @param invocationBuilder the invocation builder
+     * @param authUser the value for {@link #HEADER_X_AUTH_ADMIN_USER}
+     * @param authKey the value for {@link #HEADER_X_AUTH_ADMIN_KEY}
+     * @return given invocation builder
+     */
+    public static Invocation.Builder headersAuthAdminCredential(
+            final Invocation.Builder invocationBuilder, final String authUser,
+            final String authKey) {
+        return invocationBuilder
+                .header(HEADER_X_AUTH_ADMIN_USER, authUser)
+                .header(HEADER_X_AUTH_ADMIN_KEY, authKey);
+    }
+
     public static WebTarget targetAccount(
             final Client client, final String accountUrl,
             final MultivaluedMap<String, Object> params) {
@@ -270,11 +289,11 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
     public static Invocation.Builder buildAccount(
             final Client client, final String accountUrl,
             final MultivaluedMap<String, Object> params,
-            final String authAdminUser, final String authAdminKey) {
+            final String authUser, final String authKey) {
         return targetAccount(client, accountUrl, params)
                 .request()
-                .header(HEADER_X_AUTH_ADMIN_USER, authAdminUser)
-                .header(HEADER_X_AUTH_ADMIN_KEY, authAdminKey);
+                .header(HEADER_X_AUTH_ADMIN_USER, authUser)
+                .header(HEADER_X_AUTH_ADMIN_KEY, authKey);
     }
 
     // ----------------------------------------------------------- /account/user
@@ -282,19 +301,18 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
             final Client client, final String accountUrl,
             final String userName,
             final MultivaluedMap<String, Object> params) {
-        return targetAccount(client, accountUrl, params)
-                .path(userName);
+        return targetAccount(client, accountUrl, params).path(userName);
     }
 
     public static Invocation.Builder buildUser(
             final Client client, final String accountUrl,
             final String userName,
             final MultivaluedMap<String, Object> params,
-            final String authAdminUser, final String authAdminKey) {
+            final String authUser, final String authKey) {
         return targetUser(client, accountUrl, userName, params)
                 .request()
-                .header(HEADER_X_AUTH_ADMIN_USER, authAdminUser)
-                .header(HEADER_X_AUTH_ADMIN_KEY, authAdminKey);
+                .header(HEADER_X_AUTH_ADMIN_USER, authUser)
+                .header(HEADER_X_AUTH_ADMIN_KEY, authKey);
     }
 
     // -------------------------------------------------------------------------
@@ -309,10 +327,10 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
         }
     }
 
-    public static WsRsClient lines(
+    public static StorageClientWsRs lines(
             final Response response, final Charset charset,
-            final BiConsumer<String, WsRsClient> consumer,
-            final WsRsClient client) {
+            final BiConsumer<String, StorageClientWsRs> consumer,
+            final StorageClientWsRs client) {
         try {
             try (InputStream stream = response.readEntity(InputStream.class)) {
                 return lines(stream, charset, consumer, client);
@@ -333,10 +351,10 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
         }
     }
 
-    public static WsRsClient lines(
+    public static StorageClientWsRs lines(
             final Response response,
-            final BiConsumer<String, WsRsClient> consumer,
-            final WsRsClient client) {
+            final BiConsumer<String, StorageClientWsRs> consumer,
+            final StorageClientWsRs client) {
         try {
             try (Reader reader = response.readEntity(Reader.class)) {
                 return lines(reader, consumer, client);
@@ -354,13 +372,13 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
      * @param authUser the authentication username
      * @param authKey the authentication password
      */
-    public WsRsClient(final String authUrl, final String authUser,
-                      final String authKey) {
+    public StorageClientWsRs(final String authUrl, final String authUser,
+                             final String authKey) {
         super(authUrl, authUser, authKey);
     }
 
     @Deprecated
-    public WsRsClient(final StorageClient client) {
+    public StorageClientWsRs(final StorageClient client) {
         this(client.getStorageUrl(), client.getAuthUser(),
              client.getAuthKey());
         setStorageUrl(client.getStorageUrl());
@@ -372,7 +390,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
     @Override
     public <R> R authenticateUser(final boolean newToken,
                                   final Function<Response, R> function) {
-        return applyClient(c -> {
+        return StorageClientWsRs.this.apply(c -> {
             final Response response = authenticateUser(
                     c, authUrl, authUser, authKey, newToken);
             try {
@@ -1004,6 +1022,38 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
                           function);
     }
 
+    // -------------------------------------------------------- /account/.groups
+    public <R> R readGroups(final MultivaluedMap<String, Object> params,
+                            final MultivaluedMap<String, Object> headers,
+                            final Function<Response, R> function) {
+        final Client client = getClient();
+        try {
+            final WebTarget target
+                    = targetAccount(client, accountUrl(), params)
+                    .path(".groups");
+            final Invocation.Builder builder = target.request();
+            if (headers != null) {
+                builder.headers(headers);
+            }
+            headersAuthAdminCredential(builder, authUser, authKey);
+            final Response response = builder.get();
+            try {
+                return function.apply(response);
+            } finally {
+                response.close();
+            }
+        } finally {
+            client.close();
+        }
+    }
+
+    @Override
+    public <R> R readGroups(final Map<String, List<Object>> params,
+                            final Map<String, List<Object>> headers,
+                            final Function<Response, R> function) {
+        return readGroups(multivalued(params), multivalued(headers), function);
+    }
+
     // ---------------------------------------------------------- clientSupplier
     public Supplier<Client> getClientSupplier() {
         return clientSupplier;
@@ -1013,7 +1063,8 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
         this.clientSupplier = clientSupplier;
     }
 
-    public WsRsClient clientSupplier(final Supplier<Client> clientSupplier) {
+    public StorageClientWsRs clientSupplier(
+            final Supplier<Client> clientSupplier) {
         setClientSupplier(clientSupplier);
         return this;
     }
@@ -1023,7 +1074,7 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
         return getClientSupplier().get();
     }
 
-    protected <R> R applyClient(final Function<Client, R> function) {
+    protected <R> R apply(final Function<Client, R> function) {
         final Client client = getClient();
         try {
             return function.apply(client);
@@ -1032,25 +1083,21 @@ public class WsRsClient extends StorageClient<WsRsClient, Entity<?>, Response> {
         }
     }
 
-    protected <U, R> R applyClient(final BiFunction<Client, U, R> function,
-                                   final Supplier<U> supplier) {
-        return applyClient(c -> {
-            return function.apply(c, supplier.get());
-        });
+    protected <U, R> R apply(final BiFunction<Client, U, R> function,
+                             final Supplier<U> supplier) {
+        return apply(c -> function.apply(c, supplier.get()));
     }
 
-    protected void acceptClient(final Consumer<Client> consumer) {
-        applyClient(c -> {
+    protected StorageClientWsRs accept(final Consumer<Client> consumer) {
+        return apply(c -> {
             consumer.accept(c);
-            return null;
+            return this;
         });
     }
 
-    protected <U> void acceptClient(final BiConsumer<Client, U> consumer,
-                                    final Supplier<U> supplier) {
-        acceptClient(c -> {
-            consumer.accept(c, supplier.get());
-        });
+    protected <U> StorageClientWsRs accept(final BiConsumer<Client, U> consumer,
+                                           final Supplier<U> supplier) {
+        return accept(c -> consumer.accept(c, supplier.get()));
     }
 
     // -------------------------------------------------------------------------
