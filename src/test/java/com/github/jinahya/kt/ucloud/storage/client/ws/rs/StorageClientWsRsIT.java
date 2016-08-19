@@ -16,7 +16,7 @@
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
 import com.github.jinahya.kt.ucloud.storage.client.StorageClientIT;
-import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClient.lines;
+import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.StorageClientWsRs.lines;
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.ws.rs.client.Client;
@@ -37,8 +37,8 @@ import static org.testng.Assert.assertEquals;
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-public class WsRsClientIT
-        extends StorageClientIT<WsRsClient, Entity<?>, Response> {
+public class StorageClientWsRsIT
+        extends StorageClientIT<StorageClientWsRs, Entity<?>, Response> {
 
     private static final Logger logger
             = getLogger(MethodHandles.lookup().lookupClass());
@@ -66,12 +66,12 @@ public class WsRsClientIT
                 });
             };
 
-    public WsRsClientIT() {
-        super(WsRsClient.class);
+    public StorageClientWsRsIT() {
+        super(StorageClientWsRs.class);
     }
 
     @Override
-    protected void clientInstantiated(final WsRsClient client) {
+    protected void clientInstantiated(final StorageClientWsRs client) {
         super.clientInstantiated(client);
         client.setClientSupplier(() -> {
             final Client c = ClientBuilder.newClient();
@@ -93,12 +93,12 @@ public class WsRsClientIT
 
     @Override
     protected int statusCode(Response response) {
-        return WsRsClient.statusCode(response);
+        return StorageClientWsRs.statusCode(response);
     }
 
     @Override
     protected String reasonPhrase(Response response) {
-        return WsRsClient.reasonPhrase(response);
+        return StorageClientWsRs.reasonPhrase(response);
     }
 
     @Override

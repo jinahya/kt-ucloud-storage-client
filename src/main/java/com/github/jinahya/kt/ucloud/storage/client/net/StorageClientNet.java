@@ -40,10 +40,10 @@ import static java.util.stream.Collectors.joining;
  *
  * @author Jin Kwon &lt;onacit at gmail.com&gt;
  */
-public class NetClient
-        extends StorageClient<NetClient, InputStream, URLConnection> {
+public class StorageClientNet
+        extends StorageClient<StorageClientNet, InputStream, URLConnection> {
 
-    private static final Logger logger = getLogger(NetClient.class.getName());
+    private static final Logger logger = getLogger(StorageClientNet.class.getName());
 
     /**
      * Appends given query parameters to specified {@code builder}.
@@ -203,6 +203,25 @@ public class NetClient
     }
 
     // ---------------------------------------------------------------- /account
+    /**
+     * Sets {@link #HEADER_X_AUTH_ADMIN_USER} and
+     * {@link #HEADER_X_AUTH_ADMIN_KEY} as request properties on given
+     * connection.
+     *
+     * @param <T> url connection type parameter
+     * @param connection the connection
+     * @param authUser the value of {@link #HEADER_X_AUTH_ADMIN_USER}
+     * @param authKey the value of {@link #HEADER_X_AUTH_ADMIN_KEY}
+     * @return given connection
+     * @see URLConnection#setRequestProperty(java.lang.String, java.lang.String)
+     */
+    public static <T extends URLConnection> T setXAuthAdminCredential(
+            final T connection, final String authUser, final String authKey) {
+        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_USER, authUser);
+        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_KEY, authKey);
+        return connection;
+    }
+
     public static StringBuilder buildAccount(
             final String accountUrl,
             final Map<String, List<Object>> params) {
@@ -221,14 +240,14 @@ public class NetClient
     }
 
     public static URLConnection openAccount(
-            final String accountUrl,
-            final Map<String, List<Object>> params, final String authUser,
-            final String authKey)
+            final String accountUrl, final Map<String, List<Object>> params,
+            final String authAdminUser, final String authAdminKey)
             throws IOException {
         final URL locator = locateAccount(accountUrl, params);
         final URLConnection connection = locator.openConnection();
-        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_USER, authUser);
-        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_KEY, authKey);
+        setXAuthAdminCredential(connection, authAdminUser, authAdminKey);
+//        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_USER, authAdminUser);
+//        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_KEY, authAdminKey);
         return connection;
     }
 
@@ -260,31 +279,32 @@ public class NetClient
      * @param accountUrl base URL
      * @param userName username
      * @param params query parameters
-     * @param authUser the value for {@link #HEADER_X_AUTH_ADMIN_USER}
-     * @param authKey the value for {@link #HEADER_X_AUTH_ADMIN_KEY}
+     * @param authAdminUser the value for {@link #HEADER_X_AUTH_ADMIN_USER}
+     * @param authAdminKey the value for {@link #HEADER_X_AUTH_ADMIN_KEY}
      * @return an opened URLConnection
      * @throws IOException if an I/O error occurs.
      */
     public static URLConnection openUser(
             final String accountUrl, final String userName,
-            final Map<String, List<Object>> params, final String authUser,
-            final String authKey)
+            final Map<String, List<Object>> params, final String authAdminUser,
+            final String authAdminKey)
             throws IOException {
         final URL locator = locateUser(accountUrl, userName, params);
         final URLConnection connection = locator.openConnection();
-        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_USER, authUser);
-        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_KEY, authKey);
+        setXAuthAdminCredential(connection, authAdminUser, authAdminKey);
+//        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_USER, authAdminUser);
+//        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_KEY, authAdminKey);
         return connection;
     }
 
     // -------------------------------------------------------------------------
-    public NetClient(final String authUrl, final String authUser,
-                     final String authKey) {
+    public StorageClientNet(final String authUrl, final String authUser,
+                            final String authKey) {
         super(authUrl, authUser, authKey);
     }
 
     @Deprecated
-    public NetClient(final StorageClient client) {
+    public StorageClientNet(final StorageClient client) {
         this(client.getAuthUrl(), client.getAuthUser(), client.getAuthKey());
         setStorageUrl(client.getStorageUrl());
         setAuthToken(client.getAuthToken());
@@ -801,6 +821,33 @@ public class NetClient
             headers(connection, headers);
             connection.setDoOutput(false);
             connection.setDoInput(true);
+            connection.connect();
+            try {
+                return function.apply(connection);
+            } finally {
+                connection.disconnect();
+            }
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
+        }
+    }
+
+    // -------------------------------------------------------- /account/.groups
+    @Override
+    public <R> R readGroups(final Map<String, List<Object>> params,
+                            final Map<String, List<Object>> headers,
+                            final Function<URLConnection, R> function) {
+        final StringBuilder builder = params(
+                buildAccount(accountUrl(), null).append('/').append(".groups"),
+                params);
+        try {
+            final URL url = new URL(builder.toString());
+            final HttpURLConnection connection
+                    = (HttpURLConnection) url.openConnection();
+            if (headers != null) {
+                headers(connection, headers);
+            }
+            setXAuthAdminCredential(connection, authUser, authKey);
             connection.connect();
             try {
                 return function.apply(connection);

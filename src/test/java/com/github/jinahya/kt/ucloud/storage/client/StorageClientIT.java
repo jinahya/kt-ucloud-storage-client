@@ -565,6 +565,25 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         );
     }
 
+    // -------------------------------------------------------- /account/.groups
+    @Test
+    public void testGroups() {
+        logger.debug("---------------------------------------- testing groups");
+        accept(true,
+               c -> {
+                   logger.debug("-------------------------- reading groups...");
+                   c.readGroups(
+                           null,
+                           null,
+                           r -> {
+                               assertStatus(r, SUCCESSFUL);
+                               printBody(r);
+                           }
+                   );
+               }
+        );
+    }
+
     protected final Class<ClientType> clientClass;
 
     private transient ClientType clientInstance;

@@ -34,14 +34,14 @@ import static org.testng.Assert.fail;
  *
  * @author Jin Kwon &lt;onacit at gmail.com&gt;
  */
-public class NetClientIT
-        extends StorageClientIT<NetClient, InputStream, URLConnection> {
+public class StorageClientNetIT
+        extends StorageClientIT<StorageClientNet, InputStream, URLConnection> {
 
     private static final Logger logger
             = getLogger(MethodHandles.lookup().lookupClass());
 
-    public NetClientIT() {
-        super(NetClient.class);
+    public StorageClientNetIT() {
+        super(StorageClientNet.class);
     }
 
     @Override
@@ -60,12 +60,12 @@ public class NetClientIT
 
     @Override
     protected int statusCode(final URLConnection response) {
-        return NetClient.statusCode((HttpURLConnection) response);
+        return StorageClientNet.statusCode((HttpURLConnection) response);
     }
 
     @Override
     protected String reasonPhrase(URLConnection response) {
-        return NetClient.reasonPhrase((HttpURLConnection) response);
+        return StorageClientNet.reasonPhrase((HttpURLConnection) response);
     }
 
     @Override
