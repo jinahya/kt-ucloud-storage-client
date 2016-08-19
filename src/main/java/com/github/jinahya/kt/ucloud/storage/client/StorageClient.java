@@ -1076,7 +1076,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiFunction<ResponseType, ClientType, R> function) {
-        return StorageClient.this.readAccount(
+        return readAccount(
                 params,
                 headers,
                 r -> {
@@ -1089,7 +1089,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final Consumer<ResponseType> consumer) {
-        return StorageClient.this.readAccount(
+        return readAccount(
                 params,
                 headers,
                 r -> {
@@ -1103,7 +1103,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiConsumer<ResponseType, ClientType> consumer) {
-        return StorageClient.this.readAccount(
+        return readAccount(
                 params,
                 headers,
                 r -> {
@@ -1232,7 +1232,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiFunction<ResponseType, ClientType, R> function) {
-        return StorageClient.this.deleteUser(
+        return deleteUser(
                 userName,
                 params,
                 headers,
@@ -1247,7 +1247,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final Consumer<ResponseType> consumer) {
-        return StorageClient.this.deleteUser(
+        return deleteUser(
                 userName,
                 params,
                 headers,
@@ -1263,7 +1263,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiConsumer<ResponseType, ClientType> consumer) {
-        return StorageClient.this.deleteUser(
+        return deleteUser(
                 userName,
                 params,
                 headers,
