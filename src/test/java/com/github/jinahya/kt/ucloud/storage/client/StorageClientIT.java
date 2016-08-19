@@ -17,6 +17,7 @@ package com.github.jinahya.kt.ucloud.storage.client;
 
 import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.accountMetaHeader;
 import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.containerMetaHeader;
+import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -24,7 +25,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import static java.util.Objects.requireNonNull;
+import java.util.UUID;
 import static java.util.UUID.randomUUID;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -61,6 +65,20 @@ import org.testng.annotations.Test;
  * @param <ResponseType> response type parameter
  */
 public abstract class StorageClientIT<ClientType extends StorageClient<ClientType, EntityType, ResponseType>, EntityType, ResponseType> {
+
+    private static final Logger logger
+            = getLogger(MethodHandles.lookup().lookupClass());
+
+    private static final long MILLIS = TimeUnit.SECONDS.toMillis(4L);
+
+    protected static void sleep() {
+        logger.debug("------------------------- sleeping for {} ms...", MILLIS);
+        try {
+            Thread.sleep(MILLIS);
+        } catch (final InterruptedException ie) {
+            fail("faield to sleep", ie);
+        }
+    }
 
     protected static void assertStatus(final int actual, final Family family,
                                        final Status... expecteds) {
@@ -111,10 +129,10 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                 .getConstructor(String.class, String.class, String.class)
                 .newInstance(authUrl, authUser, authKey);
         logger.debug("client instantiated: {}", clientInstance);
+        clientInstantiated(clientInstance);
         logger.debug("client.authUser: {}", clientInstance.getAuthUser());
         logger.debug("client.authKey: {}", clientInstance.getAuthKey());
-        logger.debug("client.resellerAccountName: {}",
-                     clientInstance.getResellerAccountName());
+        logger.debug("client.accountName: {}", clientInstance.getAccountName());
         clientInstance.authenticateUser(
                 false,
                 r -> {
@@ -123,12 +141,14 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         );
         logger.debug("client authenticted");
         logger.debug("client.storageUrl: {}", clientInstance.getStorageUrl());
-        logger.debug("client.resellerAccountUrl: {}",
-                     clientInstance.getResellerAccountUrl());
+        logger.debug("client.accountUrl: {}", clientInstance.getAccountUrl());
     }
 
     protected abstract void assertSuccesfulAuthentication(
             ResponseType response);
+
+    protected void clientInstantiated(final ClientType client) {
+    }
 
     @AfterClass
     public void doAfterClass() {
@@ -139,32 +159,35 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         logger.debug("=======================================================");
     }
 
-    protected <R> R apply(final boolean reseller,
+    protected void clientNullifying(final ClientType client) {
+    }
+
+    protected <R> R apply(final boolean account,
                           final Function<ClientType, R> function) {
-        if (reseller ^ clientInstance.getResellerAccountName() != null) {
+        if (account ^ clientInstance.getAccountName() != null) {
             throw new SkipException("skipping...");
         }
         return function.apply(clientInstance);
     }
 
-    protected <U, R> R apply(final boolean reseller,
+    protected <U, R> R apply(final boolean account,
                              final BiFunction<ClientType, U, R> function,
                              final Supplier<U> u) {
-        return apply(reseller, c -> function.apply(c, u.get()));
+        return apply(account, c -> function.apply(c, u.get()));
     }
 
-    protected void accept(final boolean reseller,
+    protected void accept(final boolean account,
                           final Consumer<ClientType> consumer) {
-        apply(reseller, c -> {
+        apply(account, c -> {
           consumer.accept(c);
           return null;
       });
     }
 
-    protected <U> void accept(final boolean reseller,
+    protected <U> void accept(final boolean account,
                               final BiConsumer<ClientType, U> consumer,
                               final Supplier<U> u) {
-        accept(reseller, c -> consumer.accept(c, u.get()));
+        accept(account, c -> consumer.accept(c, u.get()));
     }
 
     protected Family family(ResponseType response) {
@@ -190,14 +213,14 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
 
     // ---------------------------------------------------------------- /account
     @Test
-    public void testAccount() {
-        logger.debug("------------------------------------ testing account...");
+    public void testStorage() {
+        logger.debug("------------------------------------ testing storage...");
         accept(false,
                c -> {
                    logger.debug("------------------------ peeking account...");
                    final Map<String, List<Object>> headers = new HashMap<>();
                    headers.put(ACCEPT, singletonList(WILDCARD));
-                   c.peekAccount(
+                   c.peekStorage(
                            null,
                            headers,
                            r -> {
@@ -213,7 +236,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                        final MultivaluedMap<String, Object> headers
                        = new MultivaluedHashMap<>();
                        headers.putSingle(ACCEPT, a);
-                       c.readAccount(
+                       c.readStorage(
                                null,
                                headers,
                                r -> {
@@ -233,7 +256,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                        = new MultivaluedHashMap<>();
                        headers.putSingle(
                                accountMetaHeader(false, tokens), "irrelevant");
-                       c.configureAccount(
+                       c.configureStorage(
                                null,
                                headers,
                                r -> {
@@ -249,7 +272,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                        = new MultivaluedHashMap<>();
                        headers.putSingle(
                                accountMetaHeader(true, tokens), "irrelevant");
-                       c.configureAccount(
+                       c.configureStorage(
                                null,
                                headers,
                                r -> {
@@ -291,7 +314,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                        = new MultivaluedHashMap<>();
                        headers.putSingle(containerMetaHeader(false, tokens),
                                          "irrelevant");
-                       c.configureAccount(
+                       c.configureStorage(
                                null,
                                headers,
                                r -> {
@@ -307,7 +330,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                        = new MultivaluedHashMap<>();
                        headers.putSingle(
                                containerMetaHeader(true, tokens), "irrelevant");
-                       c.configureAccount(
+                       c.configureStorage(
                                null,
                                headers,
                                r -> {
@@ -435,14 +458,14 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         );
     }
 
-    // ------------------------------------------------------- /reseller/account
+    // ---------------------------------------------------------------- /account
     @Test
-    public void testResellerAccount() {
-        logger.debug("--------------------------- testing reseller account...");
+    public void testAccount() {
+        logger.debug("----------------------------------- testing  account...");
         accept(true,
                c -> {
-                   logger.debug("---------------- reading reseller account...");
-                   c.readResellerAccount(
+                   logger.debug("------------------------- reading account...");
+                   c.readAccount(
                            null,
                            null,
                            r -> {
@@ -454,8 +477,93 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         );
     }
 
-    // -------------------------------------------------- /reseller/account/user
-    protected final Logger logger = getLogger(getClass());
+    // ----------------------------------------------------------- /account/user
+    @Test
+    public void testUser() {
+        logger.debug("--------------------------------------- testing user...");
+        final String userName = UUID.randomUUID().toString();
+
+        accept(true,
+               c -> {
+                   logger.debug("-------------------------- updating user...1");
+                   final String userKey = UUID.randomUUID().toString();
+                   final boolean userAdmin
+                   = ThreadLocalRandom.current().nextBoolean();
+                   c.updateUser(
+                           userName,
+                           userKey,
+                           userAdmin,
+                           null,
+                           null,
+                           r -> {
+                               assertStatus(r, SUCCESSFUL);
+                           }
+                   );
+               }
+        );
+        sleep();
+        accept(true,
+               c -> {
+                   logger.debug("--------------------------- reading user...1");
+                   c.readUser(
+                           userName,
+                           null,
+                           null,
+                           r -> {
+                               printBody(r);
+                               assertStatus(r, SUCCESSFUL);
+                           }
+                   );
+               }
+        );
+        accept(true,
+               c -> {
+                   logger.debug("-------------------------- updating user...2");
+                   String userKey = UUID.randomUUID().toString();
+                   final boolean userAdmin
+                   = ThreadLocalRandom.current().nextBoolean();
+                   c.updateUser(
+                           userName,
+                           userKey,
+                           null,
+                           null,
+                           null,
+                           r -> {
+                               assertStatus(r, SUCCESSFUL);
+                               printBody(r);
+                           }
+                   );
+               }
+        );
+        sleep();
+        accept(true,
+               c -> {
+                   logger.debug("--------------------------- reading user...2");
+                   c.readUser(
+                           userName,
+                           null,
+                           null,
+                           r -> {
+                               printBody(r);
+                               assertStatus(r, SUCCESSFUL);
+                           }
+                   );
+               }
+        );
+        accept(true,
+               c -> {
+                   logger.debug("--------------------------- deleting user...");
+                   c.deleteUser(
+                           userName,
+                           null,
+                           null,
+                           r -> {
+                               assertStatus(r, SUCCESSFUL);
+                           }
+                   );
+               }
+        );
+    }
 
     protected final Class<ClientType> clientClass;
 

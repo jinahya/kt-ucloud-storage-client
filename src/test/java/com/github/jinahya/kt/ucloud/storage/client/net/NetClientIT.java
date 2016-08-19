@@ -20,17 +20,15 @@ import com.github.jinahya.kt.ucloud.storage.client.StorageClientIT;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandles;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import java.util.concurrent.ThreadLocalRandom;
+import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
 
 /**
  *
@@ -38,6 +36,9 @@ import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
  */
 public class NetClientIT
         extends StorageClientIT<NetClient, InputStream, URLConnection> {
+
+    private static final Logger logger
+            = getLogger(MethodHandles.lookup().lookupClass());
 
     public NetClientIT() {
         super(NetClient.class);

@@ -39,6 +39,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import static java.util.stream.Collectors.joining;
+import java.util.stream.Stream;
 import javax.ws.rs.core.MultivaluedHashMap;
 
 /**
@@ -99,6 +100,12 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
 
     public static final String HEADER_X_CONTAINER_WRITE = "X-Container-Write";
 
+    public static final String HEADER_X_REMOVE_CONTAINER_READ
+            = "X-Remove-Container-Read";
+
+    public static final String HEADER_X_REMOVE_CONTAINER_WRITE
+            = "X-Remove-Container-Write";
+
     public static final String HEADER_X_COPY_FROM = "X-Copy-From";
 
     public static final String HEADER_X_AUTH_ADMIN_USER = "X-Auth-Admin-User";
@@ -115,7 +122,10 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     }
 
     public static String capitalizeAndJoin(final String... tokens) {
-        return stream(tokens).map(v -> capitalize(v)).collect(joining("-"));
+        //return stream(tokens).map(v -> capitalize(v)).collect(joining("-"));
+        return stream(tokens)
+                .flatMap(t -> Stream.of(t.split("-")))
+                .map(v -> capitalize(v)).collect(joining("-"));
     }
 
     public static String metaHeader(final boolean remove, final String scope,
@@ -139,16 +149,15 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         return metaHeader(remove, "Object", tokens);
     }
 
-    public static String resellerAccountUrl(final String storageUrl,
-                                            final String resellerAccountName) {
+    public static String accountUrl(final String storageUrl,
+                                    final String accountName) {
         try {
             final URL url
                     = new URL(requireNonNull(storageUrl, "null storageUrl"));
             final String protocol = url.getProtocol();
             final String authority = url.getAuthority();
             return protocol + "://" + authority + "/auth/v2/"
-                   + requireNonNull(resellerAccountName,
-                                    "null resellerAccountName");
+                   + requireNonNull(accountName, "null accountName");
         } catch (final MalformedURLException murle) {
             throw new StorageClientException(murle);
         }
@@ -201,13 +210,12 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         this.authUser = requireNonNull(authUser, "null authUser");
         {
             final int i = this.authUser.indexOf(':');
-            resellerAccountName
-                    = i == -1 ? null : this.authUser.substring(0, i);
+            accountName = i == -1 ? null : this.authUser.substring(0, i);
         }
         this.authKey = requireNonNull(authKey, "null authKey");
     }
 
-//    protected abstract int statusCode(ResponseType response);
+    // -------------------------------------------------------------------------
     public abstract <R> R authenticateUser(boolean newToken,
                                            Function<ResponseType, R> function);
 
@@ -283,16 +291,16 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         return isValid(currentTimeMillis() + unit.toMillis(duration));
     }
 
-    // ---------------------------------------------------------------- /account
-    public abstract <R> R peekAccount(Map<String, List<Object>> params,
+    // ---------------------------------------------------------------- /storage
+    public abstract <R> R peekStorage(Map<String, List<Object>> params,
                                       Map<String, List<Object>> headers,
                                       Function<ResponseType, R> function);
 
-    public <R> R peekAccount(
+    public <R> R peekStorage(
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiFunction<ResponseType, ClientType, R> function) {
-        return peekAccount(
+        return peekStorage(
                 params,
                 headers,
                 n -> {
@@ -301,11 +309,11 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public ClientType peekAccount(
+    public ClientType peekStorage(
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final Consumer<ResponseType> consumer) {
-        return peekAccount(
+        return peekStorage(
                 params,
                 headers,
                 n -> {
@@ -315,11 +323,11 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public ClientType peekAccount(
+    public ClientType peekStorage(
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiConsumer<ResponseType, ClientType> consumer) {
-        return peekAccount(
+        return peekStorage(
                 params,
                 headers,
                 n -> {
@@ -328,15 +336,15 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public abstract <R> R readAccount(final Map<String, List<Object>> params,
+    public abstract <R> R readStorage(final Map<String, List<Object>> params,
                                       final Map<String, List<Object>> headers,
                                       final Function<ResponseType, R> function);
 
-    public <R> R readAccount(
+    public <R> R readStorage(
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiFunction<ResponseType, ClientType, R> function) {
-        return readAccount(
+        return readStorage(
                 params,
                 headers,
                 n -> {
@@ -345,11 +353,11 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public ClientType readAccount(
+    public ClientType readStorage(
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final Consumer<ResponseType> consumer) {
-        return readAccount(
+        return readStorage(
                 params,
                 headers,
                 n -> {
@@ -359,11 +367,11 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public ClientType readAccount(
+    public ClientType readStorage(
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiConsumer<ResponseType, ClientType> consumer) {
-        return readAccount(
+        return readStorage(
                 params,
                 headers,
                 n -> {
@@ -372,7 +380,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public ClientType readAccountContainerNames(
+    public ClientType readStorageContainerNames(
             Map<String, List<Object>> params,
             Map<String, List<Object>> headers,
             final Function<ResponseType, Reader> function,
@@ -390,7 +398,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
                 params.put(QUERY_PARAM_MARKER, singletonList(marker[0]));
             }
             marker[0] = null;
-            readAccount(
+            readStorage(
                     params,
                     headers,
                     r -> {
@@ -410,12 +418,12 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         return (ClientType) this;
     }
 
-    public ClientType readAccountContainerNames(
+    public ClientType readStorageContainerNames(
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final Function<ResponseType, Reader> function,
             final BiConsumer<String, ClientType> consumer) {
-        return readAccountContainerNames(
+        return readStorageContainerNames(
                 params,
                 headers,
                 function,
@@ -423,15 +431,15 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public abstract <R> R configureAccount(Map<String, List<Object>> params,
+    public abstract <R> R configureStorage(Map<String, List<Object>> params,
                                            Map<String, List<Object>> headers,
                                            Function<ResponseType, R> function);
 
-    public <R> R configureAccount(
+    public <R> R configureStorage(
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiFunction<ResponseType, ClientType, R> function) {
-        return configureAccount(
+        return configureStorage(
                 params,
                 headers,
                 response -> {
@@ -440,11 +448,11 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public ClientType configureAccount(
+    public ClientType configureStorage(
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final Consumer<ResponseType> consumer) {
-        return configureAccount(
+        return configureStorage(
                 params,
                 headers,
                 n -> {
@@ -454,11 +462,11 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public ClientType configureAccount(
+    public ClientType configureStorage(
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiConsumer<ResponseType, ClientType> consumer) {
-        return configureAccount(
+        return configureStorage(
                 params,
                 headers,
                 n -> {
@@ -467,7 +475,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    // ------------------------------------------------------ /account/container
+    // ------------------------------------------------------ /storage/container
     public abstract <R> R peekContainer(String containerName,
                                         Map<String, List<Object>> params,
                                         Map<String, List<Object>> headers,
@@ -1059,16 +1067,16 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    // ------------------------------------------------------- /reseller/account
-    public abstract <R> R readResellerAccount(
+    // ---------------------------------------------------------------- /account
+    public abstract <R> R readAccount(
             Map<String, List<Object>> params, Map<String, List<Object>> headers,
             Function<ResponseType, R> function);
 
-    public <R> R readResellerAccount(
+    public <R> R readAccount(
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiFunction<ResponseType, ClientType, R> function) {
-        return readResellerAccount(
+        return readAccount(
                 params,
                 headers,
                 r -> {
@@ -1077,11 +1085,11 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public ClientType readResellerAccount(
+    public ClientType readAccount(
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final Consumer<ResponseType> consumer) {
-        return readResellerAccount(
+        return readAccount(
                 params,
                 headers,
                 r -> {
@@ -1091,11 +1099,11 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public ClientType readResellerAccount(
+    public ClientType readAccount(
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiConsumer<ResponseType, ClientType> consumer) {
-        return readResellerAccount(
+        return readAccount(
                 params,
                 headers,
                 r -> {
@@ -1104,18 +1112,18 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    // -------------------------------------------------- /reseller/account/user
-    public abstract <R> R readResellerUser(String userName,
-                                           Map<String, List<Object>> params,
-                                           Map<String, List<Object>> headers,
-                                           Function<ResponseType, R> function);
+    // ----------------------------------------------------------- /account/user
+    public abstract <R> R readUser(String userName,
+                                   Map<String, List<Object>> params,
+                                   Map<String, List<Object>> headers,
+                                   Function<ResponseType, R> function);
 
-    public <R> R readResellerUser(
+    public <R> R readUser(
             final String userName,
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiFunction<ResponseType, ClientType, R> function) {
-        return readResellerUser(
+        return readUser(
                 userName,
                 params,
                 headers,
@@ -1125,12 +1133,12 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public ClientType readResellerUser(
+    public ClientType readUser(
             final String userName,
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final Consumer<ResponseType> consumer) {
-        return readResellerUser(
+        return readUser(
                 userName,
                 params,
                 headers,
@@ -1141,12 +1149,12 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public ClientType readResellerUser(
+    public ClientType readUser(
             final String userName,
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiConsumer<ResponseType, ClientType> consumer) {
-        return readResellerUser(
+        return readUser(
                 userName,
                 params,
                 headers,
@@ -1156,21 +1164,21 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public abstract <R> R updateResellerUser(
-            String userName, String userKey, boolean admin,
-            Map<String, List<Object>> params,
-            Map<String, List<Object>> headers,
-            Function<ResponseType, R> function);
+    public abstract <R> R updateUser(
+            final String userName, final String userKey,
+            final Boolean userAdmin, final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Function<ResponseType, R> function);
 
-    public <R> R updateResellerUser(
-            final String userName, final String userKey, final boolean admin,
-            final Map<String, List<Object>> params,
+    public <R> R updateUser(
+            final String userName, final String userKey,
+            final Boolean userAdmin, final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiFunction<ResponseType, ClientType, R> function) {
-        return updateResellerUser(
+        return updateUser(
                 userName,
                 userKey,
-                admin,
+                userAdmin,
                 params,
                 headers,
                 r -> {
@@ -1179,15 +1187,15 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public ClientType updateResellerUser(
-            final String userName, final String userKey, final boolean admin,
-            final Map<String, List<Object>> params,
+    public ClientType updateUser(
+            final String userName, final String userKey,
+            final Boolean userAdmin, final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final Consumer<ResponseType> consumer) {
-        return updateResellerUser(
+        return updateUser(
                 userName,
                 userKey,
-                admin,
+                userAdmin,
                 params,
                 headers,
                 r -> {
@@ -1197,15 +1205,15 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public ClientType updateResellerUser(
-            final String userName, final String userKey, final boolean admin,
-            final Map<String, List<Object>> params,
+    public ClientType updateUser(
+            final String userName, final String userKey,
+            final Boolean userAdmin, final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiConsumer<ResponseType, ClientType> consumer) {
-        return updateResellerUser(
+        return updateUser(
                 userName,
                 userKey,
-                admin,
+                userAdmin,
                 params,
                 headers,
                 r -> {
@@ -1214,17 +1222,17 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public abstract <R> R deleteResellerUser(
+    public abstract <R> R deleteUser(
             String userName, Map<String, List<Object>> params,
             Map<String, List<Object>> headers,
             Function<ResponseType, R> function);
 
-    public <R> R deleteResellerUser(
+    public <R> R deleteUser(
             final String userName,
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiFunction<ResponseType, ClientType, R> function) {
-        return deleteResellerUser(
+        return deleteUser(
                 userName,
                 params,
                 headers,
@@ -1234,12 +1242,12 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public ClientType deleteResellerUser(
+    public ClientType deleteUser(
             final String userName,
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final Consumer<ResponseType> consumer) {
-        return deleteResellerUser(
+        return deleteUser(
                 userName,
                 params,
                 headers,
@@ -1250,12 +1258,12 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    public ClientType deleteResellerUser(
+    public ClientType deleteUser(
             final String userName,
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiConsumer<ResponseType, ClientType> consumer) {
-        return deleteResellerUser(
+        return deleteUser(
                 userName,
                 params,
                 headers,
@@ -1280,13 +1288,13 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         return authKey;
     }
 
-    // ----------------------------------------------------- resellerAccountName
-    public String getResellerAccountName() {
-        return resellerAccountName;
+    // ------------------------------------------------------------- accountName
+    public String getAccountName() {
+        return accountName;
     }
 
-    public String resellerAccountName() {
-        return getResellerAccountName();
+    public String accountName() {
+        return getAccountName();
     }
 
     // -------------------------------------------------------------- storageUrl
@@ -1305,9 +1313,8 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
 
     protected void setStorageUrl(final String storageUrl) {
         this.storageUrl = requireNonNull(storageUrl, "null storageUrl");
-        if (resellerAccountName != null) {
-            resellerAccountUrl
-                    = resellerAccountUrl(storageUrl, resellerAccountName);
+        if (accountName != null) {
+            accountUrl = accountUrl(storageUrl, accountName);
         }
     }
 
@@ -1316,13 +1323,13 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         return this;
     }
 
-    // ------------------------------------------------------ resellerAccountUrl
-    public String getResellerAccountUrl() {
-        return resellerAccountUrl;
+    // -------------------------------------------------------------- accountUrl
+    public String getAccountUrl() {
+        return accountUrl;
     }
 
-    public String resellerAccountUrl() {
-        return getResellerAccountUrl();
+    public String accountUrl() {
+        return getAccountUrl();
     }
 
     // --------------------------------------------------------------- authToken
@@ -1377,11 +1384,11 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
 
     protected final String authKey;
 
-    private final String resellerAccountName;
+    private final String accountName;
 
     private transient String storageUrl;
 
-    private transient String resellerAccountUrl;
+    private transient String accountUrl;
 
     private transient String authToken;
 

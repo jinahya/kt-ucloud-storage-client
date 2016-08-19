@@ -17,18 +17,21 @@ package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
 import com.github.jinahya.kt.ucloud.storage.client.StorageClientIT;
 import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.WsRsClient.lines;
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.ThreadLocalRandom;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.ClientRequestFilter;
+import javax.ws.rs.client.ClientResponseFilter;
 import javax.ws.rs.client.Entity;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status.Family;
 import static javax.ws.rs.core.Response.Status.Family.SUCCESSFUL;
 import javax.ws.rs.core.Response.StatusType;
+import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertEquals;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static org.testng.Assert.assertEquals;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
 
 /**
  *
@@ -37,8 +40,45 @@ import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
 public class WsRsClientIT
         extends StorageClientIT<WsRsClient, Entity<?>, Response> {
 
+    private static final Logger logger
+            = getLogger(MethodHandles.lookup().lookupClass());
+
+    private static final ClientRequestFilter REQUEST_FILTER = requestContext -> {
+        logger.debug("request.context.method: {}", requestContext.getMethod());
+        logger.debug("request.context.uri: {}", requestContext.getUri());
+        requestContext.getHeaders().forEach((k, vs) -> {
+            vs.forEach(v -> {
+                logger.debug("request.context.header: {}: {}", k, v);
+            });
+        });
+    };
+
+    private static final ClientResponseFilter RESPONSE_FILTER
+            = (requestContext, resposneContext) -> {
+                final StatusType statusInfo = resposneContext.getStatusInfo();
+                logger.debug("response.context.status: {} {}",
+                             statusInfo.getStatusCode(),
+                             statusInfo.getReasonPhrase());
+                resposneContext.getHeaders().forEach((k, vs) -> {
+                    vs.forEach(v -> {
+                        logger.debug("response.context.header: {}: {}", k, v);
+                    });
+                });
+            };
+
     public WsRsClientIT() {
         super(WsRsClient.class);
+    }
+
+    @Override
+    protected void clientInstantiated(final WsRsClient client) {
+        super.clientInstantiated(client);
+        client.setClientSupplier(() -> {
+            final Client c = ClientBuilder.newClient();
+            c.register(REQUEST_FILTER);
+            c.register(RESPONSE_FILTER);
+            return c;
+        });
     }
 
     @Override
