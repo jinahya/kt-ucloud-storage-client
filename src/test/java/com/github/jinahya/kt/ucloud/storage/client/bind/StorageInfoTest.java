@@ -19,9 +19,9 @@ package com.github.jinahya.kt.ucloud.storage.client.bind;
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
-public class StorageAccountInfoTest {
+public class StorageInfoTest {
 
-    public static void printXml(final StorageAccountInfo instance) {
-        JaxbTests.printXml(StorageAccountInfo.class, instance);
+    public static void printXml(final StorageInfo instance) {
+        JaxbTests.printXml(StorageInfo.class, instance);
     }
 }

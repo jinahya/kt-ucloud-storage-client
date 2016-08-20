@@ -23,7 +23,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @author Jin Kwon &lt;onacit at gmail.com&gt;
  */
 @XmlRootElement
-public class StorageAccountInfo extends StorageContainerInfo {
+public class StorageInfo extends ContainerInfo {
 
     // -------------------------------------------------------------------------
     @Override
@@ -35,14 +35,14 @@ public class StorageAccountInfo extends StorageContainerInfo {
 
     // ------------------------------------------------------------- objectCount
     @Override
-    public StorageAccountInfo objectCount(final int objectCount) {
-        return (StorageAccountInfo) super.objectCount(objectCount);
+    public StorageInfo objectCount(final int objectCount) {
+        return (StorageInfo) super.objectCount(objectCount);
     }
 
     // --------------------------------------------------------------- bytesUsed
     @Override
-    public StorageContainerInfo bytesUsed(final long bytesUsed) {
-        return (StorageAccountInfo) super.bytesUsed(bytesUsed);
+    public ContainerInfo bytesUsed(final long bytesUsed) {
+        return (StorageInfo) super.bytesUsed(bytesUsed);
     }
 
     // ---------------------------------------------------------- containerCount
@@ -54,7 +54,7 @@ public class StorageAccountInfo extends StorageContainerInfo {
         this.containerCount = containerCount;
     }
 
-    public StorageAccountInfo containerCount(final int containerCount) {
+    public StorageInfo containerCount(final int containerCount) {
         setContainerCount(containerCount);
         return this;
     }
