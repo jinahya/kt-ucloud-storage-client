@@ -5,7 +5,7 @@
 [![Build Status](https://travis-ci.org/jinahya/kt-ucloud-storage-client-jax-rs.svg?style=flat-square&branch=develop)](https://travis-ci.org/jinahya/kt-ucloud-storage-client-jax-rs)
 [![Sputnik](https://sputnik.ci/conf/badge)](https://sputnik.ci/app#/builds/jinahya/kt-ucloud-storage-client-jax-rs)
 
-a simple client for [kt ucloud storage](https://ucloudbiz.olleh.com/portal/ktcloudportal.epc.productintro.ss.info.html).
+a set of clients for accessing [kt ucloud storage](https://ucloudbiz.olleh.com/portal/ktcloudportal.epc.productintro.ss.info.html).
 
 ## verify
 ```
@@ -23,17 +23,14 @@ DELETE|delete...   |deletes resources
 
 ## java.net
 ```java
-final String url; // authentication url
-final String user; // access key ID
-final String pass; // secret key
-final StorageClient client = new NetClient(url, user, pass);
+final StorageClientNet client
+    = new StorageClientNet(authUrl, authUser, authPass);
 ```
 ## java.net.http
 N/A yet.
+
 ## javax.ws.rs
 ```java
-final String url; // authentication url
-final String user; // access key ID
-final String pass; // secret key
-final StorageClient client = new WsRsClient(url, user, pass);
+final StorageClientWsRs client
+    = new StorageClientWsRs(authUrl, authUser, authPass);
 ```
