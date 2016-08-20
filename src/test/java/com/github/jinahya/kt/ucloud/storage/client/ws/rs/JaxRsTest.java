@@ -15,8 +15,8 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 
+import java.lang.reflect.Modifier;
 import java.util.stream.Stream;
-import javassist.Modifier;
 import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;

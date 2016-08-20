@@ -43,7 +43,8 @@ import static java.util.stream.Collectors.joining;
 public class StorageClientNet
         extends StorageClient<StorageClientNet, InputStream, URLConnection> {
 
-    private static final Logger logger = getLogger(StorageClientNet.class.getName());
+    private static final Logger logger
+            = getLogger(StorageClientNet.class.getName());
 
     /**
      * Appends given query parameters to specified {@code builder}.
