@@ -98,6 +98,77 @@ public class StorageClientWsRs
     }
 
     // -------------------------------------------------------------------------
+    /**
+     * Put {@link #HEADER_X_AUTH_USER} and {@link #HEADER_X_AUTH_KEY} on given
+     * builder.
+     *
+     * @param builder the builder
+     * @param user the value for {@link #HEADER_X_AUTH_USER}
+     * @param key the value for {@link #HEADER_X_AUTH_KEY}
+     * @return given builder.
+     * @see Invocation.Builder#header(java.lang.String, java.lang.Object)
+     */
+    public static Invocation.Builder auth(final Invocation.Builder builder,
+                                          final String user, final String key) {
+        return builder
+                .header(HEADER_X_AUTH_USER, user)
+                .header(HEADER_X_AUTH_KEY, key);
+    }
+
+    /**
+     * Put {@link #HEADER_X_AUTH_USER} and {@link #HEADER_X_AUTH_KEY} on given
+     * map.
+     *
+     * @param headers the map
+     * @param user the value for {@link #HEADER_X_AUTH_USER}
+     * @param key the value for {@link #HEADER_X_AUTH_KEY}
+     * @return given map.
+     * @see MultivaluedMap#putSingle(java.lang.Object, java.lang.Object)
+     */
+    public static MultivaluedMap<String, Object> auth(
+            final MultivaluedMap<String, Object> headers,
+            final String user, final String key) {
+        headers.putSingle(HEADER_X_AUTH_USER, user);
+        headers.putSingle(HEADER_X_AUTH_KEY, key);
+        return headers;
+    }
+
+    /**
+     * Put {@link #HEADER_X_AUTH_ADMIN_USER} and
+     * {@link #HEADER_X_AUTH_ADMIN_KEY} on given builder.
+     *
+     * @param builder the builder
+     * @param user the value for {@link #HEADER_X_AUTH_ADMIN_USER}
+     * @param key the value for {@link #HEADER_X_AUTH_ADMIN_KEY}
+     * @return given builder
+     * @see Invocation.Builder#header(java.lang.String, java.lang.Object)
+     */
+    public static Invocation.Builder authAdmin(final Invocation.Builder builder,
+                                               final String user,
+                                               final String key) {
+        return builder
+                .header(HEADER_X_AUTH_ADMIN_USER, user)
+                .header(HEADER_X_AUTH_ADMIN_KEY, key);
+    }
+
+    /**
+     * Put {@link #HEADER_X_AUTH_ADMIN_USER} and
+     * {@link #HEADER_X_AUTH_ADMIN_KEY} on given map.
+     *
+     * @param headers the map
+     * @param user the value for {@link #HEADER_X_AUTH_ADMIN_USER}
+     * @param key the value for {@link #HEADER_X_AUTH_ADMIN_KEY}
+     * @return given map
+     * @see MultivaluedMap#putSingle(java.lang.Object, java.lang.Object)
+     */
+    public static MultivaluedMap<String, Object> authAdmin(
+            final MultivaluedMap<String, Object> headers,
+            final String user, final String key) {
+        headers.putSingle(HEADER_X_AUTH_ADMIN_USER, user);
+        headers.putSingle(HEADER_X_AUTH_ADMIN_KEY, key);
+        return headers;
+    }
+
     public static Response authenticateUser(final Client client,
                                             final String authUrl,
                                             final String authUser,
@@ -107,14 +178,14 @@ public class StorageClientWsRs
                 .target(authUrl)
                 .request()
                 .header(HEADER_X_AUTH_USER, authUser)
-                .header(HEADER_X_AUTH_PASS, authKey);
+                .header(HEADER_X_AUTH_KEY, authKey);
         if (newToken) {
             builder = builder.header(HEADER_X_AUTH_NEW_TOKEN, Boolean.TRUE);
         }
         return builder.buildGet().invoke();
     }
 
-    // ---------------------------------------------------------------- /account
+    // ---------------------------------------------------------------- /storage
     /**
      * Targets an account.
      *
@@ -155,7 +226,7 @@ public class StorageClientWsRs
                 .header(HEADER_X_AUTH_TOKEN, authToken);
     }
 
-    // ------------------------------------------------------ /account/container
+    // ------------------------------------------------------ /storage/container
     /**
      * Targets a container.
      *
@@ -204,7 +275,7 @@ public class StorageClientWsRs
                 .header(HEADER_X_AUTH_TOKEN, authToken);
     }
 
-    // ----------------------------------------------- /account/container/object
+    // ----------------------------------------------- /storage/container/object
     /**
      * Targets an object.
      *
@@ -255,23 +326,22 @@ public class StorageClientWsRs
     }
 
     // ---------------------------------------------------------------- /account
-    /**
-     * Put {@link #HEADER_X_AUTH_ADMIN_USER} and
-     * {@link #HEADER_X_AUTH_ADMIN_KEY} on given invocation builder.
-     *
-     * @param invocationBuilder the invocation builder
-     * @param authUser the value for {@link #HEADER_X_AUTH_ADMIN_USER}
-     * @param authKey the value for {@link #HEADER_X_AUTH_ADMIN_KEY}
-     * @return given invocation builder
-     */
-    public static Invocation.Builder headersAuthAdminCredential(
-            final Invocation.Builder invocationBuilder, final String authUser,
-            final String authKey) {
-        return invocationBuilder
-                .header(HEADER_X_AUTH_ADMIN_USER, authUser)
-                .header(HEADER_X_AUTH_ADMIN_KEY, authKey);
-    }
-
+//    /**
+//     * Put {@link #HEADER_X_AUTH_ADMIN_USER} and
+//     * {@link #HEADER_X_AUTH_ADMIN_KEY} on given invocation builder.
+//     *
+//     * @param invocationBuilder the invocation builder
+//     * @param authUser the value for {@link #HEADER_X_AUTH_ADMIN_USER}
+//     * @param authKey the value for {@link #HEADER_X_AUTH_ADMIN_KEY}
+//     * @return given invocation builder
+//     */
+//    public static Invocation.Builder headersAuthAdminCredential(
+//            final Invocation.Builder invocationBuilder, final String authUser,
+//            final String authKey) {
+//        return invocationBuilder
+//                .header(HEADER_X_AUTH_ADMIN_USER, authUser)
+//                .header(HEADER_X_AUTH_ADMIN_KEY, authKey);
+//    }
     public static WebTarget targetAccount(
             final Client client, final String accountUrl,
             final MultivaluedMap<String, Object> params) {
@@ -387,6 +457,24 @@ public class StorageClientWsRs
     }
 
     // -------------------------------------------------------------------------
+    @Override
+    protected int getStatusCode(final Response response) {
+        return response.getStatus();
+    }
+//
+//    @Override
+//    @Deprecated
+//    protected String getReasonPhrase(final Response response) {
+//        return response.getStatusInfo().getReasonPhrase();
+//    }
+//
+//    @Override
+//    protected String getHeaderValue(final Response response,
+//                                    final String name) {
+//        return response.getHeaderString(name);
+//    }
+    // -------------------------------------------------------------------------
+
     @Override
     public <R> R authenticateUser(final boolean newToken,
                                   final Function<Response, R> function) {
@@ -950,7 +1038,7 @@ public class StorageClientWsRs
     }
 
     public <R> R updateUser(final String userName, final String userKey,
-                            final Boolean userAdmin,
+                            final boolean userAdmin,
                             final MultivaluedMap<String, Object> params,
                             MultivaluedMap<String, Object> headers,
                             final Function<Response, R> function) {
@@ -964,7 +1052,7 @@ public class StorageClientWsRs
             headers.putSingle(HEADER_X_AUTH_ADMIN_USER, authUser);
             headers.putSingle(HEADER_X_AUTH_ADMIN_KEY, authKey);
             headers.putSingle(HEADER_X_AUTH_USER_KEY, userKey);
-            if (userAdmin != null && userAdmin) {
+            if (userAdmin) {
                 headers.putSingle(HEADER_X_AUTH_USER_ADMIN, userAdmin);
             }
             builder = builder.headers(headers);
@@ -981,11 +1069,11 @@ public class StorageClientWsRs
 
     @Override
     public <R> R updateUser(final String userName, final String userKey,
-                            final Boolean admin,
+                            final boolean userAdmin,
                             final Map<String, List<Object>> params,
                             final Map<String, List<Object>> headers,
                             final Function<Response, R> function) {
-        return updateUser(userName, userKey, admin, multivalued(params),
+        return updateUser(userName, userKey, userAdmin, multivalued(params),
                           multivalued(headers), function);
     }
 
@@ -1035,7 +1123,7 @@ public class StorageClientWsRs
             if (headers != null) {
                 builder.headers(headers);
             }
-            headersAuthAdminCredential(builder, authUser, authKey);
+            authAdmin(builder, authUser, authKey);
             final Response response = builder.get();
             try {
                 return function.apply(response);
@@ -1101,6 +1189,5 @@ public class StorageClientWsRs
     }
 
     // -------------------------------------------------------------------------
-    private transient Supplier<Client> clientSupplier
-            = () -> ClientBuilder.newClient();
+    private Supplier<Client> clientSupplier = () -> ClientBuilder.newClient();
 }

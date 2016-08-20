@@ -27,6 +27,7 @@ import java.nio.charset.Charset;
 import static java.util.Arrays.stream;
 import static java.util.Collections.singletonList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import static java.util.Objects.requireNonNull;
@@ -38,9 +39,10 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
+import static java.util.logging.Logger.getLogger;
 import static java.util.stream.Collectors.joining;
 import java.util.stream.Stream;
-import javax.ws.rs.core.MultivaluedHashMap;
 
 /**
  *
@@ -50,6 +52,9 @@ import javax.ws.rs.core.MultivaluedHashMap;
  * @param <ResponseType> response type parameter
  */
 public abstract class StorageClient<ClientType extends StorageClient, RequestEntityType, ResponseType> {
+
+    private static final Logger logger
+            = getLogger(StorageClient.class.getName());
 
     public static final String AUTH_URL_STANDARD_KOR_CENTER
             = "https://api.ucloudbiz.olleh.com/storage/v1/auth";
@@ -70,7 +75,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     public static final String HEADER_X_AUTH_USER = "X-Auth-User";
 
 //    public static final String HEADER_X_AUTH_PASS = "X-Storage-Pass";
-    public static final String HEADER_X_AUTH_PASS = "X-Auth-Key";
+    public static final String HEADER_X_AUTH_KEY = "X-Auth-Key";
 
     public static final String HEADER_X_AUTH_NEW_TOKEN = "X-Auth-New-Token";
 
@@ -134,7 +139,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
                + capitalizeAndJoin(tokens);
     }
 
-    public static String accountMetaHeader(final boolean remove,
+    public static String storageMetaHeader(final boolean remove,
                                            final String... tokens) {
         return metaHeader(remove, "Account", tokens);
     }
@@ -149,15 +154,20 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         return metaHeader(remove, "Object", tokens);
     }
 
+    /**
+     * Creates a URL for an account from given storage URL and account name.
+     *
+     * @param storageUrl the storage URL
+     * @param accountName the account name
+     * @return a URL for an account
+     */
     public static String accountUrl(final String storageUrl,
                                     final String accountName) {
         try {
-            final URL url
-                    = new URL(requireNonNull(storageUrl, "null storageUrl"));
+            final URL url = new URL(storageUrl);
             final String protocol = url.getProtocol();
             final String authority = url.getAuthority();
-            return protocol + "://" + authority + "/auth/v2/"
-                   + requireNonNull(accountName, "null accountName");
+            return protocol + "://" + authority + "/auth/v2/" + accountName;
         } catch (final MalformedURLException murle) {
             throw new StorageClientException(murle);
         }
@@ -174,6 +184,13 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         new BufferedReader(reader).lines().forEach(consumer::accept);
     }
 
+    /**
+     * Accepts each lines of given input stream to specified consumer.
+     *
+     * @param stream the stream
+     * @param charset a character set
+     * @param consumer the consumer
+     */
     public static void lines(final InputStream stream, final Charset charset,
                              final Consumer<String> consumer) {
         lines(new InputStreamReader(stream, charset), consumer);
@@ -204,6 +221,13 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     }
 
     // -------------------------------------------------------------------------
+    /**
+     * Creates a new instance.
+     *
+     * @param authUrl a URL for authentication
+     * @param authUser username
+     * @param authKey password
+     */
     public StorageClient(final String authUrl, final String authUser,
                          final String authKey) {
         this.authUrl = requireNonNull(authUrl, "null authUrl");
@@ -216,6 +240,28 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     }
 
     // -------------------------------------------------------------------------
+    /**
+     * Returns the value of {@code Status-Code} of given response.
+     *
+     * @param response the response
+     * @return the value of {@code Status-Code} of given response
+     */
+    protected abstract int getStatusCode(ResponseType response);
+//
+//    @Deprecated
+//    protected abstract String getReasonPhrase(ResponseType response);
+//
+//    /**
+//     * Returns the header value of given response.
+//     *
+//     * @param response the response
+//     * @param name the header name
+//     * @return the value of header or {@code null} if no header found.
+//     */
+//    protected abstract String getHeaderValue(ResponseType response,
+//                                             String name);
+    // -------------------------------------------------------------------------
+
     public abstract <R> R authenticateUser(boolean newToken,
                                            Function<ResponseType, R> function);
 
@@ -254,15 +300,15 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     }
 
     /**
-     * Purges authorization information.
+     * Purges authentiation information.
      *
      * @return this client
      */
-    public StorageClient invalidate() {
+    public ClientType invalidate() {
         storageUrl = null;
         authToken = null;
         authTokenExpires = null;
-        return this;
+        return (ClientType) this;
     }
 
     /**
@@ -292,6 +338,15 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     }
 
     // ---------------------------------------------------------------- /storage
+    /**
+     * Peeks the storage using the {@code HEAD} method.
+     *
+     * @param <R> result type parameter
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function a function to be applied with the server response
+     * @return the value the {@code function} results
+     */
     public abstract <R> R peekStorage(Map<String, List<Object>> params,
                                       Map<String, List<Object>> headers,
                                       Function<ResponseType, R> function);
@@ -336,6 +391,15 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
+    /**
+     * Reads the storage using {@code GET} method.
+     *
+     * @param <R> result type parameter
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function a function to be applied with the server response
+     * @return the value the {@code function} results
+     */
     public abstract <R> R readStorage(final Map<String, List<Object>> params,
                                       final Map<String, List<Object>> headers,
                                       final Function<ResponseType, R> function);
@@ -380,17 +444,27 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
+    /**
+     * Reads all container names and accepts each of them to given consumer.
+     *
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function a function for yielding a {@code Reader} from the server
+     * response
+     * @param consumer a consumer accepts each container names
+     * @return this client
+     */
     public ClientType readStorageContainerNames(
             Map<String, List<Object>> params,
             Map<String, List<Object>> headers,
             final Function<ResponseType, Reader> function,
             final Consumer<String> consumer) {
         if (params == null) {
-            params = new MultivaluedHashMap<>();
+            params = new HashMap<>();
         }
         params.putIfAbsent(QUERY_PARAM_LIMIT, singletonList(512));
         if (headers == null) {
-            headers = new MultivaluedHashMap<>();
+            headers = new HashMap<>();
         }
         headers.put("Accept", singletonList("text/plain"));
         for (final String[] marker = new String[1];;) {
@@ -476,6 +550,16 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     }
 
     // ------------------------------------------------------ /storage/container
+    /**
+     * Peeks a container using {@code HEAD} method.
+     *
+     * @param <R> result type parameter
+     * @param containerName the name of the container
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function a function to be applied with the server response
+     * @return the value the {@code function} results
+     */
     public abstract <R> R peekContainer(String containerName,
                                         Map<String, List<Object>> params,
                                         Map<String, List<Object>> headers,
@@ -527,6 +611,16 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
+    /**
+     * Reads a container using {@code GET} method.
+     *
+     * @param <R> result type parameter
+     * @param containerName the name of the container
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function a function to be applied with the server response
+     * @return the value the {@code funtion} results
+     */
     public abstract <R> R readContainer(String containerName,
                                         Map<String, List<Object>> params,
                                         Map<String, List<Object>> headers,
@@ -578,18 +672,28 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
+    /**
+     * Reads all object names in a container and accepts each of them to
+     * specified consumer.
+     *
+     * @param containerName the name of the container
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function a function for creating a reader from the server response
+     * @param consumer the consumer
+     * @return this client.
+     */
     public ClientType readContainerObjectNames(
-            final String containerName,
-            Map<String, List<Object>> params,
+            final String containerName, Map<String, List<Object>> params,
             Map<String, List<Object>> headers,
             final Function<ResponseType, Reader> function,
             final Consumer<String> consumer) {
         if (params == null) {
-            params = new MultivaluedHashMap<>();
+            params = new HashMap<>();
         }
         params.putIfAbsent(QUERY_PARAM_LIMIT, singletonList(512));
         if (headers == null) {
-            headers = new MultivaluedHashMap<>();
+            headers = new HashMap<>();
         }
         headers.put("Accept", singletonList("text/plain"));
         for (final String[] marker = new String[1];;) {
@@ -633,6 +737,16 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
+    /**
+     * Creates or updates a container using {@code PUT} method.
+     *
+     * @param <R> result type parameter
+     * @param containerName container name
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function a function to be applied with the server response
+     * @return the value the {@code function} results
+     */
     public abstract <R> R updateContainer(String containerName,
                                           Map<String, List<Object>> params,
                                           Map<String, List<Object>> headers,
@@ -684,6 +798,16 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
+    /**
+     * Configures a container using the {@code POST} method.
+     *
+     * @param <R> result type parameter
+     * @param containerName container name
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function a function to be applied with the server response
+     * @return the value the {@code function} results
+     */
     public abstract <R> R configureContainer(
             final String containerName,
             final Map<String, List<Object>> params,
@@ -737,7 +861,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     }
 
     /**
-     * Deletes a container.
+     * Deletes a container using {@code DELETE} method.
      *
      * @param <R> result type parameter
      * @param containerName container name
@@ -762,6 +886,16 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     public <R> R deleteContainer(final String containerName,
                                  final Function<ResponseType, R> function) {
         return deleteContainer(containerName, null, null, function);
+    }
+
+    /**
+     * Deletes a container and returns the status code of the server response.
+     *
+     * @param containerName container name
+     * @return the status code of the server response
+     */
+    public int deleteContainer(final String containerName) {
+        return deleteContainer(containerName, r -> getStatusCode(r));
     }
 
     public <R> R deleteContainer(
@@ -810,7 +944,18 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
-    // ----------------------------------------------- /account/container/object
+    // ----------------------------------------------- /storage/container/object
+    /**
+     * Peeks an object using {@code HEAD} method.
+     *
+     * @param <R> result type parameter
+     * @param containerName container name
+     * @param objectName object name
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function a function to be applied with the server response.
+     * @return the value the {@code function} results
+     */
     public abstract <R> R peekObject(String containerName, String objectName,
                                      Map<String, List<Object>> params,
                                      Map<String, List<Object>> headers,
@@ -919,6 +1064,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
+    // ---------------------------------------- /storage/container/object/update
     public abstract <R> R updateObject(String containerName, String objectName,
                                        Map<String, List<Object>> params,
                                        Map<String, List<Object>> headers,
@@ -980,6 +1126,35 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
+//    public ClientType copyObject(
+//            final String targetContainerName, final String targetObjectName,
+//            final String sourceContainerName, final String sourceObjectName,
+//            final BiConsumer<ResponseType, ResponseType> consumer) {
+//        final Map<String, List<Object>> headers = new HashMap<>();
+//        headers.put("Accept", singletonList("*/*"));
+//        return peekObject(sourceContainerName,
+//                          sourceObjectName,
+//                          null,
+//                          headers,
+//                          (r1, c) -> {
+//                              final int statusCode = getStatusCode(r1);
+//                              if (statusCode != 204) {
+//                                  logger.warning("peeking object failed with status code: " + statusCode);
+//                                  consumer.accept(r1, null);
+//                                  return (ClientType) this;
+//                              }
+//                              final String contentLength = getHeaderValue(r1, "content-length");
+//                              if (contentLength == null) {
+//                                  logger.warning("peeking object failed with absence of content-length");
+//                                  consumer.accept(r1, null);
+//                                  return (ClientType) this;
+//                              }
+//                              c.updateObject
+//                              return (ClientType) this;
+//                          }
+//        );
+//    }
+    // ------------------------------------- /storage/container/object/configure
     public abstract <R> R configureObject(String containerName,
                                           String objectName,
                                           Map<String, List<Object>> params,
@@ -1036,14 +1211,14 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     }
 
     /**
-     * Deletes an object.
+     * Deletes an object using {@code DELETE} method.
      *
      * @param <R> result type parameter
      * @param containerName container name
      * @param objectName object name
      * @param params query parameters; may be {@code null}
      * @param headers request headers; may be {@code null}
-     * @param function the function to be applied with the server response.
+     * @param function a function to be applied with the server response.
      * @return the value the {@code function} results
      */
     public abstract <R> R deleteObject(String containerName,
@@ -1065,6 +1240,18 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
                               final String objectName,
                               final Function<ResponseType, R> function) {
         return deleteObject(containerName, objectName, null, null, function);
+    }
+
+    /**
+     * Deletes an object and returns the status code of the server response.
+     *
+     * @param containerName container name
+     * @param objectName object name
+     * @return the status code of the server response
+     */
+    public int deleteObject(final String containerName,
+                            final String objectName) {
+        return deleteObject(containerName, objectName, r -> getStatusCode(r));
     }
 
     public <R> R deleteObject(
@@ -1264,13 +1451,13 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
 
     public abstract <R> R updateUser(
             final String userName, final String userKey,
-            final Boolean userAdmin, final Map<String, List<Object>> params,
+            final boolean userAdmin, final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final Function<ResponseType, R> function);
 
     public <R> R updateUser(
             final String userName, final String userKey,
-            final Boolean userAdmin, final Map<String, List<Object>> params,
+            final boolean userAdmin, final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiFunction<ResponseType, ClientType, R> function) {
         return updateUser(
@@ -1287,7 +1474,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
 
     public ClientType updateUser(
             final String userName, final String userKey,
-            final Boolean userAdmin, final Map<String, List<Object>> params,
+            final boolean userAdmin, final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final Consumer<ResponseType> consumer) {
         return updateUser(
@@ -1305,7 +1492,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
 
     public ClientType updateUser(
             final String userName, final String userKey,
-            final Boolean userAdmin, final Map<String, List<Object>> params,
+            final boolean userAdmin, final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final BiConsumer<ResponseType, ClientType> consumer) {
         return updateUser(
@@ -1321,7 +1508,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     }
 
     /**
-     * Deletes a user.
+     * Deletes a user using the {@code DELETE} method.
      *
      * @param <R> result type parameter
      * @param userName user name
@@ -1346,6 +1533,16 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     public <R> R deleteUser(final String userName,
                             final Function<ResponseType, R> function) {
         return deleteUser(userName, null, null, function);
+    }
+
+    /**
+     * Deletes a user and returns the status code of the server response.
+     *
+     * @param userName user name
+     * @return the status code of the server response
+     */
+    public int deleteUser(final String userName) {
+        return deleteUser(userName, this::getStatusCode);
     }
 
     public <R> R deleteUser(

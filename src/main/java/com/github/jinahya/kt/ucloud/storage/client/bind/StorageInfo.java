@@ -33,6 +33,46 @@ public class StorageInfo extends ContainerInfo {
                + "}";
     }
 
+    @Override
+    public int hashCode() {
+        int hash = super.hashCode();
+        hash = 89 * hash + containerCount;
+        return hash;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (true) {
+            return equalsAs(obj) && getClass() == obj.getClass();
+        }
+        if (!super.equalsAs(obj)) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final StorageInfo other = (StorageInfo) obj;
+        if (containerCount != other.containerCount) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    protected boolean equalsAs(final Object obj) {
+        if (!super.equalsAs(obj)) {
+            return false;
+        }
+        if (!getClass().isAssignableFrom(obj.getClass())) {
+            return false;
+        }
+        final StorageInfo other = (StorageInfo) obj;
+        if (containerCount != other.containerCount) {
+            return false;
+        }
+        return true;
+    }
+
     // ------------------------------------------------------------- objectCount
     @Override
     public StorageInfo objectCount(final int objectCount) {
