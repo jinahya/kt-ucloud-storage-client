@@ -736,10 +736,33 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
+    /**
+     * Deletes a container.
+     *
+     * @param <R> result type parameter
+     * @param containerName container name
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function a function to be applied with the server response
+     * @return the value the {@code function} results
+     */
     public abstract <R> R deleteContainer(String containerName,
                                           Map<String, List<Object>> params,
                                           Map<String, List<Object>> headers,
                                           Function<ResponseType, R> function);
+
+    /**
+     * Deletes a container.
+     *
+     * @param <R> result type parameter
+     * @param containerName container name
+     * @param function a function to be applied with the server response
+     * @return the value the {@code function} results
+     */
+    public <R> R deleteContainer(final String containerName,
+                                 final Function<ResponseType, R> function) {
+        return deleteContainer(containerName, null, null, function);
+    }
 
     public <R> R deleteContainer(
             final String containerName,
@@ -1012,11 +1035,37 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
+    /**
+     * Deletes an object.
+     *
+     * @param <R> result type parameter
+     * @param containerName container name
+     * @param objectName object name
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function the function to be applied with the server response.
+     * @return the value the {@code function} results
+     */
     public abstract <R> R deleteObject(String containerName,
                                        String objectName,
                                        Map<String, List<Object>> params,
                                        Map<String, List<Object>> headers,
                                        Function<ResponseType, R> function);
+
+    /**
+     * Deletes an object without any query parameters and request headers.
+     *
+     * @param <R> result type parameter
+     * @param containerName container name
+     * @param objectName object name
+     * @param function a function to be applied with the server response
+     * @return the value the {@code function} results
+     */
+    public <R> R deleteObject(final String containerName,
+                              final String objectName,
+                              final Function<ResponseType, R> function) {
+        return deleteObject(containerName, objectName, null, null, function);
+    }
 
     public <R> R deleteObject(
             final String containerName, final String objectName,
@@ -1068,9 +1117,32 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     }
 
     // ---------------------------------------------------------------- /account
+    /**
+     * Reads account information.
+     *
+     * @param <R> result type parameter
+     * @param params query parameters; may be {@code null}
+     * @param headers additional request headers; may be {@code null}
+     * @param function the function to be applied with the server response
+     * @return the value the {@code function} results
+     */
     public abstract <R> R readAccount(
             Map<String, List<Object>> params, Map<String, List<Object>> headers,
             Function<ResponseType, R> function);
+
+    /**
+     * Reads account information without any query parameters and request
+     * headers.
+     *
+     * @param <R> result type parameter
+     * @param function the function to be applied with the server response
+     * @return the value the {@code function} results
+     * @see #readAccount(java.util.Map, java.util.Map,
+     * java.util.function.Function)
+     */
+    public <R> R readAccount(final Function<ResponseType, R> function) {
+        return readAccount(null, null, function);
+    }
 
     public <R> R readAccount(
             final Map<String, List<Object>> params,
@@ -1113,10 +1185,36 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     }
 
     // ----------------------------------------------------------- /account/user
+    /**
+     * Reads user information.
+     *
+     * @param <R> result type parameter
+     * @param userName username
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function the function to be applied with server response
+     * @return the value the {@code function} results
+     */
     public abstract <R> R readUser(String userName,
                                    Map<String, List<Object>> params,
                                    Map<String, List<Object>> headers,
                                    Function<ResponseType, R> function);
+
+    /**
+     * Reads user information with any query parameter and additional request
+     * headers.
+     *
+     * @param <R> result type parameter
+     * @param userName user name
+     * @param function the function to be applied with the server response
+     * @return the value the {@code funtion} results
+     * @see #readUser(java.lang.String, java.util.Map, java.util.Map,
+     * java.util.function.Function)
+     */
+    public <R> R readUser(final String userName,
+                          final Function<ResponseType, R> function) {
+        return readUser(userName, null, null, function);
+    }
 
     public <R> R readUser(
             final String userName,
@@ -1222,10 +1320,33 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
         );
     }
 
+    /**
+     * Deletes a user.
+     *
+     * @param <R> result type parameter
+     * @param userName user name
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function a function to be applied with the server response
+     * @return the value the {@code function} results
+     */
     public abstract <R> R deleteUser(
             String userName, Map<String, List<Object>> params,
             Map<String, List<Object>> headers,
             Function<ResponseType, R> function);
+
+    /**
+     * Deletes a user without any query parameters and request headers.
+     *
+     * @param <R> result type parameter
+     * @param userName user name
+     * @param function a function to be applied with the server response
+     * @return the value the {@code function} results
+     */
+    public <R> R deleteUser(final String userName,
+                            final Function<ResponseType, R> function) {
+        return deleteUser(userName, null, null, function);
+    }
 
     public <R> R deleteUser(
             final String userName,

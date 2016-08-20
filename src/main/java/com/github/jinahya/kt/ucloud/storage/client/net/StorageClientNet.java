@@ -736,10 +736,10 @@ public class StorageClientNet
                     = (HttpURLConnection) openAccount(
                             accountUrl(), params, authUser, authKey);
             connection.setRequestMethod("GET");
-            if (headers != null) {
-                headers.put(HEADER_X_AUTH_USER, singletonList(authUser));
-                headers.put(HEADER_X_AUTH_PASS, singletonList(authKey));
-            }
+//            if (headers != null) {
+//                headers.put(HEADER_X_AUTH_USER, singletonList(authUser));
+//                headers.put(HEADER_X_AUTH_PASS, singletonList(authKey));
+//            }
             headers(connection, headers);
             connection.setDoOutput(false);
             connection.setDoInput(true);
