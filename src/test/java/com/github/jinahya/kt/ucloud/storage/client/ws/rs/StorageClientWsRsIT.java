@@ -18,12 +18,14 @@ package com.github.jinahya.kt.ucloud.storage.client.ws.rs;
 import com.github.jinahya.kt.ucloud.storage.client.StorageClientIT;
 import static com.github.jinahya.kt.ucloud.storage.client.ws.rs.StorageClientWsRs.lines;
 import java.lang.invoke.MethodHandles;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.client.ClientResponseFilter;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status.Family;
@@ -44,11 +46,11 @@ public class StorageClientWsRsIT
             = getLogger(MethodHandles.lookup().lookupClass());
 
     private static final ClientRequestFilter REQUEST_FILTER = requestContext -> {
-        logger.debug("request.context.method: {}", requestContext.getMethod());
-        logger.debug("request.context.uri: {}", requestContext.getUri());
+        logger.debug("requestContext.method: {}", requestContext.getMethod());
+        logger.debug("requestContext.uri: {}", requestContext.getUri());
         requestContext.getHeaders().forEach((k, vs) -> {
             vs.forEach(v -> {
-                logger.debug("request.context.header: {}: {}", k, v);
+                logger.debug("requestContext.header: {}: {}", k, v);
             });
         });
     };
@@ -56,7 +58,7 @@ public class StorageClientWsRsIT
     private static final ClientResponseFilter RESPONSE_FILTER
             = (requestContext, resposneContext) -> {
                 final StatusType statusInfo = resposneContext.getStatusInfo();
-                logger.debug("response.context.status: {} {}",
+                logger.debug("responseContext.status: {} {}",
                              statusInfo.getStatusCode(),
                              statusInfo.getReasonPhrase());
                 resposneContext.getHeaders().forEach((k, vs) -> {
@@ -64,6 +66,17 @@ public class StorageClientWsRsIT
                         logger.debug("response.context.header: {}: {}", k, v);
                     });
                 });
+                final MediaType mediaType = resposneContext.getMediaType();
+                logger.debug("responseContext.mediaType: {}", mediaType);
+                if (mediaType != null) {
+                    final Map<String, String> parameters
+                    = mediaType.getParameters();
+                    parameters.forEach((k, v) -> {
+                        logger.debug(
+                                "responseContext.mediaType.parameter: {}={}",
+                                k, v);
+                    });
+                };
             };
 
     public StorageClientWsRsIT() {
