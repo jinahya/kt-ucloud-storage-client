@@ -122,12 +122,14 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     public static final String HEADER_X_AUTH_USER_ADMIN = "X-Auth-User-Admin";
 
     public static String capitalize(final String token) {
+        if (token == null || token.isEmpty()) {
+            return token;
+        }
         return token.substring(0, 1).toUpperCase()
                + token.substring(1).toLowerCase();
     }
 
     public static String capitalizeAndJoin(final String... tokens) {
-        //return stream(tokens).map(v -> capitalize(v)).collect(joining("-"));
         return stream(tokens)
                 .flatMap(t -> Stream.of(t.split("-")))
                 .map(v -> capitalize(v)).collect(joining("-"));
