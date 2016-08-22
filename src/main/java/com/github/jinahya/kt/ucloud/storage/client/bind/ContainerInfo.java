@@ -15,6 +15,7 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client.bind;
 
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -23,7 +24,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @author Jin Kwon &lt;onacit at gmail.com&gt;
  */
 @XmlRootElement
-public class StorageContainerInfo {
+public class ContainerInfo {
 
     // -------------------------------------------------------------------------
     @Override
@@ -32,6 +33,55 @@ public class StorageContainerInfo {
                + "objectCount=" + objectCount
                + ", bytesUsed=" + bytesUsed
                + "}";
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(objectCount, bytesUsed);
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (true) {
+            return equalsAs(obj) && getClass() == obj.getClass();
+        }
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final ContainerInfo other = (ContainerInfo) obj;
+        if (objectCount != other.objectCount) {
+            return false;
+        }
+        if (bytesUsed != other.bytesUsed) {
+            return false;
+        }
+        return true;
+    }
+
+    protected boolean equalsAs(final Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (!(getClass().isAssignableFrom(obj.getClass()))) {
+            return false;
+        }
+        final ContainerInfo other = (ContainerInfo) obj;
+        if (objectCount != other.objectCount) {
+            return false;
+        }
+        if (bytesUsed != other.bytesUsed) {
+            return false;
+        }
+        return true;
     }
 
     // ------------------------------------------------------------- objectCount
@@ -43,7 +93,7 @@ public class StorageContainerInfo {
         this.objectCount = objectCount;
     }
 
-    public StorageContainerInfo objectCount(final int objectCount) {
+    public ContainerInfo objectCount(final int objectCount) {
         setObjectCount(objectCount);
         return this;
     }
@@ -57,7 +107,7 @@ public class StorageContainerInfo {
         this.bytesUsed = bytesUsed;
     }
 
-    public StorageContainerInfo bytesUsed(final long bytesUsed) {
+    public ContainerInfo bytesUsed(final long bytesUsed) {
         setBytesUsed(bytesUsed);
         return this;
     }

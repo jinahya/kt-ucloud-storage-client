@@ -47,11 +47,11 @@ public class StorageClientNet
             = getLogger(StorageClientNet.class.getName());
 
     /**
-     * Appends given query parameters to specified {@code builder}.
+     * Appends given query parameters to specified string builder.
      *
-     * @param builder the builder
+     * @param builder the string builder
      * @param params the query parameters; may be {@code null}
-     * @return given builder
+     * @return given string builder
      */
     private static StringBuilder params(
             final StringBuilder builder,
@@ -67,7 +67,7 @@ public class StorageClientNet
     }
 
     /**
-     * Put given request headers to specified {@code connection}.
+     * Put given request headers to specified connection.
      *
      * @param <T> connection type parameter
      * @param connection the connection
@@ -78,11 +78,9 @@ public class StorageClientNet
     private static <T extends URLConnection> T headers(
             final T connection, final Map<String, List<Object>> headers) {
         if (headers != null) {
-            headers.forEach((n, vs) -> {
-                vs.forEach(v -> {
-                    connection.addRequestProperty(n, String.valueOf(v));
-                });
-            });
+            headers.forEach((n, vs) -> vs.forEach(
+                    v -> connection.addRequestProperty(n, String.valueOf(v))
+            ));
         }
         return connection;
     }
@@ -123,17 +121,36 @@ public class StorageClientNet
      * @param connection the connection
      * @return the {@code Reason-Phrase} of given {@code connection}
      */
+    @Deprecated
     public static String reasonPhrase(final HttpURLConnection connection) {
         return status(connection, (c, p) -> p);
     }
 
     // ---------------------------------------------------------------- /storage
+    /**
+     * Builds URL for a storage.
+     *
+     * @param storageUrl a URL for the storage
+     * @param params query parameters; may be {@code null}
+     * @return a string builder
+     * @see #params(java.lang.StringBuilder, java.util.Map)
+     */
     public static StringBuilder buildStorage(
             final String storageUrl,
             final Map<String, List<Object>> params) {
         return params(new StringBuilder(storageUrl), params);
     }
 
+    /**
+     * Creates a URL for a storage.
+     *
+     * @param storageUrl a URL for the storage
+     * @param params query parameters; may be {@code null}
+     * @return a URL for the storage
+     * @throws MalformedURLException if failed to create the URL
+     * @see #buildStorage(java.lang.String, java.util.Map)
+     * @see URL#URL(java.lang.String)
+     */
     public static URL locateStorage(
             final String storageUrl,
             final Map<String, List<Object>> params)
@@ -141,6 +158,16 @@ public class StorageClientNet
         return new URL(buildStorage(storageUrl, params).toString());
     }
 
+    /**
+     * Opens a connection for a storage.
+     *
+     * @param storageUrl a URL for the storage
+     * @param params query parameters; may be {@code null}
+     * @return a {@code URLConnection}
+     * @throws IOException if an I/O error occurs.
+     * @see #locateStorage(java.lang.String, java.util.Map)
+     * @see URL#openConnection()
+     */
     public static URLConnection openStorage(
             final String storageUrl, final Map<String, List<Object>> params)
             throws IOException {
@@ -206,34 +233,31 @@ public class StorageClientNet
     // ---------------------------------------------------------------- /account
     /**
      * Sets {@link #HEADER_X_AUTH_ADMIN_USER} and
-     * {@link #HEADER_X_AUTH_ADMIN_KEY} as request properties on given
-     * connection.
+     * {@link #HEADER_X_AUTH_ADMIN_KEY} on given connection.
      *
-     * @param <T> url connection type parameter
+     * @param <T> connection type parameter
      * @param connection the connection
-     * @param authUser the value of {@link #HEADER_X_AUTH_ADMIN_USER}
-     * @param authKey the value of {@link #HEADER_X_AUTH_ADMIN_KEY}
+     * @param user the value of {@link #HEADER_X_AUTH_ADMIN_USER}
+     * @param key the value of {@link #HEADER_X_AUTH_ADMIN_KEY}
      * @return given connection
      * @see URLConnection#setRequestProperty(java.lang.String, java.lang.String)
      */
-    public static <T extends URLConnection> T setXAuthAdminCredential(
-            final T connection, final String authUser, final String authKey) {
-        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_USER, authUser);
-        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_KEY, authKey);
+    public static <T extends URLConnection> T authAdmin(
+            final T connection, final String user, final String key) {
+        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_USER, user);
+        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_KEY, key);
         return connection;
     }
 
     public static StringBuilder buildAccount(
-            final String accountUrl,
-            final Map<String, List<Object>> params) {
+            final String accountUrl, final Map<String, List<Object>> params) {
         final StringBuilder builder = new StringBuilder(accountUrl);
         params(builder, params);
         return builder;
     }
 
-    public static URL locateAccount(
-            final String accountUrl,
-            final Map<String, List<Object>> params)
+    public static URL locateAccount(final String accountUrl,
+                                    final Map<String, List<Object>> params)
             throws MalformedURLException {
         final StringBuilder builder = buildAccount(accountUrl, params);
         final URL locator = new URL(builder.toString());
@@ -246,7 +270,7 @@ public class StorageClientNet
             throws IOException {
         final URL locator = locateAccount(accountUrl, params);
         final URLConnection connection = locator.openConnection();
-        setXAuthAdminCredential(connection, authAdminUser, authAdminKey);
+        authAdmin(connection, authAdminUser, authAdminKey);
 //        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_USER, authAdminUser);
 //        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_KEY, authAdminKey);
         return connection;
@@ -292,7 +316,7 @@ public class StorageClientNet
             throws IOException {
         final URL locator = locateUser(accountUrl, userName, params);
         final URLConnection connection = locator.openConnection();
-        setXAuthAdminCredential(connection, authAdminUser, authAdminKey);
+        authAdmin(connection, authAdminUser, authAdminKey);
 //        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_USER, authAdminUser);
 //        connection.setRequestProperty(HEADER_X_AUTH_ADMIN_KEY, authAdminKey);
         return connection;
@@ -312,12 +336,38 @@ public class StorageClientNet
         setAuthTokenExpires(client.getAuthTokenExpires());
     }
 
+    // -------------------------------------------------------------------------
+    @Override
+    protected int getStatusCode(final URLConnection response) {
+        try {
+            return ((HttpURLConnection) response).getResponseCode();
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
+        }
+    }
+//
+//    @Override
+//    @Deprecated
+//    protected String getReasonPhrase(final URLConnection connection) {
+//        try {
+//            return ((HttpURLConnection) connection).getResponseMessage();
+//        } catch (final IOException ioe) {
+//            throw new StorageClientException(ioe);
+//        }
+//    }
+//
+//    @Override
+//    protected String getHeaderValue(final URLConnection connection,
+//                                         final String name) {
+//        return connection.getHeaderField(name);
+//    }
 //    // -------------------------------------------------------------------------
 //    @Override
 //    protected int statusCode(final URLConnection connection) {
 //        return statusCode(((HttpURLConnection) connection));
 //    }
     // -------------------------------------------------------------------------
+
     @Override
     public <R> R authenticateUser(final boolean newToken,
                                   final Function<URLConnection, R> function) {
@@ -327,7 +377,7 @@ public class StorageClientNet
             connection.setRequestMethod("GET");
             final Map<String, List<Object>> headers = new HashMap<>();
             headers.put(HEADER_X_AUTH_USER, singletonList(authUser));
-            headers.put(HEADER_X_AUTH_PASS, singletonList(authKey));
+            headers.put(HEADER_X_AUTH_KEY, singletonList(authKey));
             if (newToken) {
                 headers.put(HEADER_X_AUTH_NEW_TOKEN, singletonList(TRUE));
             }
@@ -736,10 +786,10 @@ public class StorageClientNet
                     = (HttpURLConnection) openAccount(
                             accountUrl(), params, authUser, authKey);
             connection.setRequestMethod("GET");
-            if (headers != null) {
-                headers.put(HEADER_X_AUTH_USER, singletonList(authUser));
-                headers.put(HEADER_X_AUTH_PASS, singletonList(authKey));
-            }
+//            if (headers != null) {
+//                headers.put(HEADER_X_AUTH_USER, singletonList(authUser));
+//                headers.put(HEADER_X_AUTH_PASS, singletonList(authKey));
+//            }
             headers(connection, headers);
             connection.setDoOutput(false);
             connection.setDoInput(true);
@@ -781,7 +831,7 @@ public class StorageClientNet
 
     @Override
     public <R> R updateUser(final String userName, final String userKey,
-                            final Boolean userAdmin,
+                            final boolean userAdmin,
                             final Map<String, List<Object>> params,
                             final Map<String, List<Object>> headers,
                             final Function<URLConnection, R> function) {
@@ -791,7 +841,7 @@ public class StorageClientNet
                             accountUrl(), userName, params, authUser, authKey);
             connection.setRequestMethod("PUT");
             connection.setRequestProperty(HEADER_X_AUTH_USER_KEY, userKey);
-            if (userAdmin != null && userAdmin) {
+            if (userAdmin) {
                 connection.setRequestProperty(
                         HEADER_X_AUTH_USER_ADMIN, userKey);
             }
@@ -848,7 +898,7 @@ public class StorageClientNet
             if (headers != null) {
                 headers(connection, headers);
             }
-            setXAuthAdminCredential(connection, authUser, authKey);
+            authAdmin(connection, authUser, authKey);
             connection.connect();
             try {
                 return function.apply(connection);

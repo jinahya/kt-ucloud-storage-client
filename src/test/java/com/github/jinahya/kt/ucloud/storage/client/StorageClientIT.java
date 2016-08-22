@@ -15,8 +15,8 @@
  */
 package com.github.jinahya.kt.ucloud.storage.client;
 
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.accountMetaHeader;
 import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.containerMetaHeader;
+import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.storageMetaHeader;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import static java.util.Arrays.asList;
@@ -254,8 +254,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                        logger.debug("--------------------- adding metadata...");
                        final MultivaluedMap<String, Object> headers
                        = new MultivaluedHashMap<>();
-                       headers.putSingle(
-                               accountMetaHeader(false, tokens), "irrelevant");
+                       headers.putSingle(storageMetaHeader(false, tokens), "irrelevant");
                        c.configureStorage(
                                null,
                                headers,
@@ -270,8 +269,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                        logger.debug("------------------- removing metadata...");
                        final MultivaluedMap<String, Object> headers
                        = new MultivaluedHashMap<>();
-                       headers.putSingle(
-                               accountMetaHeader(true, tokens), "irrelevant");
+                       headers.putSingle(storageMetaHeader(true, tokens), "irrelevant");
                        c.configureStorage(
                                null,
                                headers,
@@ -520,12 +518,12 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                c -> {
                    logger.debug("-------------------------- updating user...2");
                    String userKey = UUID.randomUUID().toString();
-                   final boolean userAdmin
-                   = ThreadLocalRandom.current().nextBoolean();
+//                   final boolean userAdmin
+//                   = ThreadLocalRandom.current().nextBoolean();
                    c.updateUser(
                            userName,
                            userKey,
-                           null,
+                           false,
                            null,
                            null,
                            r -> {

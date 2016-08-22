@@ -23,7 +23,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @author Jin Kwon &lt;onacit at gmail.com&gt;
  */
 @XmlRootElement
-public class StorageAccountInfo extends StorageContainerInfo {
+public class StorageInfo extends ContainerInfo {
 
     // -------------------------------------------------------------------------
     @Override
@@ -33,16 +33,56 @@ public class StorageAccountInfo extends StorageContainerInfo {
                + "}";
     }
 
+    @Override
+    public int hashCode() {
+        int hash = super.hashCode();
+        hash = 89 * hash + containerCount;
+        return hash;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (true) {
+            return equalsAs(obj) && getClass() == obj.getClass();
+        }
+        if (!super.equalsAs(obj)) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final StorageInfo other = (StorageInfo) obj;
+        if (containerCount != other.containerCount) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    protected boolean equalsAs(final Object obj) {
+        if (!super.equalsAs(obj)) {
+            return false;
+        }
+        if (!getClass().isAssignableFrom(obj.getClass())) {
+            return false;
+        }
+        final StorageInfo other = (StorageInfo) obj;
+        if (containerCount != other.containerCount) {
+            return false;
+        }
+        return true;
+    }
+
     // ------------------------------------------------------------- objectCount
     @Override
-    public StorageAccountInfo objectCount(final int objectCount) {
-        return (StorageAccountInfo) super.objectCount(objectCount);
+    public StorageInfo objectCount(final int objectCount) {
+        return (StorageInfo) super.objectCount(objectCount);
     }
 
     // --------------------------------------------------------------- bytesUsed
     @Override
-    public StorageContainerInfo bytesUsed(final long bytesUsed) {
-        return (StorageAccountInfo) super.bytesUsed(bytesUsed);
+    public ContainerInfo bytesUsed(final long bytesUsed) {
+        return (StorageInfo) super.bytesUsed(bytesUsed);
     }
 
     // ---------------------------------------------------------- containerCount
@@ -54,7 +94,7 @@ public class StorageAccountInfo extends StorageContainerInfo {
         this.containerCount = containerCount;
     }
 
-    public StorageAccountInfo containerCount(final int containerCount) {
+    public StorageInfo containerCount(final int containerCount) {
         setContainerCount(containerCount);
         return this;
     }
