@@ -121,6 +121,13 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
 
     public static final String HEADER_X_AUTH_USER_ADMIN = "X-Auth-User-Admin";
 
+    /**
+     * Capitalizes given string. This method does nothing but returning the
+     * string if the string is {@code null} or empty.
+     *
+     * @param token the string to capitalize
+     * @return a capitalized value of given string
+     */
     public static String capitalize(final String token) {
         if (token == null || token.isEmpty()) {
             return token;
@@ -129,6 +136,13 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
                + token.substring(1).toLowerCase();
     }
 
+    /**
+     * Capitalizes each token and joins them with '{@code -}'. Note that each
+     * token split by '{@code -}' first.
+     *
+     * @param tokens the tokens
+     * @return a string
+     */
     public static String capitalizeAndJoin(final String... tokens) {
         return stream(tokens)
                 .flatMap(t -> Stream.of(t.split("-")))
