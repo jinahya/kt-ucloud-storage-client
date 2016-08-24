@@ -354,18 +354,18 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     }
 
     // ---------------------------------------------------------------- /storage
-//    /**
-//     * Peeks the storage using the {@code HEAD} method.
-//     *
-//     * @param <R> result type parameter
-//     * @param params query parameters; may be {@code null}
-//     * @param headers request headers; may be {@code null}
-//     * @param function a function to be applied with the server response
-//     * @return the value the {@code function} results
-//     */
-//    public abstract <R> R peekStorage(Map<String, List<Object>> params,
-//                                      Map<String, List<Object>> headers,
-//                                      Function<ResponseType, R> function);
+    /**
+     * Peeks the storage using the {@code HEAD} method.
+     *
+     * @param <R> result type parameter
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function a function to be applied with the server response
+     * @return the value the {@code function} results
+     */
+    public abstract <R> R peekStorage(Map<String, List<Object>> params,
+                                      Map<String, List<Object>> headers,
+                                      Function<ResponseType, R> function);
 //    public <R> R peekStorage(
 //            final Map<String, List<Object>> params,
 //            final Map<String, List<Object>> headers,
@@ -378,37 +378,37 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
 //                }
 //        );
 //    }
-    public abstract <R> R peekStorage(
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final BiFunction<ResponseType, ClientType, R> function);
-
-//    public ClientType peekStorage(
+//    public abstract <R> R peekStorage(
 //            final Map<String, List<Object>> params,
 //            final Map<String, List<Object>> headers,
-//            final Consumer<ResponseType> consumer) {
-//        return peekStorage(
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
+//            final BiFunction<ResponseType, ClientType, R> function);
+
     public ClientType peekStorage(
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
-            final BiConsumer<ResponseType, ClientType> consumer) {
+            final Consumer<ResponseType> consumer) {
         return peekStorage(
                 params,
                 headers,
-                (response, client) -> {
-                    consumer.accept(response, client);
-                    return client;
+                n -> {
+                    consumer.accept(n);
+                    return (ClientType) this;
                 }
         );
     }
+//    public ClientType peekStorage(
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final BiConsumer<ResponseType, ClientType> consumer) {
+//        return peekStorage(
+//                params,
+//                headers,
+//                (response, client) -> {
+//                    consumer.accept(response, client);
+//                    return client;
+//                }
+//        );
+//    }
 
     /**
      * Reads the storage using {@code GET} method.

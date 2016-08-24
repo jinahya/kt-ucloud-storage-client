@@ -407,36 +407,10 @@ public class StorageClientNet
     }
 
     // ---------------------------------------------------------------- /storage
-//    @Override
-//    public <R> R peekStorage(final Map<String, List<Object>> params,
-//                             Map<String, List<Object>> headers,
-//                             final Function<URLConnection, R> function) {
-//        try {
-//            final HttpURLConnection connection
-//                    = (HttpURLConnection) openStorage(getStorageUrl(), params);
-//            connection.setRequestMethod("HEAD");
-//            if (headers == null) {
-//                headers = new HashMap<>();
-//            }
-//            headers.put(HEADER_X_AUTH_TOKEN, singletonList(getAuthToken()));
-//            headers(connection, headers);
-//            connection.setDoOutput(false);
-//            connection.setDoInput(true);
-//            connection.connect();
-//            try {
-//                return function.apply(connection);
-//            } finally {
-//                connection.disconnect();
-//            }
-//        } catch (final IOException ioe) {
-//            throw new StorageClientException(ioe);
-//        }
-//    }
     @Override
-    public <R> R peekStorage(
-            final Map<String, List<Object>> params,
-            Map<String, List<Object>> headers,
-            final BiFunction<URLConnection, StorageClientNet, R> function) {
+    public <R> R peekStorage(final Map<String, List<Object>> params,
+                             Map<String, List<Object>> headers,
+                             final Function<URLConnection, R> function) {
         try {
             final HttpURLConnection connection
                     = (HttpURLConnection) openStorage(getStorageUrl(), params);
@@ -450,7 +424,7 @@ public class StorageClientNet
             connection.setDoInput(true);
             connection.connect();
             try {
-                return function.apply(connection, this);
+                return function.apply(connection);
             } finally {
                 connection.disconnect();
             }
@@ -458,6 +432,32 @@ public class StorageClientNet
             throw new StorageClientException(ioe);
         }
     }
+//    @Override
+//    public <R> R peekStorage(
+//            final Map<String, List<Object>> params,
+//            Map<String, List<Object>> headers,
+//            final BiFunction<URLConnection, StorageClientNet, R> function) {
+//        try {
+//            final HttpURLConnection connection
+//                    = (HttpURLConnection) openStorage(getStorageUrl(), params);
+//            connection.setRequestMethod("HEAD");
+//            if (headers == null) {
+//                headers = new HashMap<>();
+//            }
+//            headers.put(HEADER_X_AUTH_TOKEN, singletonList(getAuthToken()));
+//            headers(connection, headers);
+//            connection.setDoOutput(false);
+//            connection.setDoInput(true);
+//            connection.connect();
+//            try {
+//                return function.apply(connection, this);
+//            } finally {
+//                connection.disconnect();
+//            }
+//        } catch (final IOException ioe) {
+//            throw new StorageClientException(ioe);
+//        }
+//    }
 
     @Override
     public <R> R readStorage(final Map<String, List<Object>> params,

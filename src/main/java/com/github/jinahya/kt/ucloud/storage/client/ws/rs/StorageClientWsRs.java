@@ -498,37 +498,9 @@ public class StorageClientWsRs
     }
 
     // ---------------------------------------------------------------- /storage
-//    public <R> R peekStorage(final MultivaluedMap<String, Object> params,
-//                             final MultivaluedMap<String, Object> headers,
-//                             final Function<Response, R> function) {
-//        final Client client = getClient();
-//        try {
-//            Invocation.Builder builder = buildStorage(
-//                    client, getStorageUrl(), params, getAuthToken());
-//            if (headers != null) {
-//                headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
-//                builder = builder.headers(headers);
-//            }
-//            final Response response = builder.head();
-//            try {
-//                return function.apply(response);
-//            } finally {
-//                response.close();
-//            }
-//        } finally {
-//            client.close();
-//        }
-//    }
-//
-//    @Override
-//    public <R> R peekStorage(final Map<String, List<Object>> params,
-//                             final Map<String, List<Object>> headers,
-//                             final Function<Response, R> function) {
-//        return peekStorage(multivalued(params), multivalued(headers), function);
-//    }
     public <R> R peekStorage(final MultivaluedMap<String, Object> params,
                              final MultivaluedMap<String, Object> headers,
-                             final BiFunction<Response, StorageClientWsRs, R> function) {
+                             final Function<Response, R> function) {
         final Client client = getClient();
         try {
             Invocation.Builder builder = buildStorage(
@@ -539,7 +511,7 @@ public class StorageClientWsRs
             }
             final Response response = builder.head();
             try {
-                return function.apply(response, this);
+                return function.apply(response);
             } finally {
                 response.close();
             }
@@ -549,12 +521,40 @@ public class StorageClientWsRs
     }
 
     @Override
-    public <R> R peekStorage(
-            final Map<String, List<Object>> params,
-            final Map<String, List<Object>> headers,
-            final BiFunction<Response, StorageClientWsRs, R> function) {
+    public <R> R peekStorage(final Map<String, List<Object>> params,
+                             final Map<String, List<Object>> headers,
+                             final Function<Response, R> function) {
         return peekStorage(multivalued(params), multivalued(headers), function);
     }
+//    public <R> R peekStorage(final MultivaluedMap<String, Object> params,
+//                             final MultivaluedMap<String, Object> headers,
+//                             final BiFunction<Response, StorageClientWsRs, R> function) {
+//        final Client client = getClient();
+//        try {
+//            Invocation.Builder builder = buildStorage(
+//                    client, getStorageUrl(), params, getAuthToken());
+//            if (headers != null) {
+//                headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
+//                builder = builder.headers(headers);
+//            }
+//            final Response response = builder.head();
+//            try {
+//                return function.apply(response, this);
+//            } finally {
+//                response.close();
+//            }
+//        } finally {
+//            client.close();
+//        }
+//    }
+//
+//    @Override
+//    public <R> R peekStorage(
+//            final Map<String, List<Object>> params,
+//            final Map<String, List<Object>> headers,
+//            final BiFunction<Response, StorageClientWsRs, R> function) {
+//        return peekStorage(multivalued(params), multivalued(headers), function);
+//    }
 
     /**
      * Reads a storage using {@link javax.ws.rs.HttpMethod#GET}.
