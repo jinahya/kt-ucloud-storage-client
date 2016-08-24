@@ -223,7 +223,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                    c.peekStorage(
                            null,
                            headers,
-                           r -> {
+                           (r, c1) -> {
                                assertStatus(r, SUCCESSFUL, NO_CONTENT);
                            }
                    );
