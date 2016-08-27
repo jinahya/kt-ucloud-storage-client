@@ -25,6 +25,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.client.ClientResponseFilter;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.MediaType;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import javax.ws.rs.core.Response;
@@ -34,268 +35,13 @@ import javax.ws.rs.core.Response.StatusType;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertEquals;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
 
 /**
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
 public class StorageClientWsRsIT
-        extends StorageClientIT<StorageClientWsRs, Entity<?>, Response> {
+        extends StorageClientIT<StorageClientWsRs, Invocation.Builder, Response> {
 
     private static final Logger logger
             = getLogger(MethodHandles.lookup().lookupClass());
@@ -350,13 +96,14 @@ public class StorageClientWsRsIT
     }
 
     @Override
-    protected void assertSuccesfulAuthentication(final Response response) {
+    protected int assertSuccesfulAuthentication(final Response response) {
         final StatusType statusInfo = response.getStatusInfo();
         final Family family = statusInfo.getFamily();
         final int statusCode = statusInfo.getStatusCode();
         final String reasonPhrase = statusInfo.getReasonPhrase();
         assertEquals(family, SUCCESSFUL,
                      "status: " + statusCode + " " + reasonPhrase);
+        return statusCode;
     }
 
     @Override
@@ -387,11 +134,18 @@ public class StorageClientWsRsIT
         );
     }
 
+//    @Override
+//    protected Entity<?> requestEntity() {
+//        final byte[] bytes
+//                = new byte[ThreadLocalRandom.current().nextInt(1024)];
+//        ThreadLocalRandom.current().nextBytes(bytes);
+//        return Entity.entity(bytes, APPLICATION_OCTET_STREAM);
+//    }
     @Override
-    protected Entity<?> requestEntity() {
+    protected Response requestEntity(final Invocation.Builder builder) {
         final byte[] bytes
                 = new byte[ThreadLocalRandom.current().nextInt(1024)];
         ThreadLocalRandom.current().nextBytes(bytes);
-        return Entity.entity(bytes, APPLICATION_OCTET_STREAM);
+        return builder.put(Entity.entity(bytes, APPLICATION_OCTET_STREAM));
     }
 }

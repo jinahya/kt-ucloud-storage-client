@@ -18,9 +18,8 @@ package com.github.jinahya.kt.ucloud.storage.client.net;
 import com.github.jinahya.kt.ucloud.storage.client.StorageClient;
 import com.github.jinahya.kt.ucloud.storage.client.StorageClientException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import static java.lang.Boolean.TRUE;
+import static java.lang.invoke.MethodHandles.lookup;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -31,20 +30,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.logging.Logger;
 import static java.util.logging.Logger.getLogger;
 import static java.util.stream.Collectors.joining;
 
 /**
+ * A client for accessing kt ucloud storage using classes in {@code java.net}.
  *
  * @author Jin Kwon &lt;onacit at gmail.com&gt;
  */
 public class StorageClientNet
-        extends StorageClient<StorageClientNet, InputStream, URLConnection> {
+        extends StorageClient<StorageClientNet, URLConnection, URLConnection> {
 
     private static final Logger logger
-            = getLogger(StorageClientNet.class.getName());
+            = getLogger(lookup().lookupClass().getName());
 
     /**
      * Appends given query parameters to specified string builder.
@@ -93,6 +92,8 @@ public class StorageClientNet
      * @param connection the connection
      * @param function the function
      * @return the value the {@code function} results
+     * @see HttpURLConnection#getResponseCode()
+     * @see HttpURLConnection#getResponseMessage()
      */
     public static <R> R status(final HttpURLConnection connection,
                                final BiFunction<Integer, String, R> function) {
@@ -121,14 +122,13 @@ public class StorageClientNet
      * @param connection the connection
      * @return the {@code Reason-Phrase} of given {@code connection}
      */
-    @Deprecated
     public static String reasonPhrase(final HttpURLConnection connection) {
         return status(connection, (c, p) -> p);
     }
 
     // ---------------------------------------------------------------- /storage
     /**
-     * Builds URL for a storage.
+     * Builds a spec for a storage.
      *
      * @param storageUrl a URL for the storage
      * @param params query parameters; may be {@code null}
@@ -328,17 +328,16 @@ public class StorageClientNet
         super(authUrl, authUser, authKey);
     }
 
-    @Deprecated
-    public StorageClientNet(final StorageClient client) {
-        this(client.getAuthUrl(), client.getAuthUser(), client.getAuthKey());
-        setStorageUrl(client.getStorageUrl());
-        setAuthToken(client.getAuthToken());
-        setAuthTokenExpires(client.getAuthTokenExpires());
-    }
-
+//    @Deprecated
+//    public StorageClientNet(final StorageClient client) {
+//        this(client.getAuthUrl(), client.getAuthUser(), client.getAuthKey());
+//        setStorageUrl(client.getStorageUrl());
+//        setAuthToken(client.getAuthToken());
+//        setAuthTokenExpires(client.getAuthTokenExpires());
+//    }
     // -------------------------------------------------------------------------
     @Override
-    protected int getStatusCode(final URLConnection response) {
+    public int getStatusCode(final URLConnection response) {
         try {
             return ((HttpURLConnection) response).getResponseCode();
         } catch (final IOException ioe) {
@@ -373,11 +372,11 @@ public class StorageClientNet
                                   final Function<URLConnection, R> function) {
         try {
             final HttpURLConnection connection
-                    = (HttpURLConnection) new URL(authUrl).openConnection();
+                    = (HttpURLConnection) new URL(getAuthUrl()).openConnection();
             connection.setRequestMethod("GET");
             final Map<String, List<Object>> headers = new HashMap<>();
-            headers.put(HEADER_X_AUTH_USER, singletonList(authUser));
-            headers.put(HEADER_X_AUTH_KEY, singletonList(authKey));
+            headers.put(HEADER_X_AUTH_USER, singletonList(getAuthUser()));
+            headers.put(HEADER_X_AUTH_KEY, singletonList(getAuthKey()));
             if (newToken) {
                 headers.put(HEADER_X_AUTH_NEW_TOKEN, singletonList(TRUE));
             }
@@ -406,7 +405,7 @@ public class StorageClientNet
         }
     }
 
-    // ---------------------------------------------------------------- /account
+    // ---------------------------------------------------------------- /storage
     @Override
     public <R> R peekStorage(final Map<String, List<Object>> params,
                              Map<String, List<Object>> headers,
@@ -432,14 +431,41 @@ public class StorageClientNet
             throw new StorageClientException(ioe);
         }
     }
+//    @Override
+//    public <R> R peekStorage(
+//            final Map<String, List<Object>> params,
+//            Map<String, List<Object>> headers,
+//            final BiFunction<URLConnection, StorageClientNet, R> function) {
+//        try {
+//            final HttpURLConnection connection
+//                    = (HttpURLConnection) openStorage(getStorageUrl(), params);
+//            connection.setRequestMethod("HEAD");
+//            if (headers == null) {
+//                headers = new HashMap<>();
+//            }
+//            headers.put(HEADER_X_AUTH_TOKEN, singletonList(getAuthToken()));
+//            headers(connection, headers);
+//            connection.setDoOutput(false);
+//            connection.setDoInput(true);
+//            connection.connect();
+//            try {
+//                return function.apply(connection, this);
+//            } finally {
+//                connection.disconnect();
+//            }
+//        } catch (final IOException ioe) {
+//            throw new StorageClientException(ioe);
+//        }
+//    }
 
     @Override
     public <R> R readStorage(final Map<String, List<Object>> params,
                              Map<String, List<Object>> headers,
                              final Function<URLConnection, R> function) {
         try {
-            final HttpURLConnection connection = (HttpURLConnection) openStorage(
-                    getStorageUrl(), params);
+            final HttpURLConnection connection
+                    = (HttpURLConnection) openStorage(
+                            getStorageUrl(), params);
             connection.setRequestMethod("GET");
             if (headers == null) {
                 headers = new HashMap<>();
@@ -681,13 +707,50 @@ public class StorageClientNet
         }
     }
 
+//    @Override
+//    public <R> R updateObject(final String containerName,
+//                              final String objectName,
+//                              final Map<String, List<Object>> params,
+//                              Map<String, List<Object>> headers,
+//                              final Supplier<InputStream> entity,
+//                              final Function<URLConnection, R> function) {
+//        try {
+//            final HttpURLConnection connection = (HttpURLConnection) openObject(
+//                    getStorageUrl(), containerName, objectName, params);
+//            connection.setRequestMethod("PUT");
+//            if (headers == null) {
+//                headers = new HashMap<>();
+//            }
+//            headers.put(HEADER_X_AUTH_TOKEN, singletonList(getAuthToken()));
+//            headers(connection, headers);
+//            connection.setDoOutput(true);
+//            connection.setDoInput(true);
+//            connection.setChunkedStreamingMode(0);
+//            connection.connect();
+//            try {
+//                try (InputStream input = entity.get();
+//                     OutputStream output = connection.getOutputStream()) {
+//                    final byte[] buffer = new byte[8192];
+//                    for (int read; (read = input.read(buffer)) != -1;) {
+//                        output.write(buffer, 0, read);
+//                    }
+//                    output.flush();
+//                }
+//                return function.apply(connection);
+//            } finally {
+//                connection.disconnect();
+//            }
+//        } catch (final IOException ioe) {
+//            throw new StorageClientException(ioe);
+//        }
+//    }
     @Override
-    public <R> R updateObject(final String containerName,
-                              final String objectName,
-                              final Map<String, List<Object>> params,
-                              Map<String, List<Object>> headers,
-                              final Supplier<InputStream> entity,
-                              final Function<URLConnection, R> function) {
+    public <R> R updateObject(
+            final String containerName, final String objectName,
+            final Map<String, List<Object>> params,
+            Map<String, List<Object>> headers,
+            final Function<URLConnection, URLConnection> function1,
+            final Function<URLConnection, R> function2) {
         try {
             final HttpURLConnection connection = (HttpURLConnection) openObject(
                     getStorageUrl(), containerName, objectName, params);
@@ -702,15 +765,16 @@ public class StorageClientNet
             connection.setChunkedStreamingMode(0);
             connection.connect();
             try {
-                try (InputStream input = entity.get();
-                     OutputStream output = connection.getOutputStream()) {
-                    final byte[] buffer = new byte[8192];
-                    for (int read; (read = input.read(buffer)) != -1;) {
-                        output.write(buffer, 0, read);
-                    }
-                    output.flush();
-                }
-                return function.apply(connection);
+                function1.apply(connection);
+//                try (InputStream input = operator.get();
+//                     OutputStream output = connection.getOutputStream()) {
+//                    final byte[] buffer = new byte[8192];
+//                    for (int read; (read = input.read(buffer)) != -1;) {
+//                        output.write(buffer, 0, read);
+//                    }
+//                    output.flush();
+//                }
+                return function2.apply(connection);
             } finally {
                 connection.disconnect();
             }
@@ -784,11 +848,12 @@ public class StorageClientNet
         try {
             final HttpURLConnection connection
                     = (HttpURLConnection) openAccount(
-                            accountUrl(), params, authUser, authKey);
+                            getAccountUrl(), params, getAuthUser(),
+                            getAuthKey());
             connection.setRequestMethod("GET");
 //            if (headers != null) {
-//                headers.put(HEADER_X_AUTH_USER, singletonList(authUser));
-//                headers.put(HEADER_X_AUTH_PASS, singletonList(authKey));
+//                headers.put(HEADER_X_AUTH_USER, singletonList(getAuthUser()));
+//                headers.put(HEADER_X_AUTH_PASS, singletonList(getAuthKey()));
 //            }
             headers(connection, headers);
             connection.setDoOutput(false);
@@ -813,7 +878,8 @@ public class StorageClientNet
         try {
             final HttpURLConnection connection
                     = (HttpURLConnection) openUser(
-                            accountUrl(), userName, params, authUser, authKey);
+                            getAccountUrl(), userName, params, getAuthUser(),
+                            getAuthKey());
             connection.setRequestMethod("GET");
             headers(connection, headers);
             connection.setDoOutput(false);
@@ -838,7 +904,8 @@ public class StorageClientNet
         try {
             final HttpURLConnection connection
                     = (HttpURLConnection) openUser(
-                            accountUrl(), userName, params, authUser, authKey);
+                            getAccountUrl(), userName, params, getAuthUser(),
+                            getAuthKey());
             connection.setRequestMethod("PUT");
             connection.setRequestProperty(HEADER_X_AUTH_USER_KEY, userKey);
             if (userAdmin) {
@@ -867,7 +934,8 @@ public class StorageClientNet
         try {
             final HttpURLConnection connection
                     = (HttpURLConnection) openUser(
-                            accountUrl(), userName, params, authUser, authKey);
+                            getAccountUrl(), userName, params, getAuthUser(),
+                            getAuthKey());
             connection.setRequestMethod("DELETE");
             headers(connection, headers);
             connection.setDoOutput(false);
@@ -889,7 +957,8 @@ public class StorageClientNet
                             final Map<String, List<Object>> headers,
                             final Function<URLConnection, R> function) {
         final StringBuilder builder = params(
-                buildAccount(accountUrl(), null).append('/').append(".groups"),
+                buildAccount(getAccountUrl(), null).append('/')
+                .append(".groups"),
                 params);
         try {
             final URL url = new URL(builder.toString());
@@ -898,7 +967,7 @@ public class StorageClientNet
             if (headers != null) {
                 headers(connection, headers);
             }
-            authAdmin(connection, authUser, authKey);
+            authAdmin(connection, getAuthUser(), getAuthKey());
             connection.connect();
             try {
                 return function.apply(connection);

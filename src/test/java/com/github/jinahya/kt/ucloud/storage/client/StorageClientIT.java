@@ -61,10 +61,10 @@ import org.testng.annotations.Test;
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  * @param <ClientType> client type parameter
- * @param <EntityType> request entity type parameter
+ * @param <RequestType> request entity type parameter
  * @param <ResponseType> response type parameter
  */
-public abstract class StorageClientIT<ClientType extends StorageClient<ClientType, EntityType, ResponseType>, EntityType, ResponseType> {
+public abstract class StorageClientIT<ClientType extends StorageClient<ClientType, RequestType, ResponseType>, RequestType, ResponseType> {
 
     private static final Logger logger
             = getLogger(MethodHandles.lookup().lookupClass());
@@ -80,8 +80,8 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         }
     }
 
-    protected static void assertStatus(final int actual, final Family family,
-                                       final Status... expecteds) {
+    protected static int assertStatus(final int actual, final Family family,
+                                      final Status... expecteds) {
         if (family != null) {
             assertEquals(familyOf(actual), family);
         }
@@ -97,6 +97,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                 fail(actual + " \u2288 " + Arrays.toString(expecteds));
             }
         }
+        return actual;
     }
 
     public StorageClientIT(final Class<ClientType> clientClass) {
@@ -133,18 +134,18 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         logger.debug("client.authUser: {}", clientInstance.getAuthUser());
         logger.debug("client.authKey: {}", clientInstance.getAuthKey());
         logger.debug("client.accountName: {}", clientInstance.getAccountName());
-        clientInstance.authenticateUser(
+        final int statusCode = clientInstance.authenticateUser(
                 false,
                 r -> {
-                    assertSuccesfulAuthentication(r);
+                    return assertSuccesfulAuthentication(r);
                 }
         );
-        logger.debug("client authenticted");
+        logger.debug("client authenticted; statusCode: {}", statusCode);
         logger.debug("client.storageUrl: {}", clientInstance.getStorageUrl());
         logger.debug("client.accountUrl: {}", clientInstance.getAccountUrl());
     }
 
-    protected abstract void assertSuccesfulAuthentication(
+    protected abstract int assertSuccesfulAuthentication(
             ResponseType response);
 
     protected void clientInstantiated(final ClientType client) {
@@ -202,14 +203,15 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
 
     protected abstract void printBody(final ResponseType response);
 
-    protected void assertStatus(final ResponseType response,
-                                final Family family, final Status... statuses) {
+    protected int assertStatus(final ResponseType response,
+                               final Family family, final Status... statuses) {
         final int statusCode = statusCode(response);
         logger.debug("statusCode: {}", statusCode);
-        assertStatus(statusCode, family, statuses);
+        return assertStatus(statusCode, family, statuses);
     }
 
-    protected abstract EntityType requestEntity();
+//    protected abstract EntityType requestEntity();
+    protected abstract ResponseType requestEntity(RequestType request);
 
     // ---------------------------------------------------------------- /account
     @Test
@@ -224,7 +226,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            headers,
                            r -> {
-                               assertStatus(r, SUCCESSFUL, NO_CONTENT);
+                               return assertStatus(r, SUCCESSFUL, NO_CONTENT);
                            }
                    );
                }
@@ -240,7 +242,8 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                                null,
                                headers,
                                r -> {
-                                   assertStatus(r, SUCCESSFUL, OK, NO_CONTENT);
+                                   return assertStatus(
+                                           r, SUCCESSFUL, OK, NO_CONTENT);
                                }
                        );
                    }
@@ -259,7 +262,8 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                                null,
                                headers,
                                r -> {
-                                   assertStatus(r, SUCCESSFUL, NO_CONTENT);
+                                   return assertStatus(
+                                           r, SUCCESSFUL, NO_CONTENT);
                                }
                        );
                    }
@@ -269,12 +273,14 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                        logger.debug("------------------- removing metadata...");
                        final MultivaluedMap<String, Object> headers
                        = new MultivaluedHashMap<>();
-                       headers.putSingle(storageMetaHeader(true, tokens), "irrelevant");
+                       headers.putSingle(storageMetaHeader(true, tokens),
+                                         "irrelevant");
                        c.configureStorage(
                                null,
                                headers,
                                r -> {
-                                   assertStatus(r, SUCCESSFUL, NO_CONTENT);
+                                   return assertStatus(
+                                           r, SUCCESSFUL, NO_CONTENT);
                                }
                        );
                    }
@@ -297,7 +303,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            null,
                            r -> {
-                               assertStatus(r, SUCCESSFUL);
+                               return assertStatus(r, SUCCESSFUL);
                            }
                    );
                }
@@ -316,7 +322,8 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                                null,
                                headers,
                                r -> {
-                                   assertStatus(r, SUCCESSFUL, NO_CONTENT);
+                                   return assertStatus(
+                                           r, SUCCESSFUL, NO_CONTENT);
                                }
                        );
                    }
@@ -332,7 +339,8 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                                null,
                                headers,
                                r -> {
-                                   assertStatus(r, SUCCESSFUL, NO_CONTENT);
+                                   return assertStatus(
+                                           r, SUCCESSFUL, NO_CONTENT);
                                }
                        );
                    }
@@ -346,7 +354,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            null,
                            r -> {
-                               assertStatus(r, SUCCESSFUL);
+                               return assertStatus(r, SUCCESSFUL);
                            }
                    );
                }
@@ -372,7 +380,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            null,
                            r -> {
-                               assertStatus(r, SUCCESSFUL);
+                               return assertStatus(r, SUCCESSFUL);
                            }
                    );
                }
@@ -380,14 +388,15 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         accept(false,
                c -> {
                    logger.debug("------------------------- updating object...");
-                   c.updateObject(containerName,
-                                  objectName,
-                                  null,
-                                  null,
-                                  () -> requestEntity(),
-                                  r -> {
-                                      assertStatus(r, SUCCESSFUL);
-                                  }
+                   c.updateObject(
+                           containerName,
+                           objectName,
+                           null,
+                           null,
+                           (request) -> requestEntity(request),
+                           response -> {
+                               return assertStatus(response, SUCCESSFUL);
+                           }
                    );
                }
         );
@@ -400,7 +409,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            null,
                            r -> {
-                               assertStatus(r, SUCCESSFUL, OK);
+                               return assertStatus(r, SUCCESSFUL, OK);
                            }
                    );
                }
@@ -414,7 +423,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            null,
                            r -> {
-                               assertStatus(r, SUCCESSFUL);
+                               return assertStatus(r, SUCCESSFUL);
                            }
                    );
                }
@@ -436,11 +445,12 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            headers,
                            r -> {
                                printHeaders(r);
-                               assertStatus(r, SUCCESSFUL, NO_CONTENT);
+                               return assertStatus(r, SUCCESSFUL, NO_CONTENT);
                            }
                    );
                }
         );
+        sleep();
         accept(false,
                c -> {
                    logger.debug("---------------------- deleting container...");
@@ -449,7 +459,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            null,
                            r -> {
-                               assertStatus(r, SUCCESSFUL);
+                               return assertStatus(r, SUCCESSFUL);
                            }
                    );
                }
@@ -468,7 +478,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            r -> {
                                printBody(r);
-                               assertStatus(r, SUCCESSFUL);
+                               return assertStatus(r, SUCCESSFUL);
                            }
                    );
                }
@@ -494,7 +504,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            null,
                            r -> {
-                               assertStatus(r, SUCCESSFUL);
+                               return assertStatus(r, SUCCESSFUL);
                            }
                    );
                }
@@ -509,7 +519,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            r -> {
                                printBody(r);
-                               assertStatus(r, SUCCESSFUL);
+                               return assertStatus(r, SUCCESSFUL);
                            }
                    );
                }
@@ -527,8 +537,8 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            null,
                            r -> {
-                               assertStatus(r, SUCCESSFUL);
                                printBody(r);
+                               return assertStatus(r, SUCCESSFUL);
                            }
                    );
                }
@@ -543,7 +553,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            r -> {
                                printBody(r);
-                               assertStatus(r, SUCCESSFUL);
+                               return assertStatus(r, SUCCESSFUL);
                            }
                    );
                }
@@ -556,7 +566,8 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            null,
                            r -> {
-                               assertStatus(r, SUCCESSFUL);
+                               return assertStatus(r, SUCCESSFUL
+                               );
                            }
                    );
                }
@@ -574,8 +585,9 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            null,
                            r -> {
-                               assertStatus(r, SUCCESSFUL);
                                printBody(r);
+                               return assertStatus(r, SUCCESSFUL
+                               );
                            }
                    );
                }
