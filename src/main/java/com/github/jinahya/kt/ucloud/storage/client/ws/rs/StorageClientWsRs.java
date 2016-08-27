@@ -20,6 +20,7 @@ import com.github.jinahya.kt.ucloud.storage.client.StorageClientException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import static java.lang.invoke.MethodHandles.lookup;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +47,8 @@ import static javax.ws.rs.core.Response.Status.OK;
 import javax.ws.rs.core.Response.StatusType;
 
 /**
- * A client for accessing kt ucloud storage using JAX-RS.
+ * A client for accessing kt ucloud storage using classes in
+ * {@code javax.ws.rs}.
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
@@ -54,7 +56,7 @@ public class StorageClientWsRs
         extends StorageClient<StorageClientWsRs, Entity<?>, Response> {
 
     private static final Logger logger
-            = getLogger(StorageClientWsRs.class.getName());
+            = getLogger(lookup().lookupClass().getName());
 
     /**
      * Returns a newly created instance of {@link MultivaluedMap} containing
@@ -447,15 +449,14 @@ public class StorageClientWsRs
         super(authUrl, authUser, authKey);
     }
 
-    @Deprecated
-    public StorageClientWsRs(final StorageClient client) {
-        this(client.getStorageUrl(), client.getAuthUser(),
-             client.getAuthKey());
-        setStorageUrl(client.getStorageUrl());
-        setAuthToken(client.getAuthToken());
-        setAuthTokenExpires(client.getAuthTokenExpires());
-    }
-
+//    @Deprecated
+//    public StorageClientWsRs(final StorageClient client) {
+//        this(client.getStorageUrl(), client.getAuthUser(),
+//             client.getAuthKey());
+//        setStorageUrl(client.getStorageUrl());
+//        setAuthToken(client.getAuthToken());
+//        setAuthTokenExpires(client.getAuthTokenExpires());
+//    }
     // -------------------------------------------------------------------------
     @Override
     protected int getStatusCode(final Response response) {

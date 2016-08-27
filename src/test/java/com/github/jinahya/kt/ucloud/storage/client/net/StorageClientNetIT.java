@@ -29,69 +29,7 @@ import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
-import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
+import org.testng.SkipException;
 
 /**
  *
@@ -108,16 +46,18 @@ public class StorageClientNetIT
     }
 
     @Override
-    protected void assertSuccesfulAuthentication(final URLConnection response) {
+    protected int assertSuccesfulAuthentication(final URLConnection response) {
         try {
-            final int statusCode
+            final int responseCode
                     = ((HttpURLConnection) response).getResponseCode();
-            final String reasonPhrase
+            final String responseMessage
                     = ((HttpURLConnection) response).getResponseMessage();
-            assertTrue(statusCode / 100 == 2,
-                       "status: " + statusCode + " " + reasonPhrase);
+            assertTrue(responseCode / 100 == 2,
+                       "status: " + responseCode + " " + responseMessage);
+            return responseCode;
         } catch (final IOException ioe) {
             fail("failed to get status info", ioe);
+            throw new SkipException("failed to get status info", ioe);
         }
     }
 

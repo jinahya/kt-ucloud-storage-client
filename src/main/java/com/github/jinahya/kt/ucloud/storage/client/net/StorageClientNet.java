@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import static java.lang.Boolean.TRUE;
+import static java.lang.invoke.MethodHandles.lookup;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -37,6 +38,7 @@ import static java.util.logging.Logger.getLogger;
 import static java.util.stream.Collectors.joining;
 
 /**
+ * A client for accessing kt ucloud storage using classes in {@code java.net}.
  *
  * @author Jin Kwon &lt;onacit at gmail.com&gt;
  */
@@ -44,7 +46,7 @@ public class StorageClientNet
         extends StorageClient<StorageClientNet, InputStream, URLConnection> {
 
     private static final Logger logger
-            = getLogger(StorageClientNet.class.getName());
+            = getLogger(lookup().lookupClass().getName());
 
     /**
      * Appends given query parameters to specified string builder.
@@ -93,6 +95,8 @@ public class StorageClientNet
      * @param connection the connection
      * @param function the function
      * @return the value the {@code function} results
+     * @see HttpURLConnection#getResponseCode()
+     * @see HttpURLConnection#getResponseMessage()
      */
     public static <R> R status(final HttpURLConnection connection,
                                final BiFunction<Integer, String, R> function) {
@@ -121,14 +125,13 @@ public class StorageClientNet
      * @param connection the connection
      * @return the {@code Reason-Phrase} of given {@code connection}
      */
-    @Deprecated
     public static String reasonPhrase(final HttpURLConnection connection) {
         return status(connection, (c, p) -> p);
     }
 
     // ---------------------------------------------------------------- /storage
     /**
-     * Builds URL for a storage.
+     * Builds a spec for a storage.
      *
      * @param storageUrl a URL for the storage
      * @param params query parameters; may be {@code null}
@@ -328,14 +331,13 @@ public class StorageClientNet
         super(authUrl, authUser, authKey);
     }
 
-    @Deprecated
-    public StorageClientNet(final StorageClient client) {
-        this(client.getAuthUrl(), client.getAuthUser(), client.getAuthKey());
-        setStorageUrl(client.getStorageUrl());
-        setAuthToken(client.getAuthToken());
-        setAuthTokenExpires(client.getAuthTokenExpires());
-    }
-
+//    @Deprecated
+//    public StorageClientNet(final StorageClient client) {
+//        this(client.getAuthUrl(), client.getAuthUser(), client.getAuthKey());
+//        setStorageUrl(client.getStorageUrl());
+//        setAuthToken(client.getAuthToken());
+//        setAuthTokenExpires(client.getAuthTokenExpires());
+//    }
     // -------------------------------------------------------------------------
     @Override
     protected int getStatusCode(final URLConnection response) {
