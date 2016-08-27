@@ -25,6 +25,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.client.ClientResponseFilter;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.MediaType;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import javax.ws.rs.core.Response;
@@ -40,7 +41,7 @@ import static org.testng.Assert.assertEquals;
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
 public class StorageClientWsRsIT
-        extends StorageClientIT<StorageClientWsRs, Entity<?>, Response> {
+        extends StorageClientIT<StorageClientWsRs, Invocation.Builder, Response> {
 
     private static final Logger logger
             = getLogger(MethodHandles.lookup().lookupClass());
@@ -133,11 +134,18 @@ public class StorageClientWsRsIT
         );
     }
 
+//    @Override
+//    protected Entity<?> requestEntity() {
+//        final byte[] bytes
+//                = new byte[ThreadLocalRandom.current().nextInt(1024)];
+//        ThreadLocalRandom.current().nextBytes(bytes);
+//        return Entity.entity(bytes, APPLICATION_OCTET_STREAM);
+//    }
     @Override
-    protected Entity<?> requestEntity() {
+    protected Response requestEntity(final Invocation.Builder builder) {
         final byte[] bytes
                 = new byte[ThreadLocalRandom.current().nextInt(1024)];
         ThreadLocalRandom.current().nextBytes(bytes);
-        return Entity.entity(bytes, APPLICATION_OCTET_STREAM);
+        return builder.put(Entity.entity(bytes, APPLICATION_OCTET_STREAM));
     }
 }

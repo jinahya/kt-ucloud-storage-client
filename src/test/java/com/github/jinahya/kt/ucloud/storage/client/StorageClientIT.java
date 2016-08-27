@@ -61,10 +61,10 @@ import org.testng.annotations.Test;
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  * @param <ClientType> client type parameter
- * @param <EntityType> request entity type parameter
+ * @param <RequestType> request entity type parameter
  * @param <ResponseType> response type parameter
  */
-public abstract class StorageClientIT<ClientType extends StorageClient<ClientType, EntityType, ResponseType>, EntityType, ResponseType> {
+public abstract class StorageClientIT<ClientType extends StorageClient<ClientType, RequestType, ResponseType>, RequestType, ResponseType> {
 
     private static final Logger logger
             = getLogger(MethodHandles.lookup().lookupClass());
@@ -210,7 +210,8 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         return assertStatus(statusCode, family, statuses);
     }
 
-    protected abstract EntityType requestEntity();
+//    protected abstract EntityType requestEntity();
+    protected abstract ResponseType requestEntity(RequestType request);
 
     // ---------------------------------------------------------------- /account
     @Test
@@ -392,9 +393,9 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            objectName,
                            null,
                            null,
-                           () -> requestEntity(),
-                           r -> {
-                               return assertStatus(r, SUCCESSFUL);
+                           (request) -> requestEntity(request),
+                           response -> {
+                               return assertStatus(response, SUCCESSFUL);
                            }
                    );
                }
@@ -449,6 +450,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                    );
                }
         );
+        sleep();
         accept(false,
                c -> {
                    logger.debug("---------------------- deleting container...");

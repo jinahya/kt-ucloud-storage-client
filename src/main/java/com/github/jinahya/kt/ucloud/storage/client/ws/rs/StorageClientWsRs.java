@@ -53,7 +53,7 @@ import javax.ws.rs.core.Response.StatusType;
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  */
 public class StorageClientWsRs
-        extends StorageClient<StorageClientWsRs, Entity<?>, Response> {
+        extends StorageClient<StorageClientWsRs, Invocation.Builder, Response> {
 
     private static final Logger logger
             = getLogger(lookup().lookupClass().getName());
@@ -459,7 +459,7 @@ public class StorageClientWsRs
 //    }
     // -------------------------------------------------------------------------
     @Override
-    protected int getStatusCode(final Response response) {
+    public int getStatusCode(final Response response) {
         return response.getStatus();
     }
 //
@@ -481,7 +481,7 @@ public class StorageClientWsRs
                                   final Function<Response, R> function) {
         return StorageClientWsRs.this.apply(c -> {
             final Response response = authenticateUser(
-                    c, authUrl, authUser, authKey, newToken);
+                    c, getAuthUrl(), getAuthUser(), getAuthKey(), newToken);
             try {
                 if (OK.getStatusCode() != response.getStatus()) {
                     throw new WebApplicationException(
@@ -879,12 +879,49 @@ public class StorageClientWsRs
                           multivalued(headers), function);
     }
 
-    public <R> R updateObject(final String containerName,
-                              final String objectName,
-                              final MultivaluedMap<String, Object> params,
-                              final MultivaluedMap<String, Object> headers,
-                              final Supplier<Entity<?>> entity,
-                              final Function<Response, R> function) {
+//    public <R> R updateObject(final String containerName,
+//                              final String objectName,
+//                              final MultivaluedMap<String, Object> params,
+//                              final MultivaluedMap<String, Object> headers,
+//                              final Supplier<Entity<?>> entity,
+//                              final Function<Response, R> function) {
+//        final Client client = getClient();
+//        try {
+//            Invocation.Builder builder = buildObject(
+//                    client, getStorageUrl(), containerName, objectName, params,
+//                    getAuthToken());
+//            if (headers != null) {
+//                headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
+//                builder = builder.headers(headers);
+//            }
+//            final Response response = builder.put(entity.get());
+//            try {
+//                return function.apply(response);
+//            } finally {
+//                response.close();
+//            }
+//        } finally {
+//            client.close();
+//        }
+//    }
+//
+//    @Override
+//    public <R> R updateObject(final String containerName,
+//                              final String objectName,
+//                              final Map<String, List<Object>> params,
+//                              final Map<String, List<Object>> headers,
+//                              final Supplier<Entity<?>> entity,
+//                              final Function<Response, R> function) {
+//        return updateObject(containerName, objectName, multivalued(params),
+//                            multivalued(headers), entity, function);
+//    }
+    public <R> R updateObject(
+            final String containerName,
+            final String objectName,
+            final MultivaluedMap<String, Object> params,
+            final MultivaluedMap<String, Object> headers,
+            final Function<Invocation.Builder, Response> function1,
+            final Function<Response, R> function2) {
         final Client client = getClient();
         try {
             Invocation.Builder builder = buildObject(
@@ -894,9 +931,9 @@ public class StorageClientWsRs
                 headers.putSingle(HEADER_X_AUTH_TOKEN, getAuthToken());
                 builder = builder.headers(headers);
             }
-            final Response response = builder.put(entity.get());
+            final Response response = function1.apply(builder);
             try {
-                return function.apply(response);
+                return function2.apply(response);
             } finally {
                 response.close();
             }
@@ -906,14 +943,14 @@ public class StorageClientWsRs
     }
 
     @Override
-    public <R> R updateObject(final String containerName,
-                              final String objectName,
-                              final Map<String, List<Object>> params,
-                              final Map<String, List<Object>> headers,
-                              final Supplier<Entity<?>> entity,
-                              final Function<Response, R> function) {
+    public <R> R updateObject(
+            final String containerName, final String objectName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers,
+            final Function<Invocation.Builder, Response> function1,
+            final Function<Response, R> function2) {
         return updateObject(containerName, objectName, multivalued(params),
-                            multivalued(headers), entity, function);
+                            multivalued(headers), function1, function2);
     }
 
     public <R> R configureObject(final String containerName,
@@ -1008,10 +1045,10 @@ public class StorageClientWsRs
         final Client client = getClient();
         try {
             final Invocation.Builder builder = buildAccount(
-                    client, accountUrl(), params, authUser, authKey);
+                    client, getAccountUrl(), params, getAuthUser(), getAuthKey());
             if (headers != null) {
-                headers.putSingle(HEADER_X_AUTH_ADMIN_USER, authUser);
-                headers.putSingle(HEADER_X_AUTH_ADMIN_KEY, authKey);
+                headers.putSingle(HEADER_X_AUTH_ADMIN_USER, getAuthUser());
+                headers.putSingle(HEADER_X_AUTH_ADMIN_KEY, getAuthKey());
                 builder.headers(headers);
             }
             final Response response = builder.get();
@@ -1041,10 +1078,10 @@ public class StorageClientWsRs
         final Client client = getClient();
         try {
             final Invocation.Builder builder = buildUser(
-                    client, accountUrl(), userName, params, authUser, authKey);
+                    client, getAccountUrl(), userName, params, getAuthUser(), getAuthKey());
             if (headers != null) {
-                headers.putSingle(HEADER_X_AUTH_ADMIN_USER, authUser);
-                headers.putSingle(HEADER_X_AUTH_ADMIN_KEY, authKey);
+                headers.putSingle(HEADER_X_AUTH_ADMIN_USER, getAuthUser());
+                headers.putSingle(HEADER_X_AUTH_ADMIN_KEY, getAuthKey());
                 builder.headers(headers);
             }
             final Response response = builder.get();
@@ -1075,12 +1112,12 @@ public class StorageClientWsRs
         final Client client = getClient();
         try {
             Invocation.Builder builder = buildUser(
-                    client, accountUrl(), userName, params, authUser, authKey);
+                    client, getAccountUrl(), userName, params, getAuthUser(), getAuthKey());
             if (headers == null) {
                 headers = new MultivaluedHashMap<>();
             }
-            headers.putSingle(HEADER_X_AUTH_ADMIN_USER, authUser);
-            headers.putSingle(HEADER_X_AUTH_ADMIN_KEY, authKey);
+            headers.putSingle(HEADER_X_AUTH_ADMIN_USER, getAuthUser());
+            headers.putSingle(HEADER_X_AUTH_ADMIN_KEY, getAuthKey());
             headers.putSingle(HEADER_X_AUTH_USER_KEY, userKey);
             if (userAdmin) {
                 headers.putSingle(HEADER_X_AUTH_USER_ADMIN, userAdmin);
@@ -1114,10 +1151,10 @@ public class StorageClientWsRs
         final Client client = getClient();
         try {
             final Invocation.Builder builder = buildUser(
-                    client, accountUrl(), userName, params, authUser, authKey);
+                    client, getAccountUrl(), userName, params, getAuthUser(), getAuthKey());
             if (headers != null) {
-                headers.putSingle(HEADER_X_AUTH_ADMIN_USER, authUser);
-                headers.putSingle(HEADER_X_AUTH_ADMIN_KEY, authKey);
+                headers.putSingle(HEADER_X_AUTH_ADMIN_USER, getAuthUser());
+                headers.putSingle(HEADER_X_AUTH_ADMIN_KEY, getAuthKey());
                 builder.headers(headers);
             }
             final Response response = builder.delete();
@@ -1147,13 +1184,13 @@ public class StorageClientWsRs
         final Client client = getClient();
         try {
             final WebTarget target
-                    = targetAccount(client, accountUrl(), params)
+                    = targetAccount(client, getAccountUrl(), params)
                     .path(".groups");
             final Invocation.Builder builder = target.request();
             if (headers != null) {
                 builder.headers(headers);
             }
-            authAdmin(builder, authUser, authKey);
+            authAdmin(builder, getAuthUser(), getAuthKey());
             final Response response = builder.get();
             try {
                 return function.apply(response);

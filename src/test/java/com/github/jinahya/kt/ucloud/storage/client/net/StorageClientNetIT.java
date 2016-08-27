@@ -16,10 +16,11 @@
 package com.github.jinahya.kt.ucloud.storage.client.net;
 
 import static com.github.jinahya.kt.ucloud.storage.client.StorageClient.lines;
+import com.github.jinahya.kt.ucloud.storage.client.StorageClientException;
 import com.github.jinahya.kt.ucloud.storage.client.StorageClientIT;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.invoke.MethodHandles;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
@@ -36,7 +37,7 @@ import org.testng.SkipException;
  * @author Jin Kwon &lt;onacit at gmail.com&gt;
  */
 public class StorageClientNetIT
-        extends StorageClientIT<StorageClientNet, InputStream, URLConnection> {
+        extends StorageClientIT<StorageClientNet, URLConnection, URLConnection> {
 
     private static final Logger logger
             = getLogger(MethodHandles.lookup().lookupClass());
@@ -96,11 +97,26 @@ public class StorageClientNetIT
         }
     }
 
+//    @Override
+//    protected InputStream requestEntity() {
+//        final byte[] bytes
+//                = new byte[ThreadLocalRandom.current().nextInt(1024)];
+//        ThreadLocalRandom.current().nextBytes(bytes);
+//        return new ByteArrayInputStream(bytes);
+//    }
     @Override
-    protected InputStream requestEntity() {
+    protected URLConnection requestEntity(final URLConnection connection) {
         final byte[] bytes
                 = new byte[ThreadLocalRandom.current().nextInt(1024)];
         ThreadLocalRandom.current().nextBytes(bytes);
-        return new ByteArrayInputStream(bytes);
+        try {
+            try (OutputStream output = connection.getOutputStream()) {
+                output.write(bytes);
+                output.flush();
+            }
+            return connection;
+        } catch (final IOException ioe) {
+            throw new StorageClientException(ioe);
+        }
     }
 }

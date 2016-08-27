@@ -37,7 +37,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.logging.Logger;
 import static java.util.logging.Logger.getLogger;
 import static java.util.stream.Collectors.joining;
@@ -46,38 +45,76 @@ import java.util.stream.Stream;
 /**
  *
  * @author Jin Kwon &lt;onacit at gmail.com&gt;
- * @param <ClientType> storage client implementation type parameter
- * @param <RequestEntityType> request entity type parameter
+ * @param <T> implementation type parameter
+ * @param <RequestType> request type parameter
  * @param <ResponseType> response type parameter
  */
-public abstract class StorageClient<ClientType extends StorageClient, RequestEntityType, ResponseType> {
+public abstract class StorageClient<T extends StorageClient<T, RequestType, ResponseType>, RequestType, ResponseType> {
 
     private static final Logger logger
             = getLogger(StorageClient.class.getName());
 
+    /**
+     * A constant for {@code authUrl} whose value is
+     * {@value #AUTH_URL_STANDARD_KOR_CENTER}.
+     */
     public static final String AUTH_URL_STANDARD_KOR_CENTER
             = "https://api.ucloudbiz.olleh.com/storage/v1/auth";
 
+    /**
+     * A constant for {@code authUrl} whose value is
+     * {@value #AUTH_URL_STANDARD_JPN}.
+     */
     public static final String AUTH_URL_STANDARD_JPN
             = "https://api.ucloudbiz.olleh.com/storage/v1/authjp";
 
+    /**
+     * A constant for {@code authUrl} whose value is
+     * {@value #AUTH_URL_LITE_KOR_HA}.
+     */
     public static final String AUTH_URL_LITE_KOR_HA
             = "https://api.ucloudbiz.olleh.com/storage/v1/authlite";
 
+    /**
+     * A constant for a query parameter whose value is
+     * {@value #QUERY_PARAM_LIMIT}.
+     */
     public static final String QUERY_PARAM_LIMIT = "limit";
 
+    /**
+     * A constant for a query parameter whose value is
+     * {@value #QUERY_PARAM_MARKER}.
+     */
     public static final String QUERY_PARAM_MARKER = "marker";
 
+    /**
+     * A constant for a query parameter whose value is
+     * {@value #QUERY_PARAM_FORMAT}.
+     */
     public static final String QUERY_PARAM_FORMAT = "format";
 
 //    public static final String HEADER_X_AUTH_USER = "X-Storage-User";
+    /**
+     * A constant for a header whose value is {@value #HEADER_X_AUTH_USER}.
+     */
     public static final String HEADER_X_AUTH_USER = "X-Auth-User";
 
 //    public static final String HEADER_X_AUTH_PASS = "X-Storage-Pass";
+    /**
+     * A constant for a header whose value is {@value #HEADER_X_AUTH_KEY}.
+     */
     public static final String HEADER_X_AUTH_KEY = "X-Auth-Key";
 
+    /**
+     * A constant for a header name whose value is
+     * {@value #HEADER_X_AUTH_NEW_TOKEN}.
+     */
     public static final String HEADER_X_AUTH_NEW_TOKEN = "X-Auth-New-Token";
 
+    /**
+     * A constant for a header name whose value is
+     * {@value #HEADER_X_AUTH_TOKEN}.
+     */
     public static final String HEADER_X_AUTH_TOKEN = "X-Auth-Token";
 
     public static final String HEADER_X_AUTH_TOKEN_EXPIRES
@@ -112,12 +149,28 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
 
     public static final String HEADER_X_COPY_FROM = "X-Copy-From";
 
+    /**
+     * A constant for a header name whose value is
+     * {@value #HEADER_X_AUTH_ADMIN_USER}.
+     */
     public static final String HEADER_X_AUTH_ADMIN_USER = "X-Auth-Admin-User";
 
+    /**
+     * A constant for a header name whose value is
+     * {@value #HEADER_X_AUTH_ADMIN_KEY}.
+     */
     public static final String HEADER_X_AUTH_ADMIN_KEY = "X-Auth-Admin-Key";
 
+    /**
+     * A constant for a header name whose value is
+     * {@value #HEADER_X_AUTH_USER_KEY}.
+     */
     public static final String HEADER_X_AUTH_USER_KEY = "X-Auth-User-Key";
 
+    /**
+     * A constant for a header name whose value is
+     * {@value #HEADER_X_AUTH_USER_ADMIN}.
+     */
     public static final String HEADER_X_AUTH_USER_ADMIN = "X-Auth-User-Admin";
 
     /**
@@ -261,7 +314,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
      * @param response the response
      * @return the value of {@code Status-Code} of given response
      */
-    protected abstract int getStatusCode(ResponseType response);
+    public abstract int getStatusCode(ResponseType response);
 //
 //    @Deprecated
 //    protected abstract String getReasonPhrase(ResponseType response);
@@ -318,11 +371,11 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
      *
      * @return this client
      */
-    public ClientType invalidate() {
+    public T invalidate() {
         storageUrl = null;
         authToken = null;
         authTokenExpires = null;
-        return (ClientType) this;
+        return (T) this;
     }
 
     /**
@@ -474,7 +527,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
      * @param consumer a consumer accepts each container names
      * @return this client
      */
-    public ClientType readStorageContainerNames(
+    public T readStorageContainerNames(
             Map<String, List<Object>> params,
             Map<String, List<Object>> headers,
             final Function<ResponseType, Reader> function,
@@ -527,7 +580,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
                 break;
             }
         }
-        return (ClientType) this;
+        return (T) this;
     }
 
 //    public ClientType readStorageContainerNames(
@@ -719,7 +772,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
      * @param consumer the consumer
      * @return this client.
      */
-    public ClientType readContainerObjectNames(
+    public T readContainerObjectNames(
             final String containerName, Map<String, List<Object>> params,
             Map<String, List<Object>> headers,
             final Function<ResponseType, Reader> function,
@@ -773,7 +826,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
                 break;
             }
         }
-        return (ClientType) this;
+        return (T) this;
     }
 
 //    public ClientType readContainerObjectNames(
@@ -1113,11 +1166,28 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
 //        );
 //    }
     // ---------------------------------------- /storage/container/object/update
-    public abstract <R> R updateObject(String containerName, String objectName,
-                                       Map<String, List<Object>> params,
-                                       Map<String, List<Object>> headers,
-                                       Supplier<RequestEntityType> supplier,
-                                       Function<ResponseType, R> function);
+//    public abstract <R> R updateObject(String containerName, String objectName,
+//                                       Map<String, List<Object>> params,
+//                                       Map<String, List<Object>> headers,
+//                                       Supplier<RequestType> operator,
+//                                       Function<ResponseType, R> function);
+    /**
+     * Updates an object using the {@code PUT} method.
+     *
+     * @param containerName a container name
+     * @param objectName an object name
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function1 a function for writing request entity on the request
+     * @param function2 a function to be applied with the server response
+     * @return the value the {@code function2} results.
+     */
+    public abstract <R> R updateObject(
+            String containerName, String objectName,
+            Map<String, List<Object>> params,
+            Map<String, List<Object>> headers,
+            Function<RequestType, ResponseType> function1,
+            Function<ResponseType, R> function2);
 
 //    public <R> R updateObject(
 //            final String containerName, final String objectName,
@@ -1680,11 +1750,10 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     /**
      * Returns the {@code authUrl}.
      *
-     * @return the {@code authUrl}.
-     * @deprecated forRemoval = true
+     * @return the {@code authUrl}. //@deprecated forRemoval = true
      */
-    @Deprecated//(forRemoval = true)
-    public String getAuthUrl() {
+//    @Deprecated//(forRemoval = true)
+    protected final String getAuthUrl() {
         return authUrl;
     }
 
@@ -1692,11 +1761,10 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     /**
      * Returns the {@code authUser}.
      *
-     * @return the {@code authUser}.
-     * @deprecated forRemoval = true
+     * @return the {@code authUser}. //@deprecated forRemoval = true
      */
-    @Deprecated//(forRemoval = true)
-    public String getAuthUser() {
+//    @Deprecated//(forRemoval = true)
+    protected final String getAuthUser() {
         return authUser;
     }
 
@@ -1704,69 +1772,64 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     /**
      * Returns the {@code authKey}.
      *
-     * @return the {@code authKey}
-     * @deprecated forRemoval = true
+     * @return the {@code authKey} //@deprecated forRemoval = true
      */
-    @Deprecated//(forRemoval = true)
-    public String getAuthKey() {
+//    @Deprecated//(forRemoval = true)
+    protected final String getAuthKey() {
         return authKey;
     }
 
     // ------------------------------------------------------------- accountName
-    public String getAccountName() {
+    protected final String getAccountName() {
         return accountName;
     }
 
-    public String accountName() {
-        return getAccountName();
-    }
-
+//    public final String accountName() {
+//        return getAccountName();
+//    }
     // -------------------------------------------------------------- storageUrl
     /**
      * Returns the storage URL.
      *
      * @return the storage URL
      */
-    protected String getStorageUrl() {
+    protected final String getStorageUrl() {
         return storageUrl;
     }
 
-    protected String storageUrl() {
-        return getStorageUrl();
-    }
-
-    protected void setStorageUrl(final String storageUrl) {
+//    protected String storageUrl() {
+//        return getStorageUrl();
+//    }
+    protected final void setStorageUrl(final String storageUrl) {
         this.storageUrl = requireNonNull(storageUrl, "null storageUrl");
         if (accountName != null) {
             accountUrl = accountUrl(storageUrl, accountName);
         }
     }
 
-    protected StorageClient storegeUrl(final String storageUrl) {
-        setStorageUrl(storageUrl);
-        return this;
-    }
-
+//    protected StorageClient storegeUrl(final String storageUrl) {
+//        setStorageUrl(storageUrl);
+//        return this;
+//    }
     // -------------------------------------------------------------- accountUrl
-    protected String getAccountUrl() {
+    protected final String getAccountUrl() {
         return accountUrl;
     }
 
-    protected String accountUrl() {
-        return getAccountUrl();
-    }
-
+//    protected String accountUrl() {
+//        return getAccountUrl();
+//    }
     // --------------------------------------------------------------- authToken
     /**
      * Returns the authorization token.
      *
      * @return the authorization token.
      */
-    protected String getAuthToken() {
+    protected final String getAuthToken() {
         return authToken;
     }
 
-    protected void setAuthToken(final String authToken) {
+    protected final void setAuthToken(final String authToken) {
         this.authToken = authToken;
     }
 
@@ -1776,14 +1839,14 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
      *
      * @return the date the authorization token expires.
      */
-    public Date getAuthTokenExpires() {
+    public final Date getAuthTokenExpires() {
         if (authTokenExpires == null) {
             return null;
         }
         return new Date(authTokenExpires.getTime());
     }
 
-    protected void setAuthTokenExpires(final Date authTokenExpires) {
+    protected final void setAuthTokenExpires(final Date authTokenExpires) {
         this.authTokenExpires
                 = ofNullable(authTokenExpires)
                 .map(Date::getTime)
@@ -1791,7 +1854,7 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
                 .orElse(null);
     }
 
-    protected void setAuthTokenExpires(final String authTokenExpires) {
+    protected final void setAuthTokenExpires(final String authTokenExpires) {
         setAuthTokenExpires(
                 ofNullable(authTokenExpires)
                 .map(Integer::parseInt)
@@ -1802,11 +1865,11 @@ public abstract class StorageClient<ClientType extends StorageClient, RequestEnt
     }
 
     // -------------------------------------------------------------------------
-    protected final String authUrl;
+    private final String authUrl;
 
-    protected final String authUser;
+    private final String authUser;
 
-    protected final String authKey;
+    private final String authKey;
 
     private final String accountName;
 
