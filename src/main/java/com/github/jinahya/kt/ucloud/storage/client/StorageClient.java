@@ -28,6 +28,7 @@ import static java.util.Arrays.stream;
 import static java.util.Collections.singletonList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import static java.util.Objects.requireNonNull;
@@ -117,9 +118,16 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
      */
     public static final String HEADER_X_AUTH_TOKEN = "X-Auth-Token";
 
+    /**
+     * Constant for a header name whose value is
+     * {@value #HEADER_X_AUTH_TOKEN_EXPIRES}.
+     */
     public static final String HEADER_X_AUTH_TOKEN_EXPIRES
             = "X-Auth-Token-Expires";
 
+    /**
+     * Header name whose value is {@value #HEADER_X_STORAGE_URL}.
+     */
     public static final String HEADER_X_STORAGE_URL = "X-Storage-Url";
 
     public static final String HEADER_X_ACCOUNT_OBJECT_COUNT
@@ -173,6 +181,28 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
      */
     public static final String HEADER_X_AUTH_USER_ADMIN = "X-Auth-User-Admin";
 
+//    public static void removeHeader(final Map<String, List<Object>> headers, final String name) {
+//        for (final Iterator<String> i = headers.keySet().iterator(); i.hasNext();) {
+//            if (name.equalsIgnoreCase(i.next())) {
+//                i.remove();
+//            }
+//        }
+//    }
+//
+//    public static void putHeader(final Map<String, List<Object>> headers, final String name, final List<Object> value) {
+//        removeHeader(headers, name);
+//        headers.put(name, value);
+//    }
+//
+//    public static List<Object> getHeader(final Map<String, List<Object>> headers, final String name) {
+//        for (final Iterator<Entry<String, List<Object>>> i = headers.entrySet().iterator(); i.hasNext();) {
+//            final Entry<String, List<Object>> entry = i.next();
+//            if (name.equalsIgnoreCase(entry.getKey())) {
+//                return entry.getValue();
+//            }
+//        }
+//        return null;
+//    }
     /**
      * Capitalizes given string. This method does nothing but returning the
      * string if the string is {@code null} or empty.
@@ -538,6 +568,11 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
         params.putIfAbsent(QUERY_PARAM_LIMIT, singletonList(512));
         if (headers == null) {
             headers = new HashMap<>();
+        }
+        for (Iterator<String> i = headers.keySet().iterator(); i.hasNext();) {
+            if ("accept".equalsIgnoreCase(i.next())) {
+                i.remove();
+            }
         }
         headers.put("Accept", singletonList("text/plain"));
         final String marker_;
