@@ -28,6 +28,7 @@ import static java.util.Arrays.stream;
 import static java.util.Collections.singletonList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import static java.util.Objects.requireNonNull;
@@ -117,11 +118,21 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
      */
     public static final String HEADER_X_AUTH_TOKEN = "X-Auth-Token";
 
+    /**
+     * Constant for a header name whose value is
+     * {@value #HEADER_X_AUTH_TOKEN_EXPIRES}.
+     */
     public static final String HEADER_X_AUTH_TOKEN_EXPIRES
             = "X-Auth-Token-Expires";
 
+    /**
+     * Header name whose value is {@value #HEADER_X_STORAGE_URL}.
+     */
     public static final String HEADER_X_STORAGE_URL = "X-Storage-Url";
 
+    /**
+     * Header name whose value is {@value #HEADER_X_ACCOUNT_OBJECT_COUNT}.
+     */
     public static final String HEADER_X_ACCOUNT_OBJECT_COUNT
             = "X-Account-Object-Count";
 
@@ -315,57 +326,29 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
      * @return the value of {@code Status-Code} of given response
      */
     public abstract int getStatusCode(ResponseType response);
-//
-//    @Deprecated
-//    protected abstract String getReasonPhrase(ResponseType response);
-//
-//    /**
-//     * Returns the header value of given response.
-//     *
-//     * @param response the response
-//     * @param name the header name
-//     * @return the value of header or {@code null} if no header found.
-//     */
-//    protected abstract String getHeaderValue(ResponseType response,
-//                                             String name);
-    // -------------------------------------------------------------------------
 
+    // -------------------------------------------------------------------------
+    /**
+     * Authenticates user.
+     *
+     * @param <R> result type parameter
+     * @param newToken a flag for refreshing the token.
+     * @param function a function results the result
+     * @return the value the function results
+     */
     public abstract <R> R authenticateUser(boolean newToken,
                                            Function<ResponseType, R> function);
 
-//    public <R> R authenticateUser(
-//            final boolean newToken,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return authenticateUser(
-//                newToken,
-//                response -> {
-//                    return function.apply(response, (ClientType) this);
-//                }
-//        );
-//    }
-//
-//    public ClientType authenticateUser(
-//            final boolean newToken,
-//            final Consumer<ResponseType> consumer) {
-//        return authenticateUser(
-//                newToken,
-//                response -> {
-//                    consumer.accept(response);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//
-//    public ClientType authenticateUser(
-//            final boolean newToken,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return authenticateUser(
-//                newToken,
-//                response -> {
-//                    consumer.accept(response, (ClientType) this);
-//                }
-//        );
-//    }
+    /**
+     * Authenticates user and returns the status code.
+     *
+     * @param newToken a flag for refreshing the token.
+     * @return status code of user authentication
+     */
+    public int authenticateUser(final boolean newToken) {
+        return authenticateUser(newToken, this::getStatusCode);
+    }
+
     /**
      * Purges authentication information.
      *
@@ -419,49 +402,7 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
     public abstract <R> R peekStorage(Map<String, List<Object>> params,
                                       Map<String, List<Object>> headers,
                                       Function<ResponseType, R> function);
-//    public <R> R peekStorage(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return peekStorage(
-//                params,
-//                headers,
-//                n -> {
-//                    return function.apply(n, (ClientType) this);
-//                }
-//        );
-//    }
-//    public abstract <R> R peekStorage(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<ResponseType, ClientType, R> function);
 
-//    public ClientType peekStorage(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<ResponseType> consumer) {
-//        return peekStorage(
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//    public ClientType peekStorage(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return peekStorage(
-//                params,
-//                headers,
-//                (response, client) -> {
-//                    consumer.accept(response, client);
-//                    return client;
-//                }
-//        );
-//    }
     /**
      * Reads the storage using {@code GET} method.
      *
@@ -475,45 +416,6 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
                                       final Map<String, List<Object>> headers,
                                       final Function<ResponseType, R> function);
 
-//    public <R> R readStorage(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return readStorage(
-//                params,
-//                headers,
-//                n -> {
-//                    return function.apply(n, (ClientType) this);
-//                }
-//        );
-//    }
-//
-//    public ClientType readStorage(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<ResponseType> consumer) {
-//        return readStorage(
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//
-//    public ClientType readStorage(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return readStorage(
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n, (ClientType) this);
-//                }
-//        );
-//    }
     /**
      * Reads container names and accepts each of them to given consumer. Put
      * parameters such as {@link #QUERY_PARAM_LIMIT} or
@@ -538,6 +440,11 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
         params.putIfAbsent(QUERY_PARAM_LIMIT, singletonList(512));
         if (headers == null) {
             headers = new HashMap<>();
+        }
+        for (Iterator<String> i = headers.keySet().iterator(); i.hasNext();) {
+            if ("accept".equalsIgnoreCase(i.next())) {
+                i.remove();
+            }
         }
         headers.put("Accept", singletonList("text/plain"));
         final String marker_;
@@ -583,61 +490,10 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
         return (T) this;
     }
 
-//    public ClientType readStorageContainerNames(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Function<ResponseType, Reader> function,
-//            final BiConsumer<String, ClientType> consumer) {
-//        return readStorageContainerNames(
-//                params,
-//                headers,
-//                function,
-//                l -> consumer.accept(l, (ClientType) this)
-//        );
-//    }
     public abstract <R> R configureStorage(Map<String, List<Object>> params,
                                            Map<String, List<Object>> headers,
                                            Function<ResponseType, R> function);
 
-//    public <R> R configureStorage(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return configureStorage(
-//                params,
-//                headers,
-//                response -> {
-//                    return function.apply(response, (ClientType) this);
-//                }
-//        );
-//    }
-//
-//    public ClientType configureStorage(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<ResponseType> consumer) {
-//        return configureStorage(
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//
-//    public ClientType configureStorage(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return configureStorage(
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n, (ClientType) this);
-//                }
-//        );
-//    }
     // ------------------------------------------------------ /storage/container
     /**
      * Peeks a container using {@code HEAD} method.
@@ -654,51 +510,6 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
                                         Map<String, List<Object>> headers,
                                         Function<ResponseType, R> function);
 
-//    public <R> R peekContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return peekContainer(
-//                containerName,
-//                params,
-//                headers,
-//                n -> {
-//                    return function.apply(n, (ClientType) this);
-//                }
-//        );
-//    }
-//
-//    public ClientType peekContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<ResponseType> consumer) {
-//        return peekContainer(
-//                containerName,
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//
-//    public ClientType peekContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return peekContainer(
-//                containerName,
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n, (ClientType) this);
-//                }
-//        );
-//    }
     /**
      * Reads a container using {@code GET} method.
      *
@@ -714,51 +525,6 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
                                         Map<String, List<Object>> headers,
                                         Function<ResponseType, R> function);
 
-//    public <R> R readContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return readContainer(
-//                containerName,
-//                params,
-//                headers,
-//                n -> {
-//                    return function.apply(n, (ClientType) this);
-//                }
-//        );
-//    }
-//
-//    public ClientType readContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<ResponseType> consumer) {
-//        return readContainer(
-//                containerName,
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//
-//    public ClientType readContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return readContainer(
-//                containerName,
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n, (ClientType) this);
-//                }
-//        );
-//    }
     /**
      * Reads object names in a container and accepts each of them to specified
      * consumer.
@@ -829,20 +595,6 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
         return (T) this;
     }
 
-//    public ClientType readContainerObjectNames(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Function<ResponseType, Reader> function,
-//            final BiConsumer<String, ClientType> consumer) {
-//        return readContainerObjectNames(
-//                containerName,
-//                params,
-//                headers,
-//                function,
-//                l -> consumer.accept(l, (ClientType) this)
-//        );
-//    }
     /**
      * Creates or updates a container using {@code PUT} method.
      *
@@ -858,51 +610,6 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
                                           Map<String, List<Object>> headers,
                                           Function<ResponseType, R> function);
 
-//    public <R> R updateContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return updateContainer(
-//                containerName,
-//                params,
-//                headers,
-//                r -> {
-//                    return function.apply(r, (ClientType) this);
-//                }
-//        );
-//    }
-//
-//    public ClientType updateContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<ResponseType> consumer) {
-//        return updateContainer(
-//                containerName,
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//
-//    public ClientType updateContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return updateContainer(
-//                containerName,
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r, (ClientType) this);
-//                }
-//        );
-//    }
     /**
      * Configures a container using the {@code POST} method.
      *
@@ -919,51 +626,6 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
             final Map<String, List<Object>> headers,
             final Function<ResponseType, R> function);
 
-//    public <R> R configureContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return configureContainer(
-//                containerName,
-//                params,
-//                headers,
-//                r -> {
-//                    return function.apply(r, (ClientType) this);
-//                }
-//        );
-//    }
-//
-//    public ClientType configureContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<ResponseType> consumer) {
-//        return configureContainer(
-//                containerName,
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//
-//    public ClientType configureContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return configureContainer(
-//                containerName,
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r, (ClientType) this);
-//                }
-//        );
-//    }
     /**
      * Deletes a container using {@code DELETE} method.
      *
@@ -1002,51 +664,6 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
         return deleteContainer(containerName, this::getStatusCode);
     }
 
-//    public <R> R deleteContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return deleteContainer(
-//                containerName,
-//                params,
-//                headers,
-//                r -> {
-//                    return function.apply(r, (ClientType) this);
-//                }
-//        );
-//    }
-//
-//    public ClientType deleteContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<ResponseType> consumer) {
-//        return deleteContainer(
-//                containerName,
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//
-//    public ClientType deleteContainer(
-//            final String containerName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return deleteContainer(
-//                containerName,
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r, (ClientType) this);
-//                }
-//        );
-//    }
     // ----------------------------------------------- /storage/container/object
     /**
      * Peeks an object using {@code HEAD} method.
@@ -1064,116 +681,15 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
                                      Map<String, List<Object>> headers,
                                      Function<ResponseType, R> function);
 
-//    public <R> R peekObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return peekObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                n -> {
-//                    return function.apply(n, (ClientType) this);
-//                }
-//        );
-//    }
-//
-//    public ClientType peekObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<ResponseType> consumer) {
-//        return peekObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//
-//    public ClientType peekObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return peekObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n, (ClientType) this);
-//                }
-//        );
-//    }
     public abstract <R> R readObject(String containerName, String objectName,
                                      Map<String, List<Object>> params,
                                      Map<String, List<Object>> headers,
                                      Function<ResponseType, R> function);
 
-//    public <R> R readObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return readObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                n -> {
-//                    return function.apply(n, (ClientType) this);
-//                }
-//        );
-//    }
-//
-//    public ClientType readObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<ResponseType> consumer) {
-//        return readObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//
-//    public ClientType readObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return readObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                n -> {
-//                    consumer.accept(n, (ClientType) this);
-//                }
-//        );
-//    }
-    // ---------------------------------------- /storage/container/object/update
-//    public abstract <R> R updateObject(String containerName, String objectName,
-//                                       Map<String, List<Object>> params,
-//                                       Map<String, List<Object>> headers,
-//                                       Supplier<RequestType> operator,
-//                                       Function<ResponseType, R> function);
     /**
      * Updates an object using the {@code PUT} method.
      *
+     * @param <R> result type parameter
      * @param containerName a container name
      * @param objectName an object name
      * @param params query parameters; may be {@code null}
@@ -1189,88 +705,6 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
             Function<RequestType, ResponseType> function1,
             Function<ResponseType, R> function2);
 
-//    public <R> R updateObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Supplier<RequestEntityType> entity,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return updateObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                entity,
-//                n -> {
-//                    return function.apply(n, (ClientType) this);
-//                }
-//        );
-//    }
-//
-//    public ClientType updateObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Supplier<RequestEntityType> supplier,
-//            final Consumer<ResponseType> consumer) {
-//        return updateObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                supplier,
-//                n -> {
-//                    consumer.accept(n);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//
-//    public ClientType updateObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Supplier<RequestEntityType> supplier,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return updateObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                supplier,
-//                n -> {
-//                    consumer.accept(n, (ClientType) this);
-//                }
-//        );
-//    }
-//    public ClientType copyObject(
-//            final String targetContainerName, final String targetObjectName,
-//            final String sourceContainerName, final String sourceObjectName,
-//            final BiConsumer<ResponseType, ResponseType> consumer) {
-//        final Map<String, List<Object>> headers = new HashMap<>();
-//        headers.put("Accept", singletonList("*/*"));
-//        return peekObject(sourceContainerName,
-//                          sourceObjectName,
-//                          null,
-//                          headers,
-//                          (r1, c) -> {
-//                              final int statusCode = getStatusCode(r1);
-//                              if (statusCode != 204) {
-//                                  logger.warning("peeking object failed with status code: " + statusCode);
-//                                  consumer.accept(r1, null);
-//                                  return (ClientType) this;
-//                              }
-//                              final String contentLength = getHeaderValue(r1, "content-length");
-//                              if (contentLength == null) {
-//                                  logger.warning("peeking object failed with absence of content-length");
-//                                  consumer.accept(r1, null);
-//                                  return (ClientType) this;
-//                              }
-//                              c.updateObject
-//                              return (ClientType) this;
-//                          }
-//        );
-//    }
     // ------------------------------------- /storage/container/object/configure
     public abstract <R> R configureObject(String containerName,
                                           String objectName,
@@ -1278,54 +712,6 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
                                           Map<String, List<Object>> headers,
                                           Function<ResponseType, R> function);
 
-//    public <R> R configureObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return configureObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                r -> {
-//                    return function.apply(r, (ClientType) this);
-//                }
-//        );
-//    }
-//
-//    public ClientType configureObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<ResponseType> consumer) {
-//        return configureObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//
-//    public ClientType configureObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return configureObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r, (ClientType) this);
-//                }
-//        );
-//    }
     /**
      * Deletes an object using {@code DELETE} method.
      *
@@ -1370,54 +756,6 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
         return deleteObject(containerName, objectName, this::getStatusCode);
     }
 
-//    public <R> R deleteObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return deleteObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                r -> {
-//                    return function.apply(r, (ClientType) this);
-//                }
-//        );
-//    }
-//
-//    public ClientType deleteObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<ResponseType> consumer) {
-//        return deleteObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//
-//    public ClientType deleteObject(
-//            final String containerName, final String objectName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return deleteObject(
-//                containerName,
-//                objectName,
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r, (ClientType) this);
-//                }
-//        );
-//    }
     // ---------------------------------------------------------------- /account
     /**
      * Reads account information.
@@ -1446,45 +784,6 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
         return readAccount(null, null, function);
     }
 
-//    public <R> R readAccount(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return readAccount(
-//                params,
-//                headers,
-//                r -> {
-//                    return function.apply(r, (ClientType) this);
-//                }
-//        );
-//    }
-//
-//    public ClientType readAccount(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<ResponseType> consumer) {
-//        return readAccount(
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//
-//    public ClientType readAccount(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return readAccount(
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r, (ClientType) this);
-//                }
-//        );
-//    }
     // ----------------------------------------------------------- /account/user
     /**
      * Reads user information.
@@ -1517,108 +816,12 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
         return readUser(userName, null, null, function);
     }
 
-//    public <R> R readUser(
-//            final String userName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return readUser(
-//                userName,
-//                params,
-//                headers,
-//                r -> {
-//                    return function.apply(r, (ClientType) this);
-//                }
-//        );
-//    }
-//
-//    public ClientType readUser(
-//            final String userName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<ResponseType> consumer) {
-//        return readUser(
-//                userName,
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//
-//    public ClientType readUser(
-//            final String userName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return readUser(
-//                userName,
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r, (ClientType) this);
-//                }
-//        );
-//    }
     public abstract <R> R updateUser(
             final String userName, final String userKey,
             final boolean userAdmin, final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final Function<ResponseType, R> function);
 
-//    public <R> R updateUser(
-//            final String userName, final String userKey,
-//            final boolean userAdmin, final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return updateUser(
-//                userName,
-//                userKey,
-//                userAdmin,
-//                params,
-//                headers,
-//                r -> {
-//                    return function.apply(r, (ClientType) this);
-//                }
-//        );
-//    }
-//
-//    public ClientType updateUser(
-//            final String userName, final String userKey,
-//            final boolean userAdmin, final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<ResponseType> consumer) {
-//        return updateUser(
-//                userName,
-//                userKey,
-//                userAdmin,
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//
-//    public ClientType updateUser(
-//            final String userName, final String userKey,
-//            final boolean userAdmin, final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return updateUser(
-//                userName,
-//                userKey,
-//                userAdmin,
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r, (ClientType) this);
-//                }
-//        );
-//    }
     /**
      * Deletes a user using the {@code DELETE} method.
      *
@@ -1657,95 +860,11 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
         return deleteUser(userName, this::getStatusCode);
     }
 
-//    public <R> R deleteUser(
-//            final String userName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return deleteUser(
-//                userName,
-//                params,
-//                headers,
-//                r -> {
-//                    return function.apply(r, (ClientType) this);
-//                }
-//        );
-//    }
-//
-//    public ClientType deleteUser(
-//            final String userName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<ResponseType> consumer) {
-//        return deleteUser(
-//                userName,
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//
-//    public ClientType deleteUser(
-//            final String userName,
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return deleteUser(
-//                userName,
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r, (ClientType) this);
-//                }
-//        );
-//    }
     // -------------------------------------------------------- /account/.groups
     public abstract <R> R readGroups(Map<String, List<Object>> params,
                                      Map<String, List<Object>> headers,
                                      Function<ResponseType, R> function);
 
-//    public <R> R readGroups(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiFunction<ResponseType, ClientType, R> function) {
-//        return readGroups(
-//                params,
-//                headers,
-//                r -> {
-//                    return function.apply(r, (ClientType) this);
-//                }
-//        );
-//    }
-//
-//    public ClientType readGroups(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final Consumer<ResponseType> consumer) {
-//        return readGroups(
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r);
-//                    return (ClientType) this;
-//                }
-//        );
-//    }
-//
-//    public ClientType readGroups(
-//            final Map<String, List<Object>> params,
-//            final Map<String, List<Object>> headers,
-//            final BiConsumer<ResponseType, ClientType> consumer) {
-//        return readGroups(
-//                params,
-//                headers,
-//                r -> {
-//                    consumer.accept(r, (ClientType) this);
-//                }
-//        );
-//    }
     // ----------------------------------------------------------------- authUrl
     /**
      * Returns the {@code authUrl}.

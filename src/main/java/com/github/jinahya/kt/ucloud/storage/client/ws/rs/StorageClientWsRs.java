@@ -479,7 +479,7 @@ public class StorageClientWsRs
     @Override
     public <R> R authenticateUser(final boolean newToken,
                                   final Function<Response, R> function) {
-        return StorageClientWsRs.this.apply(c -> {
+        return apply(c -> {
             final Response response = authenticateUser(
                     c, getAuthUrl(), getAuthUser(), getAuthKey(), newToken);
             try {
