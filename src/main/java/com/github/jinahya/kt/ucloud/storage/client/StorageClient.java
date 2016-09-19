@@ -328,8 +328,26 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
     public abstract int getStatusCode(ResponseType response);
 
     // -------------------------------------------------------------------------
+    /**
+     * Authenticates user.
+     *
+     * @param <R> result type parameter
+     * @param newToken a flag for refreshing the token.
+     * @param function a function results the result
+     * @return the value the function results
+     */
     public abstract <R> R authenticateUser(boolean newToken,
                                            Function<ResponseType, R> function);
+
+    /**
+     * Authenticates user and returns the status code.
+     *
+     * @param newToken a flag for refreshing the token.
+     * @return status code of user authentication
+     */
+    public int authenticateUser(final boolean newToken) {
+        return authenticateUser(newToken, this::getStatusCode);
+    }
 
     /**
      * Purges authentication information.
