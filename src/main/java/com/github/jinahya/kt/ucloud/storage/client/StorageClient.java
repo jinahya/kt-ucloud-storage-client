@@ -611,6 +611,22 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
                                           Function<ResponseType, R> function);
 
     /**
+     * Creates or updates a container and returns the status code of the server
+     * response.
+     *
+     * @param containerName the name of the container to update
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @return the status code of the server response.
+     */
+    public int updateContainer(final String containerName,
+                               final Map<String, List<Object>> params,
+                               final Map<String, List<Object>> headers) {
+        return updateContainer(
+                containerName, params, headers, this::getStatusCode);
+    }
+
+    /**
      * Configures a container using the {@code POST} method.
      *
      * @param <R> result type parameter
@@ -625,6 +641,22 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
             final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final Function<ResponseType, R> function);
+
+    /**
+     * Configures a container and returns the status code.
+     *
+     * @param containerName the name of the container to configure
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @return the status code of the server response.
+     */
+    public int configureContainer(
+            final String containerName,
+            final Map<String, List<Object>> params,
+            final Map<String, List<Object>> headers) {
+        return configureContainer(
+                containerName, params, headers, this::getStatusCode);
+    }
 
     /**
      * Deletes a container using {@code DELETE} method.
@@ -816,11 +848,37 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
         return readUser(userName, null, null, function);
     }
 
+    /**
+     * Updates (or creates) a user.
+     *
+     * @param <R> result type parameter
+     * @param userName username
+     * @param userKey password
+     * @param userAdmin a flag for administrative user
+     * @param params query parameters; may be {@code null}
+     * @param headers request headers; may be {@code null}
+     * @param function a function to be applied with the server response
+     * @return the value the function results
+     */
     public abstract <R> R updateUser(
             final String userName, final String userKey,
             final boolean userAdmin, final Map<String, List<Object>> params,
             final Map<String, List<Object>> headers,
             final Function<ResponseType, R> function);
+
+    /**
+     * Updates (or creates) a user and returns the status code.
+     *
+     * @param userName username
+     * @param userKey password
+     * @param userAdmin a flag for administrative user.
+     * @return the status code of the server response
+     */
+    public int updateUser(final String userName, final String userKey,
+                          final boolean userAdmin) {
+        return updateUser(userName, userKey, userAdmin, null, null,
+                          this::getStatusCode);
+    }
 
     /**
      * Deletes a user using the {@code DELETE} method.
@@ -872,7 +930,7 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
      * @return the {@code authUrl}. //@deprecated forRemoval = true
      */
 //    @Deprecated//(forRemoval = true)
-    protected final String getAuthUrl() {
+    public final String getAuthUrl() {
         return authUrl;
     }
 
@@ -882,7 +940,6 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
      *
      * @return the {@code authUser}. //@deprecated forRemoval = true
      */
-//    @Deprecated//(forRemoval = true)
     protected final String getAuthUser() {
         return authUser;
     }
@@ -893,19 +950,20 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
      *
      * @return the {@code authKey} //@deprecated forRemoval = true
      */
-//    @Deprecated//(forRemoval = true)
     protected final String getAuthKey() {
         return authKey;
     }
 
     // ------------------------------------------------------------- accountName
-    protected final String getAccountName() {
+    /**
+     * Returns the {@code accountName}.
+     *
+     * @return the {@code accountName}; may be {@code null}
+     */
+    public final String getAccountName() {
         return accountName;
     }
 
-//    public final String accountName() {
-//        return getAccountName();
-//    }
     // -------------------------------------------------------------- storageUrl
     /**
      * Returns the storage URL.
@@ -916,9 +974,6 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
         return storageUrl;
     }
 
-//    protected String storageUrl() {
-//        return getStorageUrl();
-//    }
     protected final void setStorageUrl(final String storageUrl) {
         this.storageUrl = requireNonNull(storageUrl, "null storageUrl");
         if (accountName != null) {
@@ -926,18 +981,11 @@ public abstract class StorageClient<T extends StorageClient<T, RequestType, Resp
         }
     }
 
-//    protected StorageClient storegeUrl(final String storageUrl) {
-//        setStorageUrl(storageUrl);
-//        return this;
-//    }
     // -------------------------------------------------------------- accountUrl
     protected final String getAccountUrl() {
         return accountUrl;
     }
 
-//    protected String accountUrl() {
-//        return getAccountUrl();
-//    }
     // --------------------------------------------------------------- authToken
     /**
      * Returns the authorization token.
