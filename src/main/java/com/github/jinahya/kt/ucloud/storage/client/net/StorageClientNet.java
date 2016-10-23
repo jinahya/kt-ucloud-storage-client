@@ -66,7 +66,7 @@ public class StorageClientNet
     }
 
     /**
-     * Put given request headers to specified connection.
+     * Adds given request headers to specified connection.
      *
      * @param <T> connection type parameter
      * @param connection the connection

@@ -126,7 +126,7 @@ public class StorageClientWsRsIT
     }
 
     @Override
-    protected void printBody(Response response) {
+    protected void printBody(final Response response) {
         lines(response,
               l -> {
                   logger.debug("line: {}", l);
@@ -134,13 +134,6 @@ public class StorageClientWsRsIT
         );
     }
 
-//    @Override
-//    protected Entity<?> requestEntity() {
-//        final byte[] bytes
-//                = new byte[ThreadLocalRandom.current().nextInt(1024)];
-//        ThreadLocalRandom.current().nextBytes(bytes);
-//        return Entity.entity(bytes, APPLICATION_OCTET_STREAM);
-//    }
     @Override
     protected Response requestEntity(final Invocation.Builder builder) {
         final byte[] bytes

@@ -29,7 +29,6 @@ import java.util.UUID;
 import static java.util.UUID.randomUUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -69,7 +68,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
     private static final Logger logger
             = getLogger(MethodHandles.lookup().lookupClass());
 
-    private static final long MILLIS = TimeUnit.SECONDS.toMillis(4L);
+    private static final long MILLIS = TimeUnit.SECONDS.toMillis(8L);
 
     protected static void sleep() {
         logger.debug("------------------------- sleeping for {} ms...", MILLIS);
@@ -210,7 +209,6 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         return assertStatus(statusCode, family, statuses);
     }
 
-//    protected abstract EntityType requestEntity();
     protected abstract ResponseType requestEntity(RequestType request);
 
     // ---------------------------------------------------------------- /account
@@ -219,7 +217,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
         logger.debug("------------------------------------ testing storage...");
         accept(false,
                c -> {
-                   logger.debug("------------------------ peeking account...");
+                   logger.debug("------------------------- peeking account...");
                    final Map<String, List<Object>> headers = new HashMap<>();
                    headers.put(ACCEPT, singletonList(WILDCARD));
                    c.peekStorage(
@@ -232,7 +230,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                }
         );
         asList(TEXT_PLAIN, APPLICATION_XML, APPLICATION_JSON).forEach(a -> {
-            logger.debug("--------------- reading account in {}...", a);
+            logger.debug("----------------------- reading account in {}...", a);
             accept(false,
                    c -> {
                        final MultivaluedMap<String, Object> headers
@@ -257,7 +255,8 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                        logger.debug("--------------------- adding metadata...");
                        final MultivaluedMap<String, Object> headers
                        = new MultivaluedHashMap<>();
-                       headers.putSingle(storageMetaHeader(false, tokens), "irrelevant");
+                       headers.putSingle(storageMetaHeader(false, tokens),
+                                         "irrelevant");
                        c.configureStorage(
                                null,
                                headers,
@@ -364,7 +363,6 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
     // ----------------------------------------------- /account/container/object
     @Test
     public void testObject() {
-        final long sleep = SECONDS.toMillis(2L);
         logger.debug("------------------------------------- testing object...");
         final String containerName
                 = getClass().getSimpleName() + "-" + randomUUID().toString();
@@ -428,12 +426,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                    );
                }
         );
-        logger.debug("sleeping for " + sleep + "ms...");
-        try {
-            Thread.sleep(2000L);
-        } catch (final InterruptedException ie) {
-            fail("failed to sleep", ie);
-        }
+        sleep();
         accept(false,
                c -> {
                    logger.debug("----------------------- peeking container...");
@@ -528,8 +521,6 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                c -> {
                    logger.debug("-------------------------- updating user...2");
                    String userKey = UUID.randomUUID().toString();
-//                   final boolean userAdmin
-//                   = ThreadLocalRandom.current().nextBoolean();
                    c.updateUser(
                            userName,
                            userKey,
@@ -566,8 +557,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            null,
                            r -> {
-                               return assertStatus(r, SUCCESSFUL
-                               );
+                               return assertStatus(r, SUCCESSFUL);
                            }
                    );
                }
@@ -575,7 +565,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
     }
 
     // -------------------------------------------------------- /account/.groups
-    @Test
+    @Test(enabled = true)
     public void testGroups() {
         logger.debug("---------------------------------------- testing groups");
         accept(true,
@@ -586,8 +576,7 @@ public abstract class StorageClientIT<ClientType extends StorageClient<ClientTyp
                            null,
                            r -> {
                                printBody(r);
-                               return assertStatus(r, SUCCESSFUL
-                               );
+                               return assertStatus(r, SUCCESSFUL);
                            }
                    );
                }

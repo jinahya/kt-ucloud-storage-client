@@ -294,7 +294,7 @@ public class StorageClientWsRs
             final MultivaluedMap<String, Object> params) {
         WebTarget target
                 = targetContainer(client, storageUrl, containerName, params)
-                .path(objectName);
+                        .path(objectName);
         if (params != null) {
             for (final Entry<String, List<Object>> entry : params.entrySet()) {
                 final String name = entry.getKey();
@@ -1185,7 +1185,7 @@ public class StorageClientWsRs
         try {
             final WebTarget target
                     = targetAccount(client, getAccountUrl(), params)
-                    .path(".groups");
+                            .path(".groups");
             final Invocation.Builder builder = target.request();
             if (headers != null) {
                 builder.headers(headers);
